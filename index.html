@@ -249,7 +249,14 @@
     background: var(--card); border: 1px solid rgba(0,0,0,.06);
     border-radius: 14px; padding: 10px 14px; margin-top: 10px;
   }
-  .fold-row .end { font-size: 18px; flex: 0 0 auto; }
+  .fold-row .end {
+    font-size: 18px; flex: 0 0 auto; display: flex; flex-direction: column;
+    align-items: center; gap: 2px; line-height: 1;
+  }
+  .fold-row .end small {
+    font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
   .fold-row input[type=range] {
     flex: 1; appearance: none; -webkit-appearance: none; height: 6px; border-radius: 3px;
     background: linear-gradient(90deg, var(--accent), #b9b6f0);
@@ -620,7 +627,6 @@
       <h2>Unfold the Cube</h2>
     </div>
   </header>
-  <div class="step-dots" id="stepDots"></div>
 
   <div class="counters">
     <div class="counter" id="cFaces"><div class="num unknown">?</div><div class="lbl">Faces</div></div>
@@ -666,10 +672,12 @@
     </div>
   </div>
 
+  <div class="step-dots" id="stepDots"></div>
+
   <div class="fold-row">
-    <span class="end" title="Cube">🧊</span>
+    <span class="end" title="Folded cube">🧊<small>Cube</small></span>
     <input type="range" id="foldSlider" min="0" max="100" value="0" disabled aria-label="Unfold amount">
-    <span class="end" title="Flat net">▦</span>
+    <span class="end" title="Flat net">▦<small>Net</small></span>
   </div>
 
   <div class="guide" id="guide">
@@ -708,7 +716,6 @@
       <h2>Build the Pieces</h2>
     </div>
   </header>
-  <div class="step-dots" id="fStepDots"></div>
 
   <div class="fstage" id="fStage">
     <div class="frow" id="fRowA">
@@ -765,6 +772,8 @@
     </div>
   </div>
 
+  <div class="step-dots" id="fStepDots"></div>
+
   <div class="guide">
     <div class="step-label" id="fStepLabel"></div>
     <p id="fStepText"></p>
@@ -789,7 +798,6 @@
       <h2>Balance the Scale</h2>
     </div>
   </header>
-  <div class="step-dots" id="aStepDots"></div>
 
   <div class="astage">
     <div class="eq-display" id="eqText">x + 3 = 7</div>
@@ -812,6 +820,8 @@
       </div>
     </div>
   </div>
+
+  <div class="step-dots" id="aStepDots"></div>
 
   <div class="guide">
     <div class="step-label" id="aStepLabel"></div>
