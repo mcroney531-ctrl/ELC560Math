@@ -122,14 +122,10 @@
   /* stage */
   .stage {
     position: relative; height: 46vh; min-height: 300px; max-height: 430px;
-    background:
-      radial-gradient(120% 90% at 50% 22%, #232c46 0%, #131728 60%, #0a0c16 100%);
-    border: 1px solid rgba(255,255,255,.08);
     border-radius: var(--radius);
     overflow: hidden;
     touch-action: none;
     cursor: grab;
-    box-shadow: inset 0 0 60px rgba(0,0,0,.5);
   }
   .stage:active { cursor: grabbing; }
   .hint {
@@ -162,19 +158,6 @@
     position: absolute; inset: 0;
     perspective: 900px;
     display: grid; place-items: center;
-  }
-  .cube-ring {
-    position: absolute; width: 220%; height: 220%; border-radius: 50%;
-    border: 2px solid rgba(255,255,255,.14);
-    box-shadow: 0 0 30px #5ef2ff, inset 0 0 30px rgba(94,242,255,.06);
-    transform: rotateX(78deg);
-    pointer-events: none; transition: opacity .3s;
-  }
-  .cube-shadow {
-    position: absolute; width: 62%; height: 16%; border-radius: 50%;
-    background: rgba(0,0,0,.55); filter: blur(18px);
-    transform: translateY(46%);
-    pointer-events: none; transition: opacity .3s;
   }
   .orbit, .centerer, .face, .hinge { transform-style: preserve-3d; }
   .orbit { width: 0; height: 0; }
@@ -247,21 +230,20 @@
   /* fold slider */
   .fold-row {
     display: flex; align-items: center; gap: 12px;
-    background: radial-gradient(140% 140% at 50% 0%, #232c46 0%, #12162a 100%);
-    border: 1px solid rgba(255,255,255,.08);
+    background: var(--card); border: 1px solid rgba(0,0,0,.06);
     border-radius: 14px; padding: 10px 14px; margin-top: 10px;
   }
-  .fold-row .end { font-size: 18px; flex: 0 0 auto; filter: drop-shadow(0 0 6px rgba(94,242,255,.5)); }
+  .fold-row .end { font-size: 18px; flex: 0 0 auto; }
   .fold-row input[type=range] {
     flex: 1; appearance: none; -webkit-appearance: none; height: 6px; border-radius: 3px;
-    background: linear-gradient(90deg, #5ef2ff, #9b5de5);
+    background: linear-gradient(90deg, var(--accent), #b9b6f0);
     outline: none;
   }
   .fold-row input[type=range]::-webkit-slider-thumb {
     appearance: none; -webkit-appearance: none;
     width: 26px; height: 26px; border-radius: 50%;
-    background: #12162a; border: 3px solid #5ef2ff;
-    box-shadow: 0 0 10px rgba(94,242,255,.7); cursor: pointer;
+    background: #fff; border: 3px solid var(--accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,.2); cursor: pointer;
   }
   .fold-row input[type=range]:disabled { filter: grayscale(1); opacity: .45; }
   .fold-row input[type=range]:disabled::-webkit-slider-thumb { cursor: default; }
@@ -635,8 +617,6 @@
     <div class="big-count" id="bigCount">1</div>
     <div class="overlay-tag" id="overlayTag"></div>
     <div class="scene">
-      <div class="cube-ring" id="cubeRing"></div>
-      <div class="cube-shadow" id="cubeShadow"></div>
       <div class="orbit" id="orbit">
         <div class="centerer" id="centerer">
           <!-- Face 1 (front) is the anchor; all other faces hinge off it -->
@@ -842,7 +822,6 @@
   var $ = function (id) { return document.getElementById(id); };
   var menu = $("menu"), activity = $("activity");
   var stage = $("stage"), orbit = $("orbit"), centerer = $("centerer");
-  var cubeRing = $("cubeRing"), cubeShadow = $("cubeShadow");
   var hingeT = $("hingeT"), hingeR = $("hingeR"), hingeB = $("hingeB"),
       hingeL = $("hingeL"), hingeK = $("hingeK");
   var foldSlider = $("foldSlider");
@@ -857,10 +836,59 @@
   // ---------- geometry state ----------
   var S = 96;                 // face size in px (responsive, set below)
   var p = 1;                  // fold progress: 1 = cube, 0 = flat net
-  var rx = -22, ry = -34;     // orbit rotation (deg)
   var zoom = 1;                // wheel-zoom multiplier
   var animating = false;
   var overlays = { edges: false, corners: false };
+
+  // ---------- orbit rotation, stored as a quaternion (no Euler-angle gimbal lock) ----------
+  var DEG = Math.PI / 180;
+  function qAxisAngle(x, y, z, rad) {
+    var s = Math.sin(rad / 2);
+    return [Math.cos(rad / 2), x * s, y * s, z * s];
+  }
+  function qMul(a, b) {
+    return [
+      a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3],
+      a[0]*b[1] + a[1]*b[0] + a[2]*b[3] - a[3]*b[2],
+      a[0]*b[2] - a[1]*b[3] + a[2]*b[0] + a[3]*b[1],
+      a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + a[3]*b[0]
+    ];
+  }
+  function qNormalize(q) {
+    var len = Math.sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]) || 1;
+    return [q[0]/len, q[1]/len, q[2]/len, q[3]/len];
+  }
+  function qSlerp(a, b, t) {
+    var dot = a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
+    var bb = b;
+    if (dot < 0) { dot = -dot; bb = [-b[0], -b[1], -b[2], -b[3]]; }
+    if (dot > 0.9995) {
+      return qNormalize([
+        a[0] + t * (bb[0] - a[0]), a[1] + t * (bb[1] - a[1]),
+        a[2] + t * (bb[2] - a[2]), a[3] + t * (bb[3] - a[3])
+      ]);
+    }
+    var theta0 = Math.acos(dot), theta = theta0 * t;
+    var s1 = Math.sin(theta) / Math.sin(theta0);
+    var s0 = Math.cos(theta) - dot * s1;
+    return [s0*a[0] + s1*bb[0], s0*a[1] + s1*bb[1], s0*a[2] + s1*bb[2], s0*a[3] + s1*bb[3]];
+  }
+  function qToMatrix3d(q) {
+    var w = q[0], x = q[1], y = q[2], z = q[3];
+    var xx = x*x, yy = y*y, zz = z*z, xy = x*y, xz = x*z, yz = y*z, wx = w*x, wy = w*y, wz = w*z;
+    return "matrix3d(" +
+      (1 - 2*(yy+zz)) + "," + (2*(xy+wz)) + "," + (2*(xz-wy)) + ",0," +
+      (2*(xy-wz)) + "," + (1 - 2*(xx+zz)) + "," + (2*(yz+wx)) + ",0," +
+      (2*(xz+wy)) + "," + (2*(yz-wx)) + "," + (1 - 2*(xx+yy)) + ",0," +
+      "0,0,0,1)";
+  }
+  var Q_IDENTITY = [1, 0, 0, 0];
+  var Q_START = qNormalize(qMul(qAxisAngle(1, 0, 0, -22 * DEG), qAxisAngle(0, 1, 0, -34 * DEG)));
+  var orientation = Q_START;
+  function applyOrbitDelta(yawRad, pitchRad) {
+    var qDelta = qMul(qAxisAngle(1, 0, 0, pitchRad), qAxisAngle(0, 1, 0, yawRad));
+    orientation = qNormalize(qMul(qDelta, orientation));
+  }
 
   function sizeFaces() {
     // Net is 4 faces wide, 3 tall; make sure it fits the stage flat.
@@ -894,8 +922,8 @@
     hingeK.style.transform = "rotateY(" + a + "deg)";
 
     // Ease the whole assembly: face-on when flat, free orbit when folded.
-    var erx = rx * p, ery = ry * p;
-    orbit.style.transform = "rotateX(" + erx + "deg) rotateY(" + ery + "deg)";
+    var eased = p > 0.999 ? orientation : qSlerp(Q_IDENTITY, orientation, p);
+    orbit.style.transform = qToMatrix3d(eased);
 
     // Center: cube occupies [0,S]^2 x [-S,0]; flat net spans x:[-S,2S], y:[-S,2S].
     var cx = -S / 2 - (S / 4) * (1 - p);   // shift left a bit when flat (net is wider right)
@@ -905,11 +933,6 @@
     centerer.style.transform =
       "scale3d(" + scale + "," + scale + "," + scale + ") " +
       "translate3d(" + cx + "px," + cy + "px," + cz + "px)";
-
-    // Ring & ground shadow read as a cube's "orbit" — fade them out as it unfolds flat.
-    var depthFade = 0.15 + 0.85 * p;
-    cubeRing.style.opacity = depthFade;
-    cubeShadow.style.opacity = depthFade;
 
     // Overlays only make sense on the folded cube.
     if (p < 0.92 && (overlays.edges || overlays.corners)) setOverlay(null);
@@ -933,19 +956,23 @@
   }
 
   // ---------- drag to rotate, with inertial coast on release ----------
-  var dragging = false, lastX = 0, lastY = 0, hasDragged = false;
-  var vx = 0, vy = 0; // angular velocity (deg/frame), carried into a post-release coast
+  // Rotation is accumulated as a quaternion (see applyOrbitDelta above) so dragging
+  // stays smooth from every orientation — no gimbal lock when passing over the top/bottom faces.
+  var ROT_SENS = 0.45 * DEG; // matches the original degrees-per-pixel feel
+  var dragging = false, lastX = 0, lastY = 0, hasDragged = false, dragDist = 0;
+  var velYaw = 0, velPitch = 0; // angular velocity (rad/frame), carried into a post-release coast
   stage.addEventListener("pointerdown", function (e) {
-    dragging = true; lastX = e.clientX; lastY = e.clientY; vx = 0; vy = 0;
+    dragging = true; lastX = e.clientX; lastY = e.clientY; velYaw = 0; velPitch = 0;
   });
   window.addEventListener("pointermove", function (e) {
     if (!dragging) return;
-    vy = (e.clientX - lastX) * 0.45;
-    vx = -(e.clientY - lastY) * 0.45;
-    ry += vy;
-    rx = Math.max(-85, Math.min(85, rx + vx));
+    var dx = e.clientX - lastX, dy = e.clientY - lastY;
+    velYaw = dx * ROT_SENS;
+    velPitch = -dy * ROT_SENS;
+    applyOrbitDelta(velYaw, velPitch);
     lastX = e.clientX; lastY = e.clientY;
-    if (!hasDragged && (Math.abs(ry) > 40 || Math.abs(rx) > 40)) {
+    dragDist += Math.abs(dx) + Math.abs(dy);
+    if (!hasDragged && dragDist > 18) {
       hasDragged = true; hint.classList.remove("show");
     }
     render();
@@ -954,10 +981,9 @@
   window.addEventListener("pointercancel", function () { dragging = false; });
 
   (function coast() {
-    if (!dragging && (Math.abs(vx) > 0.015 || Math.abs(vy) > 0.015)) {
-      rx = Math.max(-85, Math.min(85, rx + vx));
-      ry += vy;
-      vx *= 0.94; vy *= 0.94;
+    if (!dragging && (Math.abs(velYaw) > 0.00025 || Math.abs(velPitch) > 0.00025)) {
+      applyOrbitDelta(velYaw, velPitch);
+      velYaw *= 0.94; velPitch *= 0.94;
       render();
     }
     requestAnimationFrame(coast);
@@ -1276,7 +1302,7 @@
     menu.style.display = "flex";
   }
   function resetActivity() {
-    p = 1; rx = -22; ry = -34; zoom = 1; vx = 0; vy = 0; hasDragged = false;
+    p = 1; orientation = Q_START; zoom = 1; velYaw = 0; velPitch = 0; dragDist = 0; hasDragged = false;
     edgesSeen = cornersSeen = false; tappedCount = 0;
     revealed = {};
     ["cFaces", "cEdges", "cCorners"].forEach(function (id) {
