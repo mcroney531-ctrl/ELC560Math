@@ -100,12 +100,28 @@
   .act-title { flex: 1; min-width: 0; }
   .act-title .small { font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
   .act-title h2 { font-size: 19px; letter-spacing: -.01em; }
-  .step-dots { display: flex; gap: 5px; flex: 0 0 auto; }
-  .step-dots i {
-    width: 7px; height: 7px; border-radius: 50%; background: #d9d6cf; transition: all .25s;
+  .step-dots {
+    display: flex; overflow: hidden;
+    background: linear-gradient(180deg, #fff, #efeee7);
+    border: 1px solid rgba(0,0,0,.06); border-radius: 999px;
+    padding: 4px; margin: 0 0 12px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,.06), 0 10px 24px -18px rgba(43,42,51,.4);
   }
-  .step-dots i.on { background: var(--accent); transform: scale(1.25); }
-  .step-dots i.done { background: #b9b6f0; }
+  .step-dots i {
+    flex: 1; height: 30px; display: flex; align-items: center; justify-content: center;
+    font-style: normal; font-size: 12px; font-weight: 800; color: #b7b3a8;
+    background: #eceae3;
+    transform: skewX(-14deg);
+    transition: background .25s ease, color .25s ease, transform .15s ease;
+  }
+  .step-dots i + i { margin-left: -1px; border-left: 1px solid rgba(0,0,0,.07); }
+  .step-dots i span { display: inline-block; transform: skewX(14deg); }
+  .step-dots i.done { background: var(--chip); color: var(--accent); }
+  .step-dots i.on {
+    background: var(--accent); color: #fff; transform: skewX(-14deg) scaleY(1.1);
+    box-shadow: inset 0 2px 3px rgba(255,255,255,.35), inset 0 -3px 6px rgba(0,0,0,.2);
+    z-index: 1;
+  }
 
   /* counters */
   .counters { display: flex; gap: 8px; margin: 6px 0 10px; }
@@ -603,8 +619,8 @@
       <div class="small">Geometry</div>
       <h2>Unfold the Cube</h2>
     </div>
-    <div class="step-dots" id="stepDots"></div>
   </header>
+  <div class="step-dots" id="stepDots"></div>
 
   <div class="counters">
     <div class="counter" id="cFaces"><div class="num unknown">?</div><div class="lbl">Faces</div></div>
@@ -691,8 +707,8 @@
       <div class="small">Fractions</div>
       <h2>Build the Pieces</h2>
     </div>
-    <div class="step-dots" id="fStepDots"></div>
   </header>
+  <div class="step-dots" id="fStepDots"></div>
 
   <div class="fstage" id="fStage">
     <div class="frow" id="fRowA">
@@ -772,8 +788,8 @@
       <div class="small">Algebra</div>
       <h2>Balance the Scale</h2>
     </div>
-    <div class="step-dots" id="aStepDots"></div>
   </header>
+  <div class="step-dots" id="aStepDots"></div>
 
   <div class="astage">
     <div class="eq-display" id="eqText">x + 3 = 7</div>
@@ -1145,6 +1161,9 @@
       var d = document.createElement("i");
       if (i < step) d.className = "done";
       if (i === step) d.className = "on";
+      var s = document.createElement("span");
+      s.textContent = i + 1;
+      d.appendChild(s);
       stepDots.appendChild(d);
     });
   }
@@ -1541,6 +1560,9 @@
       var d = document.createElement("i");
       if (i < step) d.className = "done";
       if (i === step) d.className = "on";
+      var s = document.createElement("span");
+      s.textContent = i + 1;
+      d.appendChild(s);
       dotsEl.appendChild(d);
     });
   }
@@ -1855,6 +1877,9 @@
       var d = document.createElement("i");
       if (i < step) d.className = "done";
       if (i === step) d.className = "on";
+      var s = document.createElement("span");
+      s.textContent = i + 1;
+      d.appendChild(s);
       dotsEl.appendChild(d);
     });
   }
