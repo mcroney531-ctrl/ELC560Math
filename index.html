@@ -309,6 +309,101 @@
   }
   .done-banner.show { display: block; }
 
+  /* Dot — guide character (Geometry activity only) */
+  .dot-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .dot-avatar { position: relative; width: 66px; height: 66px; flex: 0 0 auto; }
+  .dot-avatar.bounce { animation: dotBounce .55s ease; }
+  .dot-avatar.celebrate { animation: dotCelebrate .75s ease; }
+  .dot-mini {
+    position: absolute; top: 0; left: 0; width: 190px; height: 190px;
+    transform: scale(.347); transform-origin: top left;
+  }
+  .dot-orb {
+    position: absolute; inset: 0; border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 24%, rgba(255,255,255,.92) 0 5%, transparent 22%),
+      radial-gradient(circle at 38% 28%, #a9c0ef 0 8%, #6f8ac9 35%, #4866a5 68%, #263d76 100%);
+    box-shadow:
+      inset -18px -20px 36px rgba(21,34,75,.35),
+      inset 16px 12px 28px rgba(255,255,255,.22),
+      0 0 0 2px rgba(255,255,255,.5);
+    overflow: hidden;
+  }
+  .dot-brow {
+    position: absolute; width: 38px; height: 10px; top: 50px;
+    border-radius: 50%; border-top: 7px solid #1d2b55; z-index: 3;
+  }
+  .dot-brow.left { left: 42px; transform: rotate(-9deg); }
+  .dot-brow.right { right: 42px; transform: rotate(9deg); }
+  .dot-eye {
+    position: absolute; top: 69px; width: 49px; height: 61px; border-radius: 50%;
+    background: #fff; box-shadow: inset 0 -7px 12px rgba(40,55,100,.14), 0 2px 8px rgba(12,20,50,.2);
+    z-index: 4; overflow: hidden;
+  }
+  .dot-eye.left { left: 40px; }
+  .dot-eye.right { right: 40px; }
+  .dot-pupil {
+    position: absolute; left: 16px; top: 20px; width: 19px; height: 27px;
+    border-radius: 50%; background: #111a33; transition: transform .08s linear;
+  }
+  .dot-pupil::after {
+    content: ""; position: absolute; width: 7px; height: 9px; left: 3px; top: 3px;
+    border-radius: 50%; background: #fff;
+  }
+  .dot-mouth {
+    position: absolute; left: 50%; top: 135px; width: 39px; height: 24px;
+    transform: translateX(-50%); border-radius: 6px 6px 22px 22px; background: #17213a;
+    z-index: 4; overflow: hidden;
+  }
+  .dot-mouth::after {
+    content: ""; position: absolute; width: 24px; height: 10px; left: 8px; bottom: -2px;
+    border-radius: 50%; background: #e77987;
+  }
+  .dot-hand { position: absolute; width: 54px; height: 54px; top: 102px; z-index: -1; }
+  .dot-hand.left { left: -33px; transform: rotate(-22deg); }
+  .dot-hand.right { right: -33px; transform: rotate(22deg); }
+  .dot-palm {
+    position: absolute; left: 12px; top: 15px; width: 31px; height: 31px; border-radius: 50%;
+    background: linear-gradient(145deg, #fff, #d9e0f1); box-shadow: 0 4px 8px rgba(27,39,75,.18);
+  }
+  .dot-finger {
+    position: absolute; width: 12px; height: 28px; border-radius: 12px;
+    background: linear-gradient(145deg, #fff, #d9e0f1); transform-origin: bottom;
+  }
+  .dot-finger.one { left: 4px; top: 2px; transform: rotate(-28deg); }
+  .dot-finger.two { left: 15px; top: -4px; transform: rotate(-8deg); }
+  .dot-finger.three { right: 6px; top: 1px; transform: rotate(18deg); }
+  .dot-bubble {
+    flex: 1; min-width: 0; position: relative; background: var(--chip);
+    border-radius: 14px; padding: 11px 14px; font-size: 14.5px; line-height: 1.45;
+  }
+  .dot-bubble strong { color: var(--ink); }
+  .dot-bubble::before {
+    content: ""; position: absolute; left: -6px; top: 20px; width: 13px; height: 13px;
+    background: var(--chip); border-left: 1px solid rgba(0,0,0,.04); border-bottom: 1px solid rgba(0,0,0,.04);
+    transform: rotate(45deg);
+  }
+  @keyframes dotBounce {
+    0%, 100% { transform: scale(1); }
+    35% { transform: scale(1.08, .92) translateY(4px); }
+    65% { transform: scale(.95, 1.06) translateY(-7px); }
+  }
+  @keyframes dotCelebrate {
+    0%, 100% { transform: rotate(0) scale(1); }
+    25% { transform: rotate(-8deg) scale(1.06); }
+    50% { transform: rotate(8deg) scale(1.1); }
+    75% { transform: rotate(-5deg) scale(1.05); }
+  }
+  .dot-spark {
+    position: fixed; width: 7px; height: 7px; border-radius: 2px;
+    background: #6d8fd3; pointer-events: none; z-index: 50;
+    animation: dotSpark 650ms ease-out forwards;
+  }
+  @keyframes dotSpark {
+    from { opacity: 1; transform: translate(0,0) rotate(0deg) scale(1); }
+    to { opacity: 0; transform: translate(var(--x), var(--y)) rotate(180deg) scale(.2); }
+  }
+
   /* ============ FRACTIONS ============ */
   #fracActivity, #algActivity { display: none; }
   .fstage {
@@ -585,18 +680,28 @@
 
   <div class="guide" id="guide">
     <div class="step-label" id="stepLabel"></div>
-    <p id="stepText"></p>
+    <div class="dot-row">
+      <div class="dot-avatar" id="dotAvatar" aria-hidden="true">
+        <div class="dot-mini">
+          <div class="dot-hand left"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
+          <div class="dot-hand right"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
+          <div class="dot-orb">
+            <div class="dot-brow left"></div><div class="dot-brow right"></div>
+            <div class="dot-eye left"><div class="dot-pupil"></div></div>
+            <div class="dot-eye right"><div class="dot-pupil"></div></div>
+            <div class="dot-mouth"></div>
+          </div>
+        </div>
+      </div>
+      <div class="dot-bubble" id="dotBubble" role="status" aria-live="polite"></div>
+    </div>
     <div class="choices" id="choices" style="display:none">
       <button class="choice" data-n="4">4</button>
       <button class="choice" data-n="5">5</button>
       <button class="choice" data-n="6">6</button>
       <button class="choice" data-n="8">8</button>
     </div>
-    <div class="feedback" id="feedback"></div>
     <div class="actions" id="actions"></div>
-    <div class="done-banner" id="doneBanner">
-      🎉 <strong>You did it!</strong> A cube = <strong>6 square faces</strong>, <strong>12 edges</strong> and <strong>8 corners</strong> — and now you've seen exactly where every one of them lives.
-    </div>
   </div>
 </div>
 
@@ -744,9 +849,9 @@
       hingeL = $("hingeL"), hingeK = $("hingeK");
   var foldSlider = $("foldSlider");
   var hint = $("hint"), bigCount = $("bigCount"), overlayTag = $("overlayTag");
-  var stepLabel = $("stepLabel"), stepText = $("stepText"),
-      feedback = $("feedback"), actionsEl = $("actions"),
-      choicesEl = $("choices"), doneBanner = $("doneBanner");
+  var stepLabel = $("stepLabel"), actionsEl = $("actions"), choicesEl = $("choices");
+  var dotAvatar = $("dotAvatar"), dotBubble = $("dotBubble");
+  var pupils = Array.prototype.slice.call(dotAvatar.querySelectorAll(".dot-pupil"));
   var stepDots = $("stepDots");
   var cubeRoot = $("face1"); // overlay classes go on the anchor face's parent chain
   var faces = [1, 2, 3, 4, 5, 6].map(function (n) { return $("face" + n); });
@@ -909,6 +1014,44 @@
     setTimeout(function () { el.classList.remove("pop"); }, 600);
   }
 
+  // ---------- Dot, the guide character ----------
+  window.addEventListener("pointermove", function (e) {
+    if (activity.style.display === "none") return;
+    var rect = dotAvatar.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+    var dx = Math.max(-1, Math.min(1, (e.clientX - cx) / 260));
+    var dy = Math.max(-1, Math.min(1, (e.clientY - cy) / 220));
+    pupils.forEach(function (p) { p.style.transform = "translate(" + (dx * 7) + "px," + (dy * 8) + "px)"; });
+  });
+
+  function dotAnimate(cls) {
+    dotAvatar.classList.remove("bounce", "celebrate");
+    void dotAvatar.offsetWidth;
+    dotAvatar.classList.add(cls);
+  }
+
+  function dotBurst() {
+    var rect = dotAvatar.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+    for (var i = 0; i < 16; i++) {
+      var s = document.createElement("i");
+      s.className = "dot-spark";
+      s.style.left = cx + "px"; s.style.top = cy + "px";
+      var angle = (Math.PI * 2 * i) / 16;
+      var distance = 46 + Math.random() * 46;
+      s.style.setProperty("--x", (Math.cos(angle) * distance) + "px");
+      s.style.setProperty("--y", (Math.sin(angle) * distance) + "px");
+      document.body.appendChild(s);
+      (function (el) { setTimeout(function () { el.remove(); }, 700); })(s);
+    }
+  }
+
+  function dotSay(html, celebrate) {
+    dotBubble.innerHTML = html;
+    if (celebrate) { dotAnimate("celebrate"); dotBurst(); }
+    else dotAnimate("bounce");
+  }
+
   // ---------- guided steps ----------
   var step = 0;
   var edgesSeen = false, cornersSeen = false, tappedCount = 0;
@@ -962,7 +1105,7 @@
       text: "You’ve got the whole picture. Now play with it: drag the slider to fold and unfold, spin the cube mid-fold, and light up the edges and corners whenever you like.",
       enter: function () {
         foldSlider.disabled = false;
-        doneBanner.classList.add("show");
+        dotSay("🎉 <strong>You did it!</strong> A cube = <strong>6 square faces</strong>, <strong>12 edges</strong> and <strong>8 corners</strong> — and now you’ve seen exactly where every one of them lives.", true);
         setActions([
           { id: "edges", text: "Edges", overlay: "edges", ghost: true },
           { id: "corners", text: "Corners", overlay: "corners", ghost: true },
@@ -1001,9 +1144,7 @@
     step = i;
     var s = steps[i];
     stepLabel.textContent = s.label;
-    stepText.textContent = s.text;
-    feedback.className = "feedback";
-    feedback.textContent = "";
+    dotSay(s.text, false);
     choicesEl.style.display = "none";
     renderDots();
     s.enter();
@@ -1025,7 +1166,7 @@
         var e = $("act-edges"), c = $("act-corners");
         if (e) e.style.display = "";
         if (c) c.style.display = "";
-        showFeedback("Tap <strong>Edges</strong> and <strong>Corners</strong> to light them up. (Spin the cube to check the back, too.)");
+        dotSay("Tap <strong>Edges</strong> and <strong>Corners</strong> to light them up. (Spin the cube to check the back, too.)", false);
       });
       return;
     }
@@ -1049,7 +1190,7 @@
     if (edgesSeen && cornersSeen) {
       var n = $("act-next");
       if (n) n.disabled = false;
-      showFeedback("<strong>12 edges and 8 corners.</strong> Notice the pattern: 6 faces + 8 corners − 12 edges = 2. That’s true for every box-like shape — mathematicians call it Euler’s formula.");
+      dotSay("<strong>12 edges and 8 corners.</strong> Notice the pattern: 6 faces + 8 corners − 12 edges = 2. That’s true for every box-like shape — mathematicians call it Euler’s formula.", true);
     }
   }
 
@@ -1060,7 +1201,7 @@
       if (i >= faces.length) {
         bigCount.classList.remove("show");
         revealCounter("cFaces", 6);
-        showFeedback("<strong>6 faces</strong> — and now you can see all of them at once. No more hiding.");
+        dotSay("<strong>6 faces</strong> — and now you can see all of them at once. No more hiding.", false);
         var n = $("act-next");
         if (n) { n.style.display = ""; n.disabled = false; }
         var u = $("act-unfold");
@@ -1079,11 +1220,6 @@
     tick();
   }
 
-  function showFeedback(html) {
-    feedback.innerHTML = html;
-    feedback.className = "feedback show";
-  }
-
   // face-count quiz (step 0)
   choicesEl.addEventListener("click", function (e) {
     var btn = e.target.closest(".choice");
@@ -1092,12 +1228,12 @@
     Array.prototype.forEach.call(choicesEl.children, function (c) { c.disabled = true; });
     if (n === 6) {
       btn.classList.add("right");
-      showFeedback("<strong>Nice — 6 is right!</strong> But be honest: keeping track of the hidden faces while spinning is tricky. Let’s prove it beyond doubt.");
+      dotSay("<strong>Nice — 6 is right!</strong> But be honest: keeping track of the hidden faces while spinning is tricky. Let’s prove it beyond doubt.", true);
     } else {
       btn.classList.add("wrong");
       var right = choicesEl.querySelector('[data-n="6"]');
       if (right) right.classList.add("right");
-      showFeedback("Tricky, right? Some faces always hide behind the cube while you spin it. Let’s find a way to see <strong>every</strong> face at once.");
+      dotSay("Tricky, right? Some faces always hide behind the cube while you spin it. Let’s find a way to see <strong>every</strong> face at once.", false);
     }
     var next = $("act-next");
     if (next) next.disabled = false;
@@ -1115,7 +1251,7 @@
       bigCount.classList.add("show");
       if (tappedCount >= 6) {
         setTimeout(function () { bigCount.classList.remove("show"); }, 900);
-        showFeedback("<strong>All 6 counted!</strong> Six identical squares, joined edge to edge. Fold them up the right way and they wrap perfectly into a cube.");
+        dotSay("<strong>All 6 counted!</strong> Six identical squares, joined edge to edge. Fold them up the right way and they wrap perfectly into a cube.", true);
         var n = $("act-next");
         if (n) n.disabled = false;
       }
@@ -1152,7 +1288,6 @@
     faces.forEach(function (f) { f.classList.remove("counted"); });
     setOverlay(null);
     foldSlider.disabled = true;
-    doneBanner.classList.remove("show");
     render();
     goStep(0);
   }
