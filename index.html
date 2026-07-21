@@ -142,8 +142,22 @@
     overflow: hidden;
     touch-action: none;
     cursor: grab;
+    transition: background .4s ease;
   }
   .stage:active { cursor: grabbing; }
+  .stage.net-mode {
+    background:
+      repeating-linear-gradient(0deg, rgba(91,91,214,.06) 0px, rgba(91,91,214,.06) 1px, transparent 1px, transparent 24px),
+      repeating-linear-gradient(90deg, rgba(91,91,214,.06) 0px, rgba(91,91,214,.06) 1px, transparent 1px, transparent 24px);
+  }
+  .mode-tag {
+    position: absolute; top: 10px; left: 10px; z-index: 5;
+    background: rgba(10,12,22,.85); color: #fff; font-size: 12.5px; font-weight: 700;
+    padding: 6px 13px; border-radius: 999px; pointer-events: none;
+    border: 1px solid rgba(255,255,255,.14);
+    transition: background .3s ease;
+  }
+  .mode-tag.net { background: var(--accent); }
   .hint {
     position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
     background: rgba(10,12,22,.85); color: #fff; font-size: 12.5px; font-weight: 600;
@@ -242,34 +256,6 @@
   .corner.tr { top: -7px; right: -7px; }
   .corner.bl { bottom: -7px; left: -7px; }
   .corner.br { bottom: -7px; right: -7px; }
-
-  /* fold slider */
-  .fold-row {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--card); border: 1px solid rgba(0,0,0,.06);
-    border-radius: 14px; padding: 10px 14px; margin-top: 10px;
-  }
-  .fold-row .end {
-    font-size: 18px; flex: 0 0 auto; display: flex; flex-direction: column;
-    align-items: center; gap: 2px; line-height: 1;
-  }
-  .fold-row .end small {
-    font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
-    color: var(--ink-soft);
-  }
-  .fold-row input[type=range] {
-    flex: 1; appearance: none; -webkit-appearance: none; height: 6px; border-radius: 3px;
-    background: linear-gradient(90deg, var(--accent), #b9b6f0);
-    outline: none;
-  }
-  .fold-row input[type=range]::-webkit-slider-thumb {
-    appearance: none; -webkit-appearance: none;
-    width: 26px; height: 26px; border-radius: 50%;
-    background: #fff; border: 3px solid var(--accent);
-    box-shadow: 0 2px 8px rgba(0,0,0,.2); cursor: pointer;
-  }
-  .fold-row input[type=range]:disabled { filter: grayscale(1); opacity: .45; }
-  .fold-row input[type=range]:disabled::-webkit-slider-thumb { cursor: default; }
 
   /* guide panel */
   .guide {
@@ -635,6 +621,7 @@
   </div>
 
   <div class="stage" id="stage">
+    <div class="mode-tag" id="modeTag">🧊 Cube</div>
     <div class="hint" id="hint">Drag to spin the cube</div>
     <div class="big-count" id="bigCount">1</div>
     <div class="overlay-tag" id="overlayTag"></div>
@@ -673,12 +660,6 @@
   </div>
 
   <div class="step-dots" id="stepDots"></div>
-
-  <div class="fold-row">
-    <span class="end" title="Folded cube">🧊<small>Cube</small></span>
-    <input type="range" id="foldSlider" min="0" max="100" value="0" disabled aria-label="Unfold amount">
-    <span class="end" title="Flat net">▦<small>Net</small></span>
-  </div>
 
   <div class="guide" id="guide">
     <div class="step-label" id="stepLabel"></div>
@@ -850,8 +831,7 @@
   var stage = $("stage"), orbit = $("orbit"), centerer = $("centerer");
   var hingeT = $("hingeT"), hingeR = $("hingeR"), hingeB = $("hingeB"),
       hingeL = $("hingeL"), hingeK = $("hingeK");
-  var foldSlider = $("foldSlider");
-  var hint = $("hint"), bigCount = $("bigCount"), overlayTag = $("overlayTag");
+  var hint = $("hint"), bigCount = $("bigCount"), overlayTag = $("overlayTag"), modeTag = $("modeTag");
   var stepLabel = $("stepLabel"), actionsEl = $("actions"), choicesEl = $("choices");
   var dotAvatar = $("dotAvatar"), dotBubble = $("dotBubble");
   var pupils = Array.prototype.slice.call(dotAvatar.querySelectorAll(".dot-pupil"));
@@ -863,7 +843,6 @@
   var S = 96;                 // face size in px (responsive, set below)
   var p = 1;                  // fold progress: 1 = cube, 0 = flat net
   var zoom = 1;                // wheel-zoom multiplier
-  var animating = false;
   var overlays = { edges: false, corners: false };
 
   // ---------- orbit rotation, stored as a quaternion (no Euler-angle gimbal lock) ----------
@@ -962,21 +941,25 @@
 
     // Overlays only make sense on the folded cube.
     if (p < 0.92 && (overlays.edges || overlays.corners)) setOverlay(null);
-    foldSlider.value = Math.round((1 - p) * 100);
+
+    // Mode indicator: which side of the fold are we looking at.
+    var netMode = p < 0.5;
+    modeTag.textContent = netMode ? "▦ Net" : "🧊 Cube";
+    modeTag.classList.toggle("net", netMode);
+    stage.classList.toggle("net-mode", netMode);
   }
 
   // ---------- animation helper ----------
   function easeInOut(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
   function animateFold(target, dur, done) {
     var from = p, start = null;
-    animating = true;
     function frame(ts) {
       if (start === null) start = ts;
       var t = Math.min(1, (ts - start) / dur);
       p = from + (target - from) * easeInOut(t);
       render();
       if (t < 1) requestAnimationFrame(frame);
-      else { p = target; animating = false; render(); if (done) done(); }
+      else { p = target; render(); if (done) done(); }
     }
     requestAnimationFrame(frame);
   }
@@ -1021,13 +1004,6 @@
     zoom = Math.max(0.8, Math.min(1.3, zoom - e.deltaY * 0.001));
     render();
   }, { passive: false });
-
-  // ---------- slider ----------
-  foldSlider.addEventListener("input", function () {
-    if (animating) return;
-    p = 1 - foldSlider.value / 100;
-    render();
-  });
 
   // ---------- overlays (edges / corners) ----------
   function setOverlay(kind) {
@@ -1152,11 +1128,11 @@
     },
     { // 4 — free explore
       label: "Step 5 of 5 · Your turn",
-      text: "You’ve got the whole picture. Now play with it: drag the slider to fold and unfold, spin the cube mid-fold, and light up the edges and corners whenever you like.",
+      text: "You’ve got the whole picture. Now play with it: tap to fold and unfold, spin the cube mid-fold, and light up the edges and corners whenever you like.",
       enter: function () {
-        foldSlider.disabled = false;
         dotSay("🎉 <strong>You did it!</strong> A cube = <strong>6 square faces</strong>, <strong>12 edges</strong> and <strong>8 corners</strong> — and now you’ve seen exactly where every one of them lives.", true);
         setActions([
+          { id: "toggleFold", text: "▦ Unfold flat", ghost: true },
           { id: "edges", text: "Edges", overlay: "edges", ghost: true },
           { id: "corners", text: "Corners", overlay: "corners", ghost: true },
           { id: "menu", text: "Back to menu", subtle: true }
@@ -1232,6 +1208,15 @@
         setOverlay(on ? null : kind);
         if (!on) afterOverlay(kind);
       }
+      return;
+    }
+    if (id === "toggleFold") {
+      var goingFlat = p > 0.5;
+      btn.disabled = true;
+      animateFold(goingFlat ? 0 : 1, 1200, function () {
+        btn.disabled = false;
+        btn.textContent = goingFlat ? "🧊 Fold it up" : "▦ Unfold flat";
+      });
       return;
     }
   }
@@ -1340,7 +1325,6 @@
     });
     faces.forEach(function (f) { f.classList.remove("counted"); });
     setOverlay(null);
-    foldSlider.disabled = true;
     render();
     goStep(0);
   }
