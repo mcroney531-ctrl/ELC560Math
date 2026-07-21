@@ -138,11 +138,12 @@
   /* stage */
   .stage {
     position: relative; height: 46vh; min-height: 300px; max-height: 430px;
+    border: 1px solid rgba(0,0,0,.08);
     border-radius: var(--radius);
     overflow: hidden;
     touch-action: none;
     cursor: grab;
-    transition: background .4s ease;
+    transition: background .4s ease, border-color .4s ease;
   }
   .stage:active { cursor: grabbing; }
   .stage.net-mode {
