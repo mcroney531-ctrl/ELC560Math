@@ -235,16 +235,66 @@
   @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
 
   /* stage */
+  /* Cube mode is a deep-space world: dark gradient with a purple glow
+     behind the cube, a perspective grid floor, a starfield, and faint
+     wireframe solids — the cosmic counterpart to net mode's paper. */
   .stage {
     position: relative; height: 46vh; min-height: 300px; max-height: 430px;
-    border: 1px solid rgba(0,0,0,.08);
+    border: 1px solid rgba(150,180,255,.22);
     border-radius: var(--radius);
     overflow: hidden;
     touch-action: none;
     cursor: grab;
+    background:
+      radial-gradient(60% 44% at 50% 62%, rgba(126,84,220,.42), transparent 72%),
+      radial-gradient(125% 82% at 50% 16%, #2c3b76 0%, #18214c 55%, #0e1430 100%);
     transition: background .4s ease, border-color .4s ease;
   }
   .stage:active { cursor: grabbing; }
+
+  /* cosmic decorations layer — visible in cube mode, fades out in net mode */
+  .cube-atmos {
+    position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    opacity: 1; transition: opacity .5s ease;
+    color: rgba(188,210,255,.55);
+  }
+  .stage.net-mode .cube-atmos { opacity: 0; }
+  .cube-atmos svg { position: absolute; fill: none; stroke: currentColor; }
+  .atmos-globe { top: 14px; right: 12px; width: 66px; height: 66px; stroke-width: 1.1; }
+  .atmos-wcube { top: 40%; left: 10px; width: 62px; height: 62px; stroke-width: 1.1; }
+  .atmos-pyramid { bottom: 46px; left: 16px; width: 58px; height: 52px; stroke-width: 1.1; }
+  .cube-floor {
+    position: absolute; left: -30%; right: -30%; bottom: -8%; height: 52%;
+    background:
+      repeating-linear-gradient(90deg, rgba(140,170,255,.22) 0 1px, transparent 1px 40px),
+      repeating-linear-gradient(0deg, rgba(140,170,255,.22) 0 1px, transparent 1px 40px);
+    transform: perspective(320px) rotateX(62deg);
+    transform-origin: bottom center;
+    -webkit-mask-image: linear-gradient(to top, #000 22%, transparent 88%);
+            mask-image: linear-gradient(to top, #000 22%, transparent 88%);
+  }
+  .starfield {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(1.6px 1.6px at 18% 22%, #fff, transparent),
+      radial-gradient(1.4px 1.4px at 68% 14%, rgba(255,255,255,.85), transparent),
+      radial-gradient(1.2px 1.2px at 84% 32%, rgba(255,255,255,.7), transparent),
+      radial-gradient(1.5px 1.5px at 32% 40%, rgba(255,255,255,.8), transparent),
+      radial-gradient(1.1px 1.1px at 52% 10%, rgba(255,255,255,.7), transparent),
+      radial-gradient(1.3px 1.3px at 90% 60%, rgba(255,255,255,.75), transparent),
+      radial-gradient(1.2px 1.2px at 12% 58%, rgba(255,255,255,.7), transparent),
+      radial-gradient(1.5px 1.5px at 76% 46%, #fff, transparent),
+      radial-gradient(1px 1px at 44% 66%, rgba(255,255,255,.6), transparent);
+  }
+  .star-spark {
+    position: absolute; width: 3px; height: 3px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 6px 1px rgba(255,255,255,.85);
+    animation: twinkle 2.6s ease-in-out infinite;
+  }
+  .star-spark.s1 { top: 20%; left: 60%; animation-delay: 0s; }
+  .star-spark.s2 { top: 52%; left: 88%; animation-delay: .9s; }
+  .star-spark.s3 { top: 68%; left: 24%; animation-delay: 1.7s; }
+  @keyframes twinkle { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.2); } }
   /* Net mode turns the stage into a warm "drafting table": graph-paper
      grid on cream stock, with faint blueprint decorations fading in. */
   .stage.net-mode {
@@ -274,26 +324,28 @@
   .net-note.fold { top: 92px; right: 14px; }
   .net-note.tabs { bottom: 30px; left: 100px; }
 
+  /* Mode tag: a glass card in cube mode, paper card in net mode. */
   .mode-tag {
     position: absolute; top: 10px; left: 10px; z-index: 5;
-    background: rgba(10,12,22,.85); color: #fff; font-size: 12.5px; font-weight: 700;
-    padding: 6px 13px; border-radius: 999px; pointer-events: none;
-    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.12); color: #eaf0ff;
+    padding: 8px 13px; border-radius: 12px; line-height: 1.2; pointer-events: none;
+    border: 1px solid rgba(180,205,255,.28);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    box-shadow: 0 6px 16px -8px rgba(0,0,0,.5);
     transition: background .3s ease, color .3s ease, border-color .3s ease;
   }
-  .mode-tag .mode-tag-sub { display: none; }
+  .mode-tag .mode-tag-title { font-size: 12.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  .mode-tag .mode-tag-sub {
+    display: block; font-size: 10.5px; font-weight: 600; font-style: italic;
+    color: rgba(200,215,255,.85); margin-top: 1px;
+  }
   .mode-tag.net {
     background: rgba(255,252,244,.9); color: #6a5a34; border-color: rgba(120,100,60,.3);
-    border-radius: 12px; padding: 8px 13px; line-height: 1.2;
     box-shadow: 0 4px 10px -6px rgba(120,100,60,.5);
   }
-  .mode-tag.net .mode-tag-title { font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; }
-  .mode-tag.net .mode-tag-sub {
-    display: block; font-size: 10.5px; font-weight: 600; font-style: italic;
-    color: #9a8552; text-transform: none; letter-spacing: 0; margin-top: 1px;
-  }
+  .mode-tag.net .mode-tag-sub { color: #9a8552; }
   .hint {
-    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
     background: rgba(10,12,22,.85); color: #fff; font-size: 12.5px; font-weight: 600;
     padding: 6px 13px; border-radius: 999px; pointer-events: none;
     border: 1px solid rgba(255,255,255,.14);
@@ -900,6 +952,29 @@
   </div>
 
   <div class="stage" id="stage">
+    <div class="cube-atmos" aria-hidden="true">
+      <div class="starfield"></div>
+      <span class="star-spark s1"></span><span class="star-spark s2"></span><span class="star-spark s3"></span>
+      <div class="cube-floor"></div>
+      <svg class="atmos-globe" viewBox="0 0 66 66">
+        <circle cx="33" cy="33" r="30" />
+        <ellipse cx="33" cy="33" rx="12" ry="30" />
+        <ellipse cx="33" cy="33" rx="24" ry="30" />
+        <line x1="3" y1="33" x2="63" y2="33" />
+        <path d="M6 21 H60 M6 45 H60" opacity=".7" />
+      </svg>
+      <svg class="atmos-wcube" viewBox="0 0 62 62">
+        <path d="M10 20 L38 20 L38 48 L10 48 Z" />
+        <path d="M10 20 L24 8 L52 8 L38 20" />
+        <path d="M38 20 L52 8 L52 36 L38 48" />
+        <path d="M24 8 L24 36 L10 48 M24 36 L52 36" opacity=".55" />
+      </svg>
+      <svg class="atmos-pyramid" viewBox="0 0 58 52">
+        <path d="M29 4 L52 46 L6 46 Z" />
+        <path d="M29 4 L29 46" opacity=".6" />
+        <path d="M6 46 Q29 54 52 46" opacity=".6" />
+      </svg>
+    </div>
     <div class="net-atmos" aria-hidden="true">
       <svg class="atmos-cube" viewBox="0 0 74 74">
         <path d="M14 22 L44 22 L44 52 L14 52 Z" />
@@ -935,8 +1010,8 @@
       <span class="net-note tabs">↑ Tabs hold it together</span>
     </div>
     <div class="mode-tag" id="modeTag">
-      <span class="mode-tag-title">🧊 Cube</span>
-      <span class="mode-tag-sub">Study the unfolded structure</span>
+      <span class="mode-tag-title">🧊 Cube Mode</span>
+      <span class="mode-tag-sub">Explore the 3D shape</span>
     </div>
     <div class="hint" id="hint">Drag to spin the cube</div>
     <div class="big-count" id="bigCount">1</div>
@@ -1186,6 +1261,7 @@ MIProgress.paintAll();
       hingeL = $("hingeL"), hingeK = $("hingeK");
   var hint = $("hint"), bigCount = $("bigCount"), overlayTag = $("overlayTag"), modeTag = $("modeTag");
   var modeTagTitle = modeTag.querySelector(".mode-tag-title");
+  var modeTagSub = modeTag.querySelector(".mode-tag-sub");
   var stepLabel = $("stepLabel"), actionsEl = $("actions"), choicesEl = $("choices");
   var dotAvatar = $("dotAvatar"), dotBubble = $("dotBubble");
   var pupils = Array.prototype.slice.call(dotAvatar.querySelectorAll(".dot-pupil"));
@@ -1298,7 +1374,8 @@ MIProgress.paintAll();
 
     // Mode indicator: which side of the fold are we looking at.
     var netMode = p < 0.5;
-    modeTagTitle.textContent = netMode ? "▦ Net Mode" : "🧊 Cube";
+    modeTagTitle.textContent = netMode ? "▦ Net Mode" : "🧊 Cube Mode";
+    modeTagSub.textContent = netMode ? "Study the unfolded structure" : "Explore the 3D shape";
     modeTag.classList.toggle("net", netMode);
     stage.classList.toggle("net-mode", netMode);
   }
