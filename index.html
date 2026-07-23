@@ -202,19 +202,26 @@
     box-shadow: inset 0 1px 3px rgba(0,0,0,.06), 0 10px 24px -18px rgba(43,42,51,.4);
   }
   .step-dots i {
+    position: relative;
     flex: 1; height: 34px; display: flex; align-items: center; justify-content: center;
     font-style: normal; font-size: 12px; font-weight: 800; color: #b7b3a8;
     background: #eceae3;
     transform: skewX(-14deg);
     transition: background .25s ease, color .25s ease;
   }
-  /* First and last segments overhang into the rounded corners (the pill's
-     overflow:hidden clips them), so the fill reaches the dark outline
-     instead of leaving a skew-shaped gap. Padding re-centers the number. */
-  .step-dots i:first-child { margin-left: -14px; padding-left: 14px; }
-  .step-dots i:last-child { margin-right: -14px; padding-right: 14px; }
   .step-dots i + i { margin-left: -2px; border-left: 2px solid var(--ink); }
   .step-dots i span { display: inline-block; transform: skewX(14deg); }
+  /* Fill the rounded end-caps: an absolutely-positioned sliver extends each
+     end segment past its skewed edge into the corner (clipped by the pill's
+     overflow:hidden). Because it's out of flow, the segments stay equal-width
+     and every number stays centered — no margin/padding nudging. */
+  .step-dots i:first-child::before,
+  .step-dots i:last-child::after {
+    content: ""; position: absolute; top: 0; bottom: 0; width: 24px;
+    background: inherit;
+  }
+  .step-dots i:first-child::before { right: 100%; }
+  .step-dots i:last-child::after { left: 100%; }
   .step-dots i.done { background: var(--chip); color: var(--accent); }
   .step-dots i.on {
     background: var(--accent); color: #fff;
@@ -248,14 +255,27 @@
     background:
       radial-gradient(60% 44% at 50% 62%, rgba(126,84,220,.42), transparent 72%),
       radial-gradient(125% 82% at 50% 16%, #2c3b76 0%, #18214c 55%, #0e1430 100%);
-    transition: background .4s ease, border-color .4s ease;
+    transition: border-color .6s ease;
   }
   .stage:active { cursor: grabbing; }
+  /* The cosmic gradient lives on the stage itself (always present). The
+     paper "drafting table" rides on its own layer above it and cross-fades
+     via opacity — you can't smoothly transition between two different
+     gradient stacks, but you can fade one layer over another. */
+  .net-paper {
+    position: absolute; inset: 0; z-index: 0; opacity: 0;
+    transition: opacity .6s ease;
+    background:
+      repeating-linear-gradient(0deg, rgba(120,100,60,.09) 0px, rgba(120,100,60,.09) 1px, transparent 1px, transparent 26px),
+      repeating-linear-gradient(90deg, rgba(120,100,60,.09) 0px, rgba(120,100,60,.09) 1px, transparent 1px, transparent 26px),
+      linear-gradient(160deg, #f6efdc, #efe6cf);
+  }
+  .stage.net-mode .net-paper { opacity: 1; }
 
   /* cosmic decorations layer — visible in cube mode, fades out in net mode */
   .cube-atmos {
     position: absolute; inset: 0; pointer-events: none; z-index: 1;
-    opacity: 1; transition: opacity .5s ease;
+    opacity: 1; transition: opacity .6s ease;
     color: rgba(188,210,255,.55);
   }
   .stage.net-mode .cube-atmos { opacity: 0; }
@@ -297,18 +317,12 @@
   @keyframes twinkle { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.2); } }
   /* Net mode turns the stage into a warm "drafting table": graph-paper
      grid on cream stock, with faint blueprint decorations fading in. */
-  .stage.net-mode {
-    border-color: rgba(120,100,60,.25);
-    background:
-      repeating-linear-gradient(0deg, rgba(120,100,60,.09) 0px, rgba(120,100,60,.09) 1px, transparent 1px, transparent 26px),
-      repeating-linear-gradient(90deg, rgba(120,100,60,.09) 0px, rgba(120,100,60,.09) 1px, transparent 1px, transparent 26px),
-      linear-gradient(160deg, #f6efdc, #efe6cf);
-  }
+  .stage.net-mode { border-color: rgba(120,100,60,.25); }
 
   /* blueprint decorations layer — only visible in net mode */
   .net-atmos {
     position: absolute; inset: 0; pointer-events: none; z-index: 1;
-    opacity: 0; transition: opacity .5s ease;
+    opacity: 0; transition: opacity .6s ease;
     color: #8a7648;
   }
   .stage.net-mode .net-atmos { opacity: .55; }
@@ -952,6 +966,7 @@
   </div>
 
   <div class="stage" id="stage">
+    <div class="net-paper" aria-hidden="true"></div>
     <div class="cube-atmos" aria-hidden="true">
       <div class="starfield"></div>
       <span class="star-spark s1"></span><span class="star-spark s2"></span><span class="star-spark s3"></span>
