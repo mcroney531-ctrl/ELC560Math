@@ -338,25 +338,21 @@
   .net-note.fold { top: 116px; left: 50%; transform: translateX(-50%); }
   .net-note.tabs { bottom: 62px; left: 108px; }
 
-  /* Step tracker built into the stage atmosphere: a vertical column of
-     5 geometric shapes in the top-right corner. Each shape lights up and
-     glows as you advance — dim/hollow when ahead, filled+glowing once
+  /* Step tracker built into the stage atmosphere: a horizontal row of
+     5 identical diamond markers in the top-right corner. Each lights up
+     and glows as you advance — dim when ahead, filled+glowing once
      reached, brightest and pulsing on the current step. Restyles between
      the cosmic and paper worlds. */
   .atmos-track {
-    position: absolute; top: 14px; right: 14px; z-index: 4; pointer-events: none;
-    display: flex; flex-direction: column; align-items: center; gap: 15px;
+    position: absolute; top: 16px; right: 14px; z-index: 4; pointer-events: none;
+    display: flex; flex-direction: row; align-items: center; gap: 13px;
   }
   .tnode {
-    width: 22px; height: 22px;
+    width: 19px; height: 19px;
     background: rgba(190,210,255,.22);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
     transition: background .35s ease, transform .35s ease, filter .35s ease;
   }
-  .tnode.s1 { border-radius: 50%; }                                          /* circle */
-  .tnode.s2 { clip-path: polygon(50% 2%, 100% 100%, 0 100%); }               /* triangle */
-  .tnode.s3 { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }        /* diamond */
-  .tnode.s4 { clip-path: polygon(50% 0, 95% 35%, 78% 92%, 22% 92%, 5% 35%); } /* pentagon */
-  .tnode.s5 { clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); } /* hexagon */
   .tnode.done {
     background: var(--accent);
     filter: drop-shadow(0 0 5px rgba(123,108,255,.9));
@@ -408,14 +404,14 @@
   }
   .hint.show { opacity: 1; }
   .big-count {
-    position: absolute; top: 14px; right: 14px; z-index: 5;
+    position: absolute; top: 62px; left: 50%; z-index: 6;
     width: 46px; height: 46px; border-radius: 50%;
     background: var(--accent); color: #fff; font-size: 22px; font-weight: 800;
     display: grid; place-items: center;
     box-shadow: 0 0 22px rgba(91,91,214,.75);
-    opacity: 0; transform: scale(.6); transition: all .25s; pointer-events: none;
+    opacity: 0; transform: translateX(-50%) scale(.6); transition: all .25s; pointer-events: none;
   }
-  .big-count.show { opacity: 1; transform: scale(1); }
+  .big-count.show { opacity: 1; transform: translateX(-50%) scale(1); }
   .overlay-tag {
     position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%);
     background: rgba(10,12,22,.9); color: #fff; font-size: 13px; font-weight: 700;
@@ -1073,7 +1069,7 @@
     <div class="big-count" id="bigCount">1</div>
     <div class="overlay-tag" id="overlayTag"></div>
     <div class="atmos-track" id="stepTrack" aria-hidden="true">
-      <span class="tnode s1"></span><span class="tnode s2"></span><span class="tnode s3"></span><span class="tnode s4"></span><span class="tnode s5"></span>
+      <span class="tnode"></span><span class="tnode"></span><span class="tnode"></span><span class="tnode"></span><span class="tnode"></span>
     </div>
     <div class="scene">
       <div class="orbit" id="orbit">
@@ -1632,7 +1628,7 @@ MIProgress.paintAll();
 
   function renderDots() {
     trackNodes.forEach(function (n, i) {
-      n.className = "tnode s" + (i + 1) + (i < step ? " done" : i === step ? " on" : "");
+      n.className = "tnode" + (i < step ? " done" : i === step ? " on" : "");
     });
   }
 
