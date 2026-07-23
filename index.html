@@ -336,7 +336,60 @@
     color: #9a8552; white-space: nowrap;
   }
   .net-note.fold { top: 92px; right: 14px; }
-  .net-note.tabs { bottom: 30px; left: 100px; }
+  .net-note.tabs { bottom: 62px; left: 108px; }
+
+  /* Step tracker built into the stage atmosphere: a row of 5 node markers
+     on a progress rail, anchored near the "floor". It restyles between the
+     cosmic and paper worlds rather than living as a separate pill below. */
+  .atmos-track {
+    position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 24px; z-index: 4; pointer-events: none;
+  }
+  .track-rail {
+    position: absolute; left: 11px; right: 11px; top: 50%; height: 3px;
+    transform: translateY(-50%); border-radius: 2px;
+    background: rgba(190,210,255,.28);
+    transition: background .5s ease;
+  }
+  .track-fill {
+    display: block; height: 100%; width: 0; border-radius: 2px;
+    background: linear-gradient(90deg, #7e6cff, #63f7ff);
+    box-shadow: 0 0 8px rgba(120,150,255,.85);
+    transition: width .45s ease, background .5s ease, box-shadow .5s ease;
+  }
+  .tnode {
+    position: relative; z-index: 1;
+    width: 23px; height: 23px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 11px; font-weight: 800;
+    background: rgba(20,26,54,.75); color: rgba(200,215,255,.7);
+    border: 2px solid rgba(190,210,255,.45);
+    transition: transform .3s ease, background .3s ease, color .3s ease,
+                border-color .3s ease, box-shadow .3s ease;
+  }
+  .tnode.done {
+    background: var(--accent); color: #fff; border-color: transparent;
+    box-shadow: 0 0 10px rgba(120,120,230,.8);
+  }
+  .tnode.on {
+    background: #fff; color: var(--accent); border-color: #fff;
+    transform: scale(1.28);
+    box-shadow: 0 0 0 4px rgba(120,150,255,.35), 0 0 14px rgba(150,180,255,.9);
+  }
+  /* paper-world restyle */
+  .stage.net-mode .track-rail { background: rgba(120,100,60,.3); }
+  .stage.net-mode .track-fill {
+    background: #b98f42; box-shadow: none;
+  }
+  .stage.net-mode .tnode {
+    background: rgba(255,252,244,.92); color: #9a8552; border-color: rgba(120,100,60,.4);
+  }
+  .stage.net-mode .tnode.done {
+    background: #b98f42; color: #fff; border-color: transparent; box-shadow: none;
+  }
+  .stage.net-mode .tnode.on {
+    background: #6a5a34; color: #fff; border-color: #6a5a34;
+    box-shadow: 0 0 0 3px rgba(120,100,60,.22);
+  }
 
   /* Mode tag: a glass card in cube mode, paper card in net mode. */
   .mode-tag {
@@ -359,7 +412,7 @@
   }
   .mode-tag.net .mode-tag-sub { color: #9a8552; }
   .hint {
-    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%);
     background: rgba(10,12,22,.85); color: #fff; font-size: 12.5px; font-weight: 600;
     padding: 6px 13px; border-radius: 999px; pointer-events: none;
     border: 1px solid rgba(255,255,255,.14);
@@ -376,7 +429,7 @@
   }
   .big-count.show { opacity: 1; transform: scale(1); }
   .overlay-tag {
-    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%);
     background: rgba(10,12,22,.9); color: #fff; font-size: 13px; font-weight: 700;
     padding: 7px 14px; border-radius: 999px; opacity: 0; transition: opacity .3s;
     border: 1px solid rgba(255,255,255,.14);
@@ -1031,6 +1084,10 @@
     <div class="hint" id="hint">Drag to spin the cube</div>
     <div class="big-count" id="bigCount">1</div>
     <div class="overlay-tag" id="overlayTag"></div>
+    <div class="atmos-track" id="stepTrack" aria-hidden="true">
+      <div class="track-rail"><i class="track-fill" id="stepFill"></i></div>
+      <span class="tnode">1</span><span class="tnode">2</span><span class="tnode">3</span><span class="tnode">4</span><span class="tnode">5</span>
+    </div>
     <div class="scene">
       <div class="orbit" id="orbit">
         <div class="centerer" id="centerer">
@@ -1064,8 +1121,6 @@
       </div>
     </div>
   </div>
-
-  <div class="step-dots" id="stepDots"></div>
 
   <div class="guide" id="guide">
     <div class="step-label" id="stepLabel"></div>
@@ -1280,7 +1335,8 @@ MIProgress.paintAll();
   var stepLabel = $("stepLabel"), actionsEl = $("actions"), choicesEl = $("choices");
   var dotAvatar = $("dotAvatar"), dotBubble = $("dotBubble");
   var pupils = Array.prototype.slice.call(dotAvatar.querySelectorAll(".dot-pupil"));
-  var stepDots = $("stepDots");
+  var stepTrack = $("stepTrack"), stepFill = $("stepFill");
+  var trackNodes = Array.prototype.slice.call(stepTrack.querySelectorAll(".tnode"));
   var cubeRoot = $("face1"); // overlay classes go on the anchor face's parent chain
   var faces = [1, 2, 3, 4, 5, 6].map(function (n) { return $("face" + n); });
 
@@ -1588,16 +1644,11 @@ MIProgress.paintAll();
   ];
 
   function renderDots() {
-    stepDots.innerHTML = "";
-    steps.forEach(function (_, i) {
-      var d = document.createElement("i");
-      if (i < step) d.className = "done";
-      if (i === step) d.className = "on";
-      var s = document.createElement("span");
-      s.textContent = i + 1;
-      d.appendChild(s);
-      stepDots.appendChild(d);
+    trackNodes.forEach(function (n, i) {
+      n.className = "tnode" + (i < step ? " done" : i === step ? " on" : "");
     });
+    var gaps = trackNodes.length - 1;
+    stepFill.style.width = gaps ? (Math.min(step, gaps) / gaps * 100) + "%" : "0";
   }
 
   function setActions(list) {
