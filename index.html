@@ -51,6 +51,9 @@
     display: flex;
     flex-direction: column;
   }
+  /* The Geometry activity uses the spotlit staging + in-scene Dot, which
+     wants more room — widen it so nothing feels cramped when embedded. */
+  #activity { max-width: 760px; }
 
   /* ============ MENU HUB ============ */
   .hub-nav { display: flex; align-items: center; gap: 10px; padding: 6px 2px 0; }
@@ -241,51 +244,71 @@
   .counter.pop .num { animation: pop .5s ease; color: var(--accent); }
   @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
 
-  /* stage: a flex column — the spotlit 3D scene up top, Dot's callout
-     (instructions + controls) docked at the bottom, all in one frame. */
+  /* Stage = the staging area: a spotlit scene with Dot living inside it.
+     The controls where the learner completes each step sit in a separate
+     panel below. */
   .stage {
-    position: relative; height: 66vh; min-height: 500px; max-height: 640px;
+    position: relative; height: 56vh; min-height: 420px; max-height: 560px;
     border: 1px solid rgba(150,180,255,.22);
     border-radius: var(--radius);
     overflow: hidden;
-    display: flex; flex-direction: column;
     transition: border-color .6s ease;
   }
   /* Cube mode is a deep-space world: dark gradient with a purple glow
      behind the cube, a perspective grid floor, a starfield, and faint
      wireframe solids — the cosmic counterpart to net mode's paper. */
   .scene-region {
-    position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden;
+    position: absolute; inset: 0; overflow: hidden;
     touch-action: none; cursor: grab;
     background:
       radial-gradient(60% 44% at 50% 62%, rgba(126,84,220,.42), transparent 72%),
       radial-gradient(125% 82% at 50% 16%, #2c3b76 0%, #18214c 55%, #0e1430 100%);
   }
   .scene-region:active { cursor: grabbing; }
-  /* Spotlight: dims the scene toward the edges, leaving a bright pool on
-     the focused component. Moderate — the atmosphere still reads through. */
+  /* Spotlight: a strong pool of light on the focused component, deep shadow
+     everywhere else — theatrical, so the shape reads as the star. */
   .spotlight {
     position: absolute; inset: 0; z-index: 3; pointer-events: none;
-    background: radial-gradient(circle at 50% 45%, transparent 0, transparent 27%, rgba(5,7,18,.5) 80%);
+    background: radial-gradient(circle at 50% 46%, transparent 0, transparent 20%, rgba(3,4,12,.78) 62%, rgba(2,3,9,.92) 100%);
     transition: background .55s ease;
   }
   .stage.net-mode .spotlight {
-    background: radial-gradient(circle at 50% 45%, transparent 0, transparent 32%, rgba(70,52,18,.26) 84%);
+    background: radial-gradient(circle at 50% 46%, transparent 0, transparent 24%, rgba(52,38,12,.5) 66%, rgba(40,30,10,.62) 100%);
   }
 
-  /* Dot's callout: docked strip at the bottom of the stage holding the
-     character, the step instruction, and the controls. */
-  .stage-callout {
-    flex: 0 0 auto; position: relative; z-index: 7;
-    background: var(--card);
-    border-top: 1px solid rgba(0,0,0,.08);
-    padding: 12px 14px 14px;
+  /* Dot lives inside the staging area (top-right), guiding from within the
+     scene with a speech bubble carrying the step instruction. */
+  .dot-stage {
+    position: absolute; top: 14px; right: 22px; z-index: 6;
+    display: flex; align-items: flex-start; gap: 6px;
+    max-width: min(74%, 350px);
   }
-  .stage-callout .step-label {
+  .dot-stage .dot-avatar { flex: 0 0 auto; order: 2; margin-top: 6px; }
+  .dot-stage .dot-bubble {
+    order: 1; position: relative; flex: 1 1 auto; min-width: 0;
+    background: rgba(255,255,255,.96);
+    border-radius: 14px; padding: 10px 13px; font-size: 14px; line-height: 1.4;
+    color: var(--ink); box-shadow: 0 10px 26px -10px rgba(0,0,0,.6);
+  }
+  .dot-stage .dot-bubble strong { color: var(--accent); }
+  .dot-stage .dot-bubble::before {
+    content: ""; position: absolute; right: -6px; top: 16px; width: 13px; height: 13px;
+    background: rgba(255,255,255,.96);
+    transform: rotate(45deg);
+  }
+
+  /* Controls panel: the "workbench" below the staging where the learner
+     answers and advances. */
+  .controls-panel {
+    background: var(--card); border: 1px solid rgba(0,0,0,.06);
+    border-radius: var(--radius); padding: 14px 16px;
+    margin-top: 10px;
+    box-shadow: 0 10px 30px -20px rgba(43,42,51,.4);
+  }
+  .controls-panel .step-label {
     font-size: 11.5px; font-weight: 800; letter-spacing: .1em;
-    text-transform: uppercase; color: var(--accent); margin-bottom: 4px;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 8px;
   }
-  .dot-speak { flex: 1; min-width: 0; }
   /* The cosmic gradient lives on the stage itself (always present). The
      paper "drafting table" rides on its own layer above it and cross-fades
      via opacity — you can't smoothly transition between two different
@@ -372,7 +395,8 @@
      reached, brightest and pulsing on the current step. Restyles between
      the cosmic and paper worlds. */
   .atmos-track {
-    position: absolute; top: 16px; right: 14px; z-index: 4; pointer-events: none;
+    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    z-index: 4; pointer-events: none;
     display: flex; flex-direction: row; align-items: center; gap: 13px;
   }
   .tnode {
@@ -1097,6 +1121,21 @@
       <span class="mode-tag-title">🧊 Cube Mode</span>
       <span class="mode-tag-sub">Explore the 3D shape</span>
     </div>
+    <div class="dot-stage">
+      <div class="dot-bubble" id="dotBubble" role="status" aria-live="polite"></div>
+      <div class="dot-avatar" id="dotAvatar" aria-hidden="true">
+        <div class="dot-mini">
+          <div class="dot-hand left"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
+          <div class="dot-hand right"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
+          <div class="dot-orb">
+            <div class="dot-brow left"></div><div class="dot-brow right"></div>
+            <div class="dot-eye left"><div class="dot-pupil"></div></div>
+            <div class="dot-eye right"><div class="dot-pupil"></div></div>
+            <div class="dot-mouth"></div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="hint" id="hint">Drag to spin the cube</div>
     <div class="big-count" id="bigCount">1</div>
     <div class="overlay-tag" id="overlayTag"></div>
@@ -1137,34 +1176,17 @@
       </div>
     </div>
     </div><!-- /scene-region -->
+  </div><!-- /stage -->
 
-    <div class="stage-callout" id="guide">
-      <div class="dot-row">
-        <div class="dot-avatar" id="dotAvatar" aria-hidden="true">
-          <div class="dot-mini">
-            <div class="dot-hand left"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
-            <div class="dot-hand right"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
-            <div class="dot-orb">
-              <div class="dot-brow left"></div><div class="dot-brow right"></div>
-              <div class="dot-eye left"><div class="dot-pupil"></div></div>
-              <div class="dot-eye right"><div class="dot-pupil"></div></div>
-              <div class="dot-mouth"></div>
-            </div>
-          </div>
-        </div>
-        <div class="dot-speak">
-          <div class="step-label" id="stepLabel"></div>
-          <div class="dot-bubble" id="dotBubble" role="status" aria-live="polite"></div>
-        </div>
-      </div>
-      <div class="choices" id="choices" style="display:none">
-        <button class="choice" data-n="4">4</button>
-        <button class="choice" data-n="5">5</button>
-        <button class="choice" data-n="6">6</button>
-        <button class="choice" data-n="8">8</button>
-      </div>
-      <div class="actions" id="actions"></div>
+  <div class="controls-panel" id="guide">
+    <div class="step-label" id="stepLabel"></div>
+    <div class="choices" id="choices" style="display:none">
+      <button class="choice" data-n="4">4</button>
+      <button class="choice" data-n="5">5</button>
+      <button class="choice" data-n="6">6</button>
+      <button class="choice" data-n="8">8</button>
     </div>
+    <div class="actions" id="actions"></div>
   </div>
 
 <!-- ================= FRACTIONS ACTIVITY ================= -->
