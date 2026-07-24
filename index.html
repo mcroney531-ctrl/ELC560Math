@@ -678,9 +678,22 @@
       0 8px 16px -9px rgba(43,42,51,.3);
   }
 
+  /* Cal — rendered guide character (image asset) */
+  .cal-img {
+    display: block; width: 100%; height: auto;
+    filter: drop-shadow(0 10px 14px rgba(10,14,30,.45));
+    pointer-events: none; -webkit-user-drag: none; user-select: none;
+  }
+  .cal-hero { width: 152px; margin: 0 auto; }
+  .dot-hero .cal-hero { animation: calIdle 3.4s ease-in-out infinite; }
+  @keyframes calIdle {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-7px) rotate(-1.5deg); }
+  }
+
   /* Dot — guide character (Geometry activity only) */
   .dot-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
-  .dot-avatar { position: relative; width: 66px; height: 66px; flex: 0 0 auto; }
+  .dot-avatar { position: relative; width: 92px; flex: 0 0 auto; }
   .dot-avatar.bounce { animation: dotBounce .55s ease; }
   .dot-avatar.celebrate { animation: dotCelebrate .75s ease; }
   .dot-mini {
@@ -962,19 +975,10 @@
     <span class="deco spot d2"></span>
     <div class="dot-hero-ring"></div>
     <div class="dot-hero">
-      <div class="dot-mini">
-        <div class="dot-hand left"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
-        <div class="dot-hand right"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
-        <div class="dot-orb">
-          <div class="dot-brow left"></div><div class="dot-brow right"></div>
-          <div class="dot-eye left"><div class="dot-pupil"></div></div>
-          <div class="dot-eye right"><div class="dot-pupil"></div></div>
-          <div class="dot-mouth"></div>
-        </div>
-      </div>
+      <img class="cal-img cal-hero" src="assets/cal.png" alt="Cal, your math guide">
       <div class="dot-hero-shadow"></div>
     </div>
-    <div class="dot-hero-speech">Hi! I'm <b>Dot</b>. I'll guide you through math!</div>
+    <div class="dot-hero-speech">Hi! I'm <b>Cal</b>. I'll guide you through math!</div>
   </div>
 
   <div class="section-label">✦ Pick your adventure</div>
@@ -1124,16 +1128,7 @@
     <div class="dot-stage">
       <div class="dot-bubble" id="dotBubble" role="status" aria-live="polite"></div>
       <div class="dot-avatar" id="dotAvatar" aria-hidden="true">
-        <div class="dot-mini">
-          <div class="dot-hand left"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
-          <div class="dot-hand right"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
-          <div class="dot-orb">
-            <div class="dot-brow left"></div><div class="dot-brow right"></div>
-            <div class="dot-eye left"><div class="dot-pupil"></div></div>
-            <div class="dot-eye right"><div class="dot-pupil"></div></div>
-            <div class="dot-mouth"></div>
-          </div>
-        </div>
+        <img class="cal-img" src="assets/cal.png" alt="Cal, your math guide">
       </div>
     </div>
     <div class="hint" id="hint">Drag to spin the cube</div>
