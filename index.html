@@ -241,23 +241,51 @@
   .counter.pop .num { animation: pop .5s ease; color: var(--accent); }
   @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
 
-  /* stage */
-  /* Cube mode is a deep-space world: dark gradient with a purple glow
-     behind the cube, a perspective grid floor, a starfield, and faint
-     wireframe solids — the cosmic counterpart to net mode's paper. */
+  /* stage: a flex column — the spotlit 3D scene up top, Dot's callout
+     (instructions + controls) docked at the bottom, all in one frame. */
   .stage {
-    position: relative; height: 46vh; min-height: 300px; max-height: 430px;
+    position: relative; height: 66vh; min-height: 500px; max-height: 640px;
     border: 1px solid rgba(150,180,255,.22);
     border-radius: var(--radius);
     overflow: hidden;
-    touch-action: none;
-    cursor: grab;
+    display: flex; flex-direction: column;
+    transition: border-color .6s ease;
+  }
+  /* Cube mode is a deep-space world: dark gradient with a purple glow
+     behind the cube, a perspective grid floor, a starfield, and faint
+     wireframe solids — the cosmic counterpart to net mode's paper. */
+  .scene-region {
+    position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden;
+    touch-action: none; cursor: grab;
     background:
       radial-gradient(60% 44% at 50% 62%, rgba(126,84,220,.42), transparent 72%),
       radial-gradient(125% 82% at 50% 16%, #2c3b76 0%, #18214c 55%, #0e1430 100%);
-    transition: border-color .6s ease;
   }
-  .stage:active { cursor: grabbing; }
+  .scene-region:active { cursor: grabbing; }
+  /* Spotlight: dims the scene toward the edges, leaving a bright pool on
+     the focused component. Moderate — the atmosphere still reads through. */
+  .spotlight {
+    position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    background: radial-gradient(circle at 50% 45%, transparent 0, transparent 27%, rgba(5,7,18,.5) 80%);
+    transition: background .55s ease;
+  }
+  .stage.net-mode .spotlight {
+    background: radial-gradient(circle at 50% 45%, transparent 0, transparent 32%, rgba(70,52,18,.26) 84%);
+  }
+
+  /* Dot's callout: docked strip at the bottom of the stage holding the
+     character, the step instruction, and the controls. */
+  .stage-callout {
+    flex: 0 0 auto; position: relative; z-index: 7;
+    background: var(--card);
+    border-top: 1px solid rgba(0,0,0,.08);
+    padding: 12px 14px 14px;
+  }
+  .stage-callout .step-label {
+    font-size: 11.5px; font-weight: 800; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 4px;
+  }
+  .dot-speak { flex: 1; min-width: 0; }
   /* The cosmic gradient lives on the stage itself (always present). The
      paper "drafting table" rides on its own layer above it and cross-fades
      via opacity — you can't smoothly transition between two different
@@ -422,7 +450,7 @@
   .overlay-tag.show { opacity: 1; }
 
   .scene {
-    position: absolute; inset: 0;
+    position: absolute; inset: 0; z-index: 2;
     perspective: 900px;
     display: grid; place-items: center;
   }
@@ -1006,6 +1034,7 @@
   </div>
 
   <div class="stage" id="stage">
+    <div class="scene-region" id="sceneRegion">
     <div class="net-paper" aria-hidden="true"></div>
     <div class="cube-atmos" aria-hidden="true">
       <div class="starfield"></div>
@@ -1074,6 +1103,7 @@
     <div class="atmos-track" id="stepTrack" aria-hidden="true">
       <span class="tnode"></span><span class="tnode"></span><span class="tnode"></span><span class="tnode"></span><span class="tnode"></span>
     </div>
+    <div class="spotlight" id="spotlight"></div>
     <div class="scene">
       <div class="orbit" id="orbit">
         <div class="centerer" id="centerer">
@@ -1106,34 +1136,36 @@
         </div>
       </div>
     </div>
-  </div>
+    </div><!-- /scene-region -->
 
-  <div class="guide" id="guide">
-    <div class="step-label" id="stepLabel"></div>
-    <div class="dot-row">
-      <div class="dot-avatar" id="dotAvatar" aria-hidden="true">
-        <div class="dot-mini">
-          <div class="dot-hand left"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
-          <div class="dot-hand right"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
-          <div class="dot-orb">
-            <div class="dot-brow left"></div><div class="dot-brow right"></div>
-            <div class="dot-eye left"><div class="dot-pupil"></div></div>
-            <div class="dot-eye right"><div class="dot-pupil"></div></div>
-            <div class="dot-mouth"></div>
+    <div class="stage-callout" id="guide">
+      <div class="dot-row">
+        <div class="dot-avatar" id="dotAvatar" aria-hidden="true">
+          <div class="dot-mini">
+            <div class="dot-hand left"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
+            <div class="dot-hand right"><div class="dot-palm"></div><div class="dot-finger one"></div><div class="dot-finger two"></div><div class="dot-finger three"></div></div>
+            <div class="dot-orb">
+              <div class="dot-brow left"></div><div class="dot-brow right"></div>
+              <div class="dot-eye left"><div class="dot-pupil"></div></div>
+              <div class="dot-eye right"><div class="dot-pupil"></div></div>
+              <div class="dot-mouth"></div>
+            </div>
           </div>
         </div>
+        <div class="dot-speak">
+          <div class="step-label" id="stepLabel"></div>
+          <div class="dot-bubble" id="dotBubble" role="status" aria-live="polite"></div>
+        </div>
       </div>
-      <div class="dot-bubble" id="dotBubble" role="status" aria-live="polite"></div>
+      <div class="choices" id="choices" style="display:none">
+        <button class="choice" data-n="4">4</button>
+        <button class="choice" data-n="5">5</button>
+        <button class="choice" data-n="6">6</button>
+        <button class="choice" data-n="8">8</button>
+      </div>
+      <div class="actions" id="actions"></div>
     </div>
-    <div class="choices" id="choices" style="display:none">
-      <button class="choice" data-n="4">4</button>
-      <button class="choice" data-n="5">5</button>
-      <button class="choice" data-n="6">6</button>
-      <button class="choice" data-n="8">8</button>
-    </div>
-    <div class="actions" id="actions"></div>
   </div>
-</div>
 
 <!-- ================= FRACTIONS ACTIVITY ================= -->
 <div class="wrap" id="fracActivity">
@@ -1312,7 +1344,7 @@ MIProgress.paintAll();
   // ---------- element refs ----------
   var $ = function (id) { return document.getElementById(id); };
   var menu = $("menu"), activity = $("activity");
-  var stage = $("stage"), orbit = $("orbit"), centerer = $("centerer");
+  var stage = $("stage"), sceneRegion = $("sceneRegion"), orbit = $("orbit"), centerer = $("centerer");
   var hingeT = $("hingeT"), hingeR = $("hingeR"), hingeB = $("hingeB"),
       hingeL = $("hingeL"), hingeK = $("hingeK");
   var hint = $("hint"), bigCount = $("bigCount"), overlayTag = $("overlayTag"), modeTag = $("modeTag");
@@ -1384,7 +1416,7 @@ MIProgress.paintAll();
 
   function sizeFaces() {
     // Net is 4 faces wide, 3 tall; make sure it fits the stage flat.
-    var w = stage.clientWidth, h = stage.clientHeight;
+    var w = sceneRegion.clientWidth, h = sceneRegion.clientHeight;
     S = Math.floor(Math.min(w / 4.6, h / 3.6, 120));
     document.documentElement.style.setProperty("--s", S + "px");
     layout();
@@ -1458,7 +1490,7 @@ MIProgress.paintAll();
   var ROT_SENS = 0.45 * DEG; // matches the original degrees-per-pixel feel
   var dragging = false, lastX = 0, lastY = 0, hasDragged = false, dragDist = 0;
   var velYaw = 0, velPitch = 0; // angular velocity (rad/frame), carried into a post-release coast
-  stage.addEventListener("pointerdown", function (e) {
+  sceneRegion.addEventListener("pointerdown", function (e) {
     dragging = true; lastX = e.clientX; lastY = e.clientY; velYaw = 0; velPitch = 0;
   });
   window.addEventListener("pointermove", function (e) {
@@ -1487,7 +1519,7 @@ MIProgress.paintAll();
   })();
 
   // ---------- wheel to zoom ----------
-  stage.addEventListener("wheel", function (e) {
+  sceneRegion.addEventListener("wheel", function (e) {
     e.preventDefault();
     zoom = Math.max(0.8, Math.min(1.3, zoom - e.deltaY * 0.001));
     render();
@@ -1780,7 +1812,7 @@ MIProgress.paintAll();
   });
   // suppress taps that were really drags
   var downAt = null;
-  stage.addEventListener("pointerdown", function (e) { downAt = { x: e.clientX, y: e.clientY }; }, true);
+  sceneRegion.addEventListener("pointerdown", function (e) { downAt = { x: e.clientX, y: e.clientY }; }, true);
   function hasDraggedSince(e) {
     if (!downAt) return false;
     return Math.abs(e.clientX - downAt.x) + Math.abs(e.clientY - downAt.y) > 12;
