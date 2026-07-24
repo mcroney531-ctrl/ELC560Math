@@ -305,10 +305,57 @@
     margin-top: 10px;
     box-shadow: 0 10px 30px -20px rgba(43,42,51,.4);
   }
-  .controls-panel .step-label {
+  .controls-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .controls-panel .step-label { flex: 1; min-width: 0;
     font-size: 11.5px; font-weight: 800; letter-spacing: .1em;
-    text-transform: uppercase; color: var(--accent); margin-bottom: 8px;
+    text-transform: uppercase; color: var(--accent);
   }
+  /* "Learn more" — the optional scale-down / dig-deeper door. Framed as
+     enrichment (sparkle, inviting), never as remediation. Shown only on
+     steps that have deeper content. */
+  .learn-more-btn {
+    flex: 0 0 auto; border: 1px solid rgba(91,91,214,.3);
+    background: var(--chip); color: var(--accent);
+    font: inherit; font-size: 12px; font-weight: 800;
+    padding: 6px 12px; border-radius: 999px; cursor: pointer;
+    transition: transform .12s ease, background .15s ease;
+  }
+  .learn-more-btn:hover { background: #e2ddf6; }
+  .learn-more-btn:active { transform: scale(.95); }
+  .learn-more-btn[hidden] { display: none; }
+
+  /* Learn-more sheet: a dismissible overlay any step drops content into. */
+  .lm-sheet { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; }
+  .lm-sheet[hidden] { display: none; }
+  .lm-backdrop { position: absolute; inset: 0; background: rgba(18,20,34,.55);
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); animation: lmFade .2s ease; }
+  .lm-card {
+    position: relative; z-index: 1;
+    width: min(560px, calc(100vw - 32px)); max-height: min(84vh, 720px);
+    display: flex; flex-direction: column;
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: 0 30px 70px -20px rgba(10,12,30,.6);
+    animation: lmRise .25s cubic-bezier(.2,.9,.3,1.2);
+    overflow: hidden;
+  }
+  .lm-header { display: flex; align-items: center; gap: 10px; padding: 16px 16px 10px; }
+  .lm-badge { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--accent); background: var(--chip); padding: 5px 10px; border-radius: 999px; flex: 0 0 auto; }
+  .lm-title { flex: 1; min-width: 0; font-size: 17px; letter-spacing: -.01em; }
+  .lm-close {
+    flex: 0 0 auto; width: 32px; height: 32px; border-radius: 10px;
+    border: 1px solid rgba(0,0,0,.08); background: #fff; color: var(--ink-soft);
+    font-size: 15px; cursor: pointer;
+  }
+  .lm-close:active { transform: scale(.92); }
+  .lm-body { padding: 4px 18px 20px; overflow-y: auto; font-size: 15px; line-height: 1.55; color: var(--ink); }
+  .lm-body p { margin-bottom: 10px; }
+  .lm-body .lm-placeholder {
+    border: 1px dashed rgba(91,91,214,.4); border-radius: 12px; padding: 16px;
+    color: var(--ink-soft); text-align: center; background: #faf9ff;
+  }
+  @keyframes lmFade { from { opacity: 0; } }
+  @keyframes lmRise { from { opacity: 0; transform: translateY(16px) scale(.97); } }
   /* The cosmic gradient lives on the stage itself (always present). The
      paper "drafting table" rides on its own layer above it and cross-fades
      via opacity — you can't smoothly transition between two different
@@ -1174,7 +1221,10 @@
   </div><!-- /stage -->
 
   <div class="controls-panel" id="guide">
-    <div class="step-label" id="stepLabel"></div>
+    <div class="controls-head">
+      <div class="step-label" id="stepLabel"></div>
+      <button class="learn-more-btn" id="learnMoreBtn" type="button" hidden>✦ Learn more</button>
+    </div>
     <div class="choices" id="choices" style="display:none">
       <button class="choice" data-n="4">4</button>
       <button class="choice" data-n="5">5</button>
@@ -1182,6 +1232,19 @@
       <button class="choice" data-n="8">8</button>
     </div>
     <div class="actions" id="actions"></div>
+  </div>
+
+  <!-- Reusable "Learn more" sheet — any step drops its deeper content here. -->
+  <div class="lm-sheet" id="lmSheet" hidden>
+    <div class="lm-backdrop" id="lmBackdrop"></div>
+    <div class="lm-card" role="dialog" aria-modal="true" aria-labelledby="lmTitle">
+      <div class="lm-header">
+        <span class="lm-badge">✦ Learn more</span>
+        <h3 class="lm-title" id="lmTitle"></h3>
+        <button class="lm-close" id="lmClose" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="lm-body" id="lmBody"></div>
+    </div>
   </div>
 
 <!-- ================= FRACTIONS ACTIVITY ================= -->
@@ -1372,6 +1435,7 @@ MIProgress.paintAll();
   var pupils = Array.prototype.slice.call(dotAvatar.querySelectorAll(".dot-pupil"));
   var stepTrack = $("stepTrack");
   var trackNodes = Array.prototype.slice.call(stepTrack.querySelectorAll(".tnode"));
+  var learnMoreBtn = $("learnMoreBtn"), lmSheet = $("lmSheet"), lmTitle = $("lmTitle"), lmBody = $("lmBody");
   var cubeRoot = $("face1"); // overlay classes go on the anchor face's parent chain
   var faces = [1, 2, 3, 4, 5, 6].map(function (n) { return $("face" + n); });
 
@@ -1623,6 +1687,12 @@ MIProgress.paintAll();
     { // 0 — count the faces
       label: "Step 1 of 5 · Look closely",
       text: "This is a cube. Drag it to spin it around. A “face” is one flat side — how many faces can you count?",
+      learnMore: {
+        title: "What’s a face?",
+        html: '<p>A <strong>face</strong> is one flat side of a solid shape. A cube’s faces are all squares.</p>' +
+              '<p>Counting them while the cube spins is tricky because some always hide around the back — that’s exactly the puzzle we’re about to solve by unfolding it.</p>' +
+              '<div class="lm-placeholder">Interactive coming here: tap-a-face identify practice &amp; a “count with me” tally that lights up each face so none get lost.</div>'
+      },
       enter: function () {
         choicesEl.style.display = "flex";
         hint.textContent = "Drag to spin the cube";
@@ -1644,6 +1714,12 @@ MIProgress.paintAll();
     { // 2 — meet the net
       label: "Step 3 of 5 · Meet the net",
       text: "This flat pattern is called the cube’s net. Every face is an identical square. Tap each square to check it off — all 6 of them.",
+      learnMore: {
+        title: "The net is the cube, unfolded",
+        html: '<p>A <strong>net</strong> is what you get when you cut a solid along its edges and lay it out flat. These six squares aren’t new shapes — they <em>are</em> the cube, opened up.</p>' +
+              '<p>Fold them back the right way and they wrap into the cube with no gaps and no overlaps.</p>' +
+              '<div class="lm-placeholder">Interactive coming here: fold one flap partway to prove it’s the same piece, plus a peek at how the same six squares can be arranged into other valid nets.</div>'
+      },
       enter: function () {
         if (p > 0.05) animateFold(0, 900);
         tappedCount = 0;
@@ -1707,9 +1783,27 @@ MIProgress.paintAll();
     stepLabel.textContent = s.label;
     dotSay(s.text, false);
     choicesEl.style.display = "none";
+    learnMoreBtn.hidden = !s.learnMore;   // the scale-down door only shows where there's depth
     renderDots();
     s.enter();
   }
+
+  // ---------- reusable "Learn more" sheet ----------
+  function openLearnMore() {
+    var lm = steps[step] && steps[step].learnMore;
+    if (!lm) return;
+    lmTitle.textContent = lm.title;
+    lmBody.innerHTML = lm.html || "";
+    if (typeof lm.onOpen === "function") lm.onOpen(lmBody);
+    lmSheet.hidden = false;
+  }
+  function closeLearnMore() { lmSheet.hidden = true; }
+  learnMoreBtn.addEventListener("click", openLearnMore);
+  $("lmClose").addEventListener("click", closeLearnMore);
+  $("lmBackdrop").addEventListener("click", closeLearnMore);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !lmSheet.hidden) closeLearnMore();
+  });
 
   function onAction(id, btn) {
     if (id === "next") { goStep(step + 1); return; }
