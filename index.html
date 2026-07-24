@@ -335,7 +335,7 @@
     position: absolute; font-size: 12px; font-weight: 700; font-style: italic;
     color: #9a8552; white-space: nowrap;
   }
-  .net-note.fold { top: 116px; left: 50%; transform: translateX(-50%); }
+  .net-note.fold { top: 70px; left: 16px; }
   .net-note.tabs { bottom: 62px; left: 108px; }
 
   /* Step tracker built into the stage atmosphere: a horizontal row of
@@ -475,7 +475,10 @@
     box-shadow: 0 2px 6px rgba(0,0,0,.15);
     z-index: 2;
   }
-  .face.counted .check { display: grid; }
+  /* Direct-child only: faces 2-6 are nested inside face 1 (and 6 inside 3),
+     so a descendant selector here would reveal a checked face's nested
+     faces' checkmarks too. `>` keeps each check tied to its own face. */
+  .face.counted > .check { display: grid; }
   .cube-root.show-edges .face,
   .face.cube-root.show-edges {
     box-shadow:
@@ -1603,6 +1606,7 @@ MIProgress.paintAll();
       label: "Step 4 of 5 · Edges & corners",
       text: "Now fold it back up. Where two faces meet, they make an edge. Where edges meet, they make a corner. Light them up and count.",
       enter: function () {
+        faces.forEach(function (f) { f.classList.remove("counted"); });
         setActions([
           { id: "refold", text: "◀ Fold it back up", primary: true },
           { id: "edges", text: "Edges", overlay: "edges", ghost: true, hidden: true },
