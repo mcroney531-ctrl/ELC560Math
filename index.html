@@ -354,6 +354,26 @@
     border: 1px dashed rgba(91,91,214,.4); border-radius: 12px; padding: 16px;
     color: var(--ink-soft); text-align: center; background: #faf9ff;
   }
+  /* dimensional ladder: point → line → square → cube */
+  .dim-ladder { display: flex; gap: 8px; margin: 4px 0 12px; }
+  .dim-rung {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 12px 6px; border-radius: 12px; background: #faf9ff;
+    border: 1px solid rgba(91,91,214,.16); text-align: center;
+  }
+  .dim-rung b { font-size: 13px; color: var(--ink); }
+  .dim-rung em { font-size: 10.5px; font-style: normal; color: var(--ink-soft); line-height: 1.3; }
+  .dim-fig { height: 40px; display: grid; place-items: center; }
+  .dim-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+  .dim-line { width: 34px; height: 4px; border-radius: 2px; background: var(--accent); }
+  .dim-square { width: 30px; height: 30px; border-radius: 5px; background: rgba(91,91,214,.22); border: 2px solid var(--accent); }
+  .dim-cube { width: 40px; height: 30px; position: relative; }
+  .dim-cube i {
+    position: absolute; box-sizing: border-box;
+    width: 26px; height: 26px; border-radius: 4px; border: 2px solid var(--accent);
+  }
+  .dim-cube i:first-child { right: 0; top: 0; background: rgba(91,91,214,.12); }
+  .dim-cube i:last-child { left: 0; bottom: 0; background: rgba(91,91,214,.28); }
   @keyframes lmFade { from { opacity: 0; } }
   @keyframes lmRise { from { opacity: 0; transform: translateY(16px) scale(.97); } }
   /* The cosmic gradient lives on the stage itself (always present). The
@@ -1488,6 +1508,8 @@ MIProgress.paintAll();
       dim: { a: 3, b: 3, c: 3 }, unit: "cm",  // a=width, b=height, c=depth (match W:H:D ratio)
       title: "Unfold the Cube",
       solidLabel: "Cube",
+      buildup: "Straight on, a cube looks like a flat square. Drag it — as it turns, the depth appears and the square becomes a solid you can walk around.",
+      buildupDone: "<strong>There it is — 3D!</strong> That “flat square” was a cube all along; it was just facing you head-on. A solid is a 2D shape given <strong>depth</strong>.",
       intro: "This is a cube. Drag it to spin it around. A “face” is one flat side — how many faces can you count?",
       netDesc: "This flat pattern is called the cube’s net. Every face is an identical square. Tap each square to check it off — all 6 of them.",
       counted: "<strong>All 6 counted!</strong> Six identical squares, joined edge to edge. Fold them up the right way and they wrap perfectly into a cube.",
@@ -1499,6 +1521,8 @@ MIProgress.paintAll();
       dim: { a: 4, b: 3, c: 2 }, unit: "cm",  // 4×3×2 → three distinct face areas: 12, 8, 6
       title: "Unfold the Rectangular Prism",
       solidLabel: "Prism",
+      buildup: "Head-on, this prism looks like a plain flat rectangle. Give it a drag — turn it and the depth appears, and the rectangle becomes a solid box.",
+      buildupDone: "<strong>3D!</strong> A flat rectangle, pushed back to give it <strong>depth</strong>, becomes a rectangular prism — a box you can see from every side.",
       intro: "This is a rectangular prism — a box. Drag it to spin it around. It still has flat faces — how many can you count?",
       netDesc: "Here’s the prism’s net. The faces aren’t all identical this time — they come in three matching pairs of rectangles. Tap each of the 6 to check it off.",
       counted: "<strong>All 6 counted!</strong> Six rectangles in three matching pairs — fold them up and they wrap into the box: top with bottom, front with back, end with end.",
@@ -1626,6 +1650,13 @@ MIProgress.paintAll();
     modeTagSub.textContent = netMode ? "Study the unfolded structure" : "Explore the 3D shape";
     modeTag.classList.toggle("net", netMode);
     stage.classList.toggle("net-mode", netMode);
+
+    // Warm-up reveal: once the learner has rotated far enough off face-on for
+    // the depth to show, the flat shape has become a solid — celebrate & unlock.
+    if (!warmupBuilt && steps[step] && steps[step].warmup) {
+      var ang = 2 * Math.acos(Math.min(1, Math.abs(orientation[0]))); // radians off identity
+      if (ang > 22 * DEG) onWarmupBuilt();
+    }
   }
 
   // ---------- animation helper ----------
@@ -1771,8 +1802,50 @@ MIProgress.paintAll();
     areaReadout.innerHTML = "Surface area: <strong>" + saTotal + "</strong> " + shape.unit + "²";
   }
 
+  var WARMUP_COUNT = 1;   // leading warm-up steps that sit outside the numbered main arc
+  var warmupBuilt = false;
+  function onWarmupBuilt() {
+    if (warmupBuilt) return;
+    warmupBuilt = true;
+    hint.classList.remove("show");
+    dotSay(shape.buildupDone, true);
+    var n = $("act-next");
+    if (n) n.disabled = false;
+  }
+
   var steps = [
-    { // 0 — count the faces
+    { // warm-up — build it up (2D → 3D). Sits before Step 1, off the numbered track.
+      warmup: true,
+      key: "warmup",
+      name: "Build it up",
+      textKey: "buildup",
+      text: "Straight on, a solid can look completely flat. Drag it — as it turns, its depth appears.",
+      learnMore: {
+        title: "From a dot to a solid",
+        html: '<p>Every solid is built by adding one <strong>dimension</strong> at a time — climb the ladder:</p>' +
+              '<div class="dim-ladder">' +
+                '<div class="dim-rung"><span class="dim-fig"><span class="dim-dot"></span></span><b>Point</b><em>0D · no size</em></div>' +
+                '<div class="dim-rung"><span class="dim-fig"><span class="dim-line"></span></span><b>Line</b><em>1D · length</em></div>' +
+                '<div class="dim-rung"><span class="dim-fig"><span class="dim-square"></span></span><b>Square</b><em>2D · + width</em></div>' +
+                '<div class="dim-rung"><span class="dim-fig"><span class="dim-cube"><i></i><i></i></span></span><b>Cube</b><em>3D · + depth</em></div>' +
+              '</div>' +
+              '<p>Slide a point and you draw a line. Slide a line sideways and you sweep out a square. Slide a square through the air and it carves out a cube. <strong>Depth</strong> is the one new thing that turns a flat shape into a solid.</p>' +
+              '<div class="lm-placeholder">Interactive coming here: a scrubber that sweeps each shape into the next, so you can watch a square grow into a cube in real time.</div>'
+      },
+      enter: function () {
+        warmupBuilt = false;
+        if (p < 0.999) p = 1;          // must be solid, not a net
+        orientation = Q_IDENTITY;       // face-on: the solid reads as a flat shape
+        zoom = 1; velYaw = 0; velPitch = 0;
+        render();
+        choicesEl.style.display = "none";
+        hint.textContent = "Drag the flat shape to pull it into 3D";
+        hint.classList.add("show");
+        setActions([{ id: "next", text: "Next →", primary: true, disabled: true }]);
+      }
+    },
+    { // count the faces
+      key: "faces",
       name: "Look closely",
       textKey: "intro",
       text: "This is a cube. Drag it to spin it around. A “face” is one flat side — how many faces can you count?",
@@ -1783,6 +1856,7 @@ MIProgress.paintAll();
               '<div class="lm-placeholder">Interactive coming here: tap-a-face identify practice &amp; a “count with me” tally that lights up each face so none get lost.</div>'
       },
       enter: function () {
+        orientation = Q_START; render();   // back to the friendly angled view after the warm-up
         choicesEl.style.display = "flex";
         hint.textContent = "Drag to spin the " + shape.solidLabel.toLowerCase();
         hint.classList.add("show");
@@ -1790,7 +1864,8 @@ MIProgress.paintAll();
         setActions([{ id: "next", text: "Next →", primary: true, disabled: true }]);
       }
     },
-    { // 1 — unfold
+    { // unfold
+      key: "unfold",
       name: "The big reveal",
       text: "Counting is hard when half the faces hide behind the cube. So let’s cheat — in a good way. Unfold it flat and see every face at once.",
       enter: function () {
@@ -1800,7 +1875,8 @@ MIProgress.paintAll();
         ]);
       }
     },
-    { // 2 — meet the net
+    { // meet the net
+      key: "net",
       name: "Meet the net",
       textKey: "netDesc",
       text: "This flat pattern is called the cube’s net. Every face is an identical square. Tap each square to check it off — all 6 of them.",
@@ -1817,7 +1893,8 @@ MIProgress.paintAll();
         setActions([{ id: "next", text: "Next →", primary: true, disabled: true }]);
       }
     },
-    { // 3 — fold back, edges & corners
+    { // fold back, edges & corners
+      key: "edges",
       name: "Edges & corners",
       text: "Now fold it back up. Where two faces meet, they make an edge. Where edges meet, they make a corner. Light them up and count.",
       enter: function () {
@@ -1830,7 +1907,8 @@ MIProgress.paintAll();
         ]);
       }
     },
-    { // 4 — surface area
+    { // surface area
+      key: "sa",
       name: "Surface area",
       text: "Here's the real payoff of a net: flat, the outside is easy to measure. Tap each face to add up its area — that's the surface area, the paper it'd take to wrap the shape.",
       learnMore: {
@@ -1848,7 +1926,8 @@ MIProgress.paintAll();
         setActions([{ id: "next", text: "Next →", primary: true, disabled: true }]);
       }
     },
-    { // 5 — free explore
+    { // free explore
+      key: "free",
       name: "Your turn",
       text: "You’ve got the whole picture. Now play with it: tap to fold and unfold, spin it mid-fold, and light up the edges and corners whenever you like.",
       enter: function () {
@@ -1868,7 +1947,9 @@ MIProgress.paintAll();
 
   function buildTrack() {
     stepTrack.innerHTML = "";
-    trackNodes = steps.map(function () {
+    // The warm-up sits outside the numbered arc, so it gets no track node —
+    // the main journey stays a clean 6-node line.
+    trackNodes = steps.filter(function (s) { return !s.warmup; }).map(function () {
       var s = document.createElement("span");
       s.className = "tnode";
       stepTrack.appendChild(s);
@@ -1876,8 +1957,9 @@ MIProgress.paintAll();
     });
   }
   function renderDots() {
+    var mainIdx = step - WARMUP_COUNT;   // -1 while still in the warm-up (nothing lit yet)
     trackNodes.forEach(function (n, i) {
-      n.className = "tnode" + (i < step ? " done" : i === step ? " on" : "");
+      n.className = "tnode" + (i < mainIdx ? " done" : i === mainIdx ? " on" : "");
     });
   }
 
@@ -1898,9 +1980,16 @@ MIProgress.paintAll();
 
   function goStep(i) {
     step = i;
-    MIProgress.markStep("geometry", i, 5);
     var s = steps[i];
-    stepLabel.textContent = "Step " + (i + 1) + " of " + steps.length + " · " + s.name;
+    var mainCount = steps.length - WARMUP_COUNT;
+    if (s.warmup) {
+      MIProgress.markStep("geometry", 0, mainCount);
+      stepLabel.textContent = "Warm-up · " + s.name;
+    } else {
+      var mainIdx = i - WARMUP_COUNT;
+      MIProgress.markStep("geometry", mainIdx, mainCount);
+      stepLabel.textContent = "Step " + (mainIdx + 1) + " of " + mainCount + " · " + s.name;
+    }
     areaReadout.classList.remove("show");   // only the surface-area step shows it
     dotSay(s.textKey && shape[s.textKey] ? shape[s.textKey] : s.text, false);
     choicesEl.style.display = "none";
@@ -1970,7 +2059,7 @@ MIProgress.paintAll();
   }
 
   function afterOverlay(kind) {
-    if (step !== 3) return;
+    if (steps[step].key !== "edges") return;
     if (kind === "edges") edgesSeen = true;
     if (kind === "corners") cornersSeen = true;
     if (edgesSeen && cornersSeen) {
@@ -2009,7 +2098,7 @@ MIProgress.paintAll();
   // face-count quiz (step 0)
   choicesEl.addEventListener("click", function (e) {
     var btn = e.target.closest(".choice");
-    if (!btn || step !== 0) return;
+    if (!btn || steps[step].key !== "faces") return;
     var n = +btn.getAttribute("data-n");
     Array.prototype.forEach.call(choicesEl.children, function (c) { c.disabled = true; });
     if (n === 6) {
@@ -2031,7 +2120,7 @@ MIProgress.paintAll();
       e.stopPropagation(); // faces 2-6 are nested inside face 1
       if (p > 0.1 || hasDraggedSince(e)) return;
 
-      if (step === 2) {
+      if (steps[step].key === "net") {
         if (f.classList.contains("counted")) return;
         f.classList.add("counted");
         tappedCount++;
@@ -2046,7 +2135,7 @@ MIProgress.paintAll();
         return;
       }
 
-      if (step === 4) {  // surface area: reveal each face's area, sum them
+      if (steps[step].key === "sa") {  // surface area: reveal each face's area, sum them
         if (f.classList.contains("sa-shown")) return;
         var areas = faceAreas();
         var d = shape.dim;
@@ -2100,6 +2189,7 @@ MIProgress.paintAll();
   }
   function resetActivity() {
     p = 1; orientation = Q_START; zoom = 1; velYaw = 0; velPitch = 0; dragDist = 0; hasDragged = false;
+    warmupBuilt = false;
     edgesSeen = cornersSeen = false; tappedCount = 0;
     saTotal = 0; saCount = 0;
     revealed = {};
