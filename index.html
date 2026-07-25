@@ -715,12 +715,18 @@
   .face.f4 { background: var(--face4); color: var(--glow4); }
   .face.f5 { background: var(--face5); color: var(--glow5); }
   .face.f6 { background: var(--face6); color: var(--glow6); }
-  .face.pulse { animation: facePulse .5s ease; }
-  @keyframes facePulse {
-    0% { filter: brightness(1); transform: scale(1); }
-    40% { filter: brightness(1.35); transform: scale(1.08); }
-    100% { filter: brightness(1); transform: scale(1); }
+  /* Count-up flash. Must NOT use transform/filter on .face itself: faces
+     2-6 are DOM descendants of face 1 (and 6 of 3), so those properties
+     would cascade and light up nested faces too. Instead: an overlay
+     flash clipped to this face's own box + a pop on its direct badge. */
+  .face.pulse::before {
+    content: ""; position: absolute; inset: 0; border-radius: 7%;
+    background: rgba(255,255,255,.55); opacity: 0; pointer-events: none; z-index: 2;
+    animation: faceFlash .5s ease;
   }
+  .face.pulse > .badge { animation: badgePop .5s ease; }
+  @keyframes faceFlash { 0%, 100% { opacity: 0; } 40% { opacity: 1; } }
+  @keyframes badgePop { 40% { transform: scale(1.3); } }
   .face .check {
     position: absolute; top: 6px; right: 6px;
     width: 26%; height: 26%; border-radius: 50%;
