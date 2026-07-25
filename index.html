@@ -1401,6 +1401,7 @@ MIProgress.paintAll();
       buildupDone: "<strong>There it is — 3D!</strong> That “flat square” was a cube all along. A solid is a 2D shape given <strong>depth</strong>.",
       intro: "This is a cube. Drag to spin it. A “face” is one flat side — how many can you count?",
       netDesc: "This flat pattern is the cube’s net. All 6 faces are identical squares — tap each one to check it off.",
+      saIntro: "Each edge is <strong>3 cm</strong> — so every face is a 3 × 3 square: 9 cm². Tap each face to add them up.",
       counted: "<strong>All 6 counted!</strong> Fold these squares back up and they wrap perfectly into the cube.",
       done: "🎉 <strong>You did it!</strong> 6 square faces, 12 edges, 8 corners — and you’ve seen exactly where each one lives.",
       next: "rect"
@@ -1414,6 +1415,7 @@ MIProgress.paintAll();
       buildupDone: "<strong>3D!</strong> A flat rectangle given <strong>depth</strong> becomes a rectangular prism — a box.",
       intro: "A rectangular prism — a box. Drag to spin it. How many flat faces can you count?",
       netDesc: "The prism’s net: 6 rectangles in three matching pairs. Tap each one to check it off.",
+      saIntro: "This box is <strong>4 × 3 × 2 cm</strong>, so its faces come in three sizes — each label is that face’s width × height. Tap each one to add them up.",
       counted: "<strong>All 6 counted!</strong> Three matching pairs — top &amp; bottom, front &amp; back, end &amp; end.",
       done: "🎉 <strong>Same 6 faces, 12 edges and 8 corners as the cube</strong> — but with three face sizes, which makes its surface area more interesting.",
       next: null
@@ -1799,10 +1801,12 @@ MIProgress.paintAll();
     { // surface area
       key: "sa",
       name: "Surface area",
+      textKey: "saIntro",
       text: "The net’s payoff: flat, every face is easy to measure. Tap each face to add up its area — that total is the surface area.",
       learnMore: {
         title: "What is surface area?",
         html: '<p><strong>Surface area</strong> is the total area of all the faces — literally how much wrapping paper (or paint, or cardboard) it takes to cover the outside.</p>' +
+              '<p>The little label on each face is that face’s <strong>width × height</strong>, taken from the solid’s edge lengths. Multiply the two numbers for the face’s area — a 3 × 3 face is 9 cm² — then add up all the faces.</p>' +
               '<p>Folded up it looks hard, but the net turns it into simple addition: work out each flat rectangle’s area and add them together.</p>' +
               '<div class="lm-placeholder">Interactive coming here: drag a ruler across each face to measure it, and a wrapping-paper animation that lays the net over the solid.</div>'
       },
