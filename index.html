@@ -520,6 +520,29 @@
   }
   .overlay-tag.show { opacity: 1; }
 
+  /* Surface-area running total (top-center of the scene) */
+  .area-readout {
+    position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%);
+    background: rgba(10,12,22,.9); color: #fff; font-size: 14px; font-weight: 700;
+    padding: 8px 16px; border-radius: 999px; opacity: 0; transition: opacity .3s;
+    border: 1px solid rgba(255,255,255,.14); pointer-events: none; z-index: 6; white-space: nowrap;
+  }
+  .area-readout.show { opacity: 1; }
+  .area-readout strong { color: #7defff; font-size: 16px; }
+  .stage.net-mode .area-readout { background: rgba(255,252,244,.95); color: #6a5a34; border-color: rgba(120,100,60,.3); }
+  .stage.net-mode .area-readout strong { color: var(--accent); }
+
+  /* Per-face area label, shown during the surface-area step */
+  .area-label {
+    position: absolute; bottom: 8%; left: 50%; transform: translateX(-50%);
+    display: none; white-space: nowrap;
+    background: rgba(255,255,255,.95); color: #2b2a33;
+    font-size: calc(var(--s) * .16); font-weight: 800;
+    padding: 2px 7px; border-radius: 999px; z-index: 3;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  }
+  .face.sa-shown .area-label { display: block; }
+
   .scene {
     position: absolute; inset: 0; z-index: 2;
     perspective: 900px;
@@ -1181,6 +1204,7 @@
     <div class="hint" id="hint">Drag to spin the cube</div>
     <div class="big-count" id="bigCount">1</div>
     <div class="overlay-tag" id="overlayTag"></div>
+    <div class="area-readout" id="areaReadout"></div>
     <div class="atmos-track" id="stepTrack" aria-hidden="true">
       <span class="tnode"></span><span class="tnode"></span><span class="tnode"></span><span class="tnode"></span><span class="tnode"></span>
     </div>
@@ -1434,10 +1458,18 @@ MIProgress.paintAll();
   var dotAvatar = $("dotAvatar"), dotBubble = $("dotBubble");
   var pupils = Array.prototype.slice.call(dotAvatar.querySelectorAll(".dot-pupil"));
   var stepTrack = $("stepTrack");
-  var trackNodes = Array.prototype.slice.call(stepTrack.querySelectorAll(".tnode"));
+  var trackNodes = [];   // built to match steps.length in buildTrack()
   var learnMoreBtn = $("learnMoreBtn"), lmSheet = $("lmSheet"), lmTitle = $("lmTitle"), lmBody = $("lmBody");
+  var areaReadout = $("areaReadout");
   var cubeRoot = $("face1"); // overlay classes go on the anchor face's parent chain
   var faces = [1, 2, 3, 4, 5, 6].map(function (n) { return $("face" + n); });
+  // Each face gets an area label used in the surface-area step.
+  var areaLabels = faces.map(function (f) {
+    var el = document.createElement("span");
+    el.className = "area-label";
+    f.appendChild(el);
+    return el;
+  });
 
   // ---------- geometry state ----------
   var S = 96;                 // base unit in px (pixels per shape-unit; responsive)
@@ -1453,6 +1485,7 @@ MIProgress.paintAll();
   var SHAPES = {
     cube: {
       key: "cube", W: 1, H: 1, D: 1,
+      dim: { a: 3, b: 3, c: 3 }, unit: "cm",  // a=width, b=height, c=depth (match W:H:D ratio)
       title: "Unfold the Cube",
       solidLabel: "Cube",
       intro: "This is a cube. Drag it to spin it around. A “face” is one flat side — how many faces can you count?",
@@ -1462,7 +1495,8 @@ MIProgress.paintAll();
       next: "rect"
     },
     rect: {
-      key: "rect", W: 1.4, H: 1, D: 0.72,
+      key: "rect", W: 1.333, H: 1, D: 0.667,
+      dim: { a: 4, b: 3, c: 2 }, unit: "cm",  // 4×3×2 → three distinct face areas: 12, 8, 6
       title: "Unfold the Rectangular Prism",
       solidLabel: "Prism",
       intro: "This is a rectangular prism — a box. Drag it to spin it around. It still has flat faces — how many can you count?",
@@ -1726,10 +1760,20 @@ MIProgress.paintAll();
   // ---------- guided steps ----------
   var step = 0;
   var edgesSeen = false, cornersSeen = false, tappedCount = 0;
+  var saTotal = 0, saCount = 0;  // surface-area running total + faces tapped
+
+  // Per-face areas (units²), by face index 0-5 = front,top,right,bottom,left,back.
+  function faceAreas() {
+    var d = shape.dim;
+    return [d.a * d.b, d.a * d.c, d.c * d.b, d.a * d.c, d.c * d.b, d.a * d.b];
+  }
+  function updateAreaReadout() {
+    areaReadout.innerHTML = "Surface area: <strong>" + saTotal + "</strong> " + shape.unit + "²";
+  }
 
   var steps = [
     { // 0 — count the faces
-      label: "Step 1 of 5 · Look closely",
+      name: "Look closely",
       textKey: "intro",
       text: "This is a cube. Drag it to spin it around. A “face” is one flat side — how many faces can you count?",
       learnMore: {
@@ -1747,7 +1791,7 @@ MIProgress.paintAll();
       }
     },
     { // 1 — unfold
-      label: "Step 2 of 5 · The big reveal",
+      name: "The big reveal",
       text: "Counting is hard when half the faces hide behind the cube. So let’s cheat — in a good way. Unfold it flat and see every face at once.",
       enter: function () {
         setActions([
@@ -1757,7 +1801,7 @@ MIProgress.paintAll();
       }
     },
     { // 2 — meet the net
-      label: "Step 3 of 5 · Meet the net",
+      name: "Meet the net",
       textKey: "netDesc",
       text: "This flat pattern is called the cube’s net. Every face is an identical square. Tap each square to check it off — all 6 of them.",
       learnMore: {
@@ -1774,7 +1818,7 @@ MIProgress.paintAll();
       }
     },
     { // 3 — fold back, edges & corners
-      label: "Step 4 of 5 · Edges & corners",
+      name: "Edges & corners",
       text: "Now fold it back up. Where two faces meet, they make an edge. Where edges meet, they make a corner. Light them up and count.",
       enter: function () {
         faces.forEach(function (f) { f.classList.remove("counted"); });
@@ -1786,9 +1830,27 @@ MIProgress.paintAll();
         ]);
       }
     },
-    { // 4 — free explore
-      label: "Step 5 of 5 · Your turn",
-      text: "You’ve got the whole picture. Now play with it: tap to fold and unfold, spin the cube mid-fold, and light up the edges and corners whenever you like.",
+    { // 4 — surface area
+      name: "Surface area",
+      text: "Here's the real payoff of a net: flat, the outside is easy to measure. Tap each face to add up its area — that's the surface area, the paper it'd take to wrap the shape.",
+      learnMore: {
+        title: "What is surface area?",
+        html: '<p><strong>Surface area</strong> is the total area of all the faces — literally how much wrapping paper (or paint, or cardboard) it takes to cover the outside.</p>' +
+              '<p>Folded up it looks hard, but the net turns it into simple addition: work out each flat rectangle’s area and add them together.</p>' +
+              '<div class="lm-placeholder">Interactive coming here: drag a ruler across each face to measure it, and a wrapping-paper animation that lays the net over the solid.</div>'
+      },
+      enter: function () {
+        if (p > 0.05) animateFold(0, 900);
+        saTotal = 0; saCount = 0;
+        faces.forEach(function (f) { f.classList.remove("counted", "sa-shown"); });
+        updateAreaReadout();
+        areaReadout.classList.add("show");
+        setActions([{ id: "next", text: "Next →", primary: true, disabled: true }]);
+      }
+    },
+    { // 5 — free explore
+      name: "Your turn",
+      text: "You’ve got the whole picture. Now play with it: tap to fold and unfold, spin it mid-fold, and light up the edges and corners whenever you like.",
       enter: function () {
         dotSay(shape.done, true);
         var acts = [
@@ -1804,6 +1866,15 @@ MIProgress.paintAll();
     }
   ];
 
+  function buildTrack() {
+    stepTrack.innerHTML = "";
+    trackNodes = steps.map(function () {
+      var s = document.createElement("span");
+      s.className = "tnode";
+      stepTrack.appendChild(s);
+      return s;
+    });
+  }
   function renderDots() {
     trackNodes.forEach(function (n, i) {
       n.className = "tnode" + (i < step ? " done" : i === step ? " on" : "");
@@ -1829,7 +1900,8 @@ MIProgress.paintAll();
     step = i;
     MIProgress.markStep("geometry", i, 5);
     var s = steps[i];
-    stepLabel.textContent = s.label;
+    stepLabel.textContent = "Step " + (i + 1) + " of " + steps.length + " · " + s.name;
+    areaReadout.classList.remove("show");   // only the surface-area step shows it
     dotSay(s.textKey && shape[s.textKey] ? shape[s.textKey] : s.text, false);
     choicesEl.style.display = "none";
     learnMoreBtn.hidden = !s.learnMore;   // the scale-down door only shows where there's depth
@@ -1953,24 +2025,55 @@ MIProgress.paintAll();
     if (next) next.disabled = false;
   });
 
-  // face tapping (step 2)
-  faces.forEach(function (f) {
+  // face tapping — step 2 (count the net) and step 4 (surface area)
+  faces.forEach(function (f, idx) {
     f.addEventListener("click", function (e) {
       e.stopPropagation(); // faces 2-6 are nested inside face 1
-      if (step !== 2 || p > 0.1 || hasDraggedSince(e)) return;
-      if (f.classList.contains("counted")) return;
-      f.classList.add("counted");
-      tappedCount++;
-      bigCount.textContent = tappedCount;
-      bigCount.classList.add("show");
-      if (tappedCount >= 6) {
-        setTimeout(function () { bigCount.classList.remove("show"); }, 900);
-        dotSay(shape.counted, true);
-        var n = $("act-next");
-        if (n) n.disabled = false;
+      if (p > 0.1 || hasDraggedSince(e)) return;
+
+      if (step === 2) {
+        if (f.classList.contains("counted")) return;
+        f.classList.add("counted");
+        tappedCount++;
+        bigCount.textContent = tappedCount;
+        bigCount.classList.add("show");
+        if (tappedCount >= 6) {
+          setTimeout(function () { bigCount.classList.remove("show"); }, 900);
+          dotSay(shape.counted, true);
+          var n = $("act-next");
+          if (n) n.disabled = false;
+        }
+        return;
+      }
+
+      if (step === 4) {  // surface area: reveal each face's area, sum them
+        if (f.classList.contains("sa-shown")) return;
+        var areas = faceAreas();
+        var d = shape.dim;
+        // dims of this face, for the "w × h" label
+        var faceDims = [[d.a, d.b], [d.a, d.c], [d.c, d.b], [d.a, d.c], [d.c, d.b], [d.a, d.b]][idx];
+        f.classList.add("sa-shown");
+        areaLabels[idx].textContent = faceDims[0] + "×" + faceDims[1];
+        saTotal += areas[idx]; saCount++;
+        updateAreaReadout();
+        if (saCount >= 6) {
+          var terms = uniqueAreaTerms();
+          dotSay("<strong>Surface area = " + saTotal + " " + shape.unit + "²</strong> — " + terms + ". That's exactly how much paper it takes to wrap the " + shape.solidLabel.toLowerCase() + ".", true);
+          var n2 = $("act-next");
+          if (n2) n2.disabled = false;
+        }
+        return;
       }
     });
   });
+
+  // Build the "2×12 + 2×8 + 2×6" style summary of the surface-area sum.
+  function uniqueAreaTerms() {
+    var counts = {};
+    faceAreas().forEach(function (a) { counts[a] = (counts[a] || 0) + 1; });
+    return Object.keys(counts).map(Number).sort(function (a, b) { return b - a; })
+      .map(function (a) { return counts[a] + "×" + a; }).join(" + ");
+  }
   // suppress taps that were really drags
   var downAt = null;
   sceneRegion.addEventListener("pointerdown", function (e) { downAt = { x: e.clientX, y: e.clientY }; }, true);
@@ -1998,12 +2101,15 @@ MIProgress.paintAll();
   function resetActivity() {
     p = 1; orientation = Q_START; zoom = 1; velYaw = 0; velPitch = 0; dragDist = 0; hasDragged = false;
     edgesSeen = cornersSeen = false; tappedCount = 0;
+    saTotal = 0; saCount = 0;
     revealed = {};
     ["cFaces", "cEdges", "cCorners"].forEach(function (id) {
       var num = $(id).querySelector(".num");
       num.textContent = "?"; num.classList.add("unknown");
     });
-    faces.forEach(function (f) { f.classList.remove("counted"); });
+    faces.forEach(function (f) { f.classList.remove("counted", "sa-shown"); });
+    areaLabels.forEach(function (l) { l.textContent = ""; });
+    areaReadout.classList.remove("show");
     Array.prototype.forEach.call(choicesEl.children, function (c) {
       c.disabled = false; c.classList.remove("right", "wrong");
     });
@@ -2017,6 +2123,7 @@ MIProgress.paintAll();
   });
 
   // initial
+  buildTrack();
   sizeFaces();
 })();
 
@@ -2134,7 +2241,7 @@ MIProgress.paintAll();
       }
     },
     { // 4 — free explore
-      label: "Step 5 of 5 · Your turn",
+      name: "Your turn",
       text: "Play freely: change tops and bottoms on both bars, hunt for pairs that light up the “equivalent” badge, or flip to pie view to see the same fractions as slices.",
       enter: function () {
         ctrls.style.display = "flex";
@@ -2462,7 +2569,7 @@ MIProgress.paintAll();
       }
     },
     { // 4 — practice
-      label: "Step 5 of 5 · Your turn",
+      name: "Your turn",
       text: "Random equations, three fair moves: add, subtract, or halve — always on both sides. Isolate x and the box will open. How long a streak can you build?",
       enter: function () {
         streak = 0;
