@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Math Interactives · Unfold the Cube</title>
+<title>Unfold · 3D Shapes &amp; Nets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=National+Park:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -71,8 +71,8 @@
     background: var(--chip); padding: 6px 12px; border-radius: 999px; margin-bottom: 14px;
   }
   .hub-header h1 { font-size: 36px; line-height: 1.05; letter-spacing: -.02em; }
+  .hub-header h1 { letter-spacing: -.03em; }
   .hub-header h1 .grad {
-    display: block;
     background: linear-gradient(90deg, var(--accent), #06d6a0);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
@@ -185,6 +185,106 @@
   .card.locked { opacity: .62; cursor: default; }
   .card.locked .go { color: var(--ink-soft); background: #eeedea; }
   .hub-foot { text-align: center; color: var(--ink-soft); font-size: 12.5px; margin-top: auto; padding-top: 34px; line-height: 1.5; }
+
+  /* ============ JOURNEY MAP ============ */
+  /* The landing is a "map you unfold": a dashed trail of shape stops on the
+     main path, then a challenge shelf of tougher solids that unlocks after. */
+  .journey { position: relative; }
+  .trail { display: flex; flex-direction: column; gap: 0; }
+
+  .stop {
+    --card-accent: var(--accent);
+    position: relative; z-index: 1;
+    background: var(--card); border-radius: var(--radius);
+    padding: 16px 16px 16px 14px;
+    display: flex; align-items: center; gap: 14px;
+    border: 1px solid rgba(0,0,0,.06);
+    box-shadow: 0 10px 30px -18px rgba(43,42,51,.35);
+    text-align: left; width: 100%; cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, opacity .3s ease;
+    font: inherit; color: inherit;
+  }
+  .stop[data-shape="rect"] { --card-accent: var(--ok); }
+  .stop.unlocked:active { transform: scale(.985); }
+
+  .stop-pin {
+    position: relative; flex: 0 0 56px; height: 56px; border-radius: 16px;
+    display: grid; place-items: center; font-size: 28px;
+    background: linear-gradient(135deg, #e8e4ff, #d4f5ea);
+  }
+  .stop[data-shape="rect"] .stop-pin { background: linear-gradient(135deg, #d4f5ea, #d9f0ff); }
+  .stop-num {
+    position: absolute; top: -8px; left: -8px; z-index: 2;
+    width: 22px; height: 22px; border-radius: 8px;
+    background: var(--card-accent); color: #fff;
+    font-size: 12px; font-weight: 800; display: grid; place-items: center;
+    box-shadow: 0 3px 8px rgba(0,0,0,.22);
+  }
+  .stop-lock {
+    position: absolute; inset: 0; display: none;
+    align-items: center; justify-content: center; font-size: 22px;
+    background: rgba(255,255,255,.72); border-radius: 16px;
+  }
+  .stop-body { flex: 1; min-width: 0; }
+  .stop-cat { display: block; font-size: 11.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--card-accent); }
+  .stop-title { display: block; font-size: 16.5px; font-weight: 800; letter-spacing: -.01em; margin-top: 2px; }
+  .stop-sub { display: block; color: var(--ink-soft); font-size: 13px; margin-top: 3px; line-height: 1.35; }
+  .stop-locknote { display: none; font-size: 11.5px; font-weight: 700; color: var(--ink-soft); margin-top: 7px; }
+  .stop-locknote::before { content: "🔒 "; }
+  .stop-go {
+    flex: 0 0 auto; font-weight: 800; font-size: 13px;
+    color: #fff; background: var(--card-accent);
+    padding: 9px 15px; border-radius: 999px;
+  }
+
+  /* Locked stop: dim, no button, show the lock + note. */
+  .stop.locked { cursor: default; opacity: .7; }
+  .stop.locked .stop-pin { filter: grayscale(.55); }
+  .stop.locked .stop-lock { display: flex; }
+  .stop.locked .stop-go { display: none; }
+  .stop.locked .stop-locknote { display: block; }
+  .stop.locked .progress-row { display: none; }
+  .stop.nudge { animation: nudge .4s ease; }
+  @keyframes nudge { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+
+  /* Dashed connector between the two main stops. */
+  .trail-link { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 7px 0; margin-left: 42px; }
+  .trail-link i { width: 4px; height: 4px; border-radius: 50%; background: rgba(91,91,214,.4); }
+
+  /* Challenge zone */
+  .zone-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 22px 2px 4px; color: var(--accent);
+    font-size: 13px; font-weight: 800; letter-spacing: .02em;
+  }
+  .zone-divider::before, .zone-divider::after {
+    content: ""; height: 2px; flex: 1;
+    background: repeating-linear-gradient(90deg, rgba(91,91,214,.35) 0 6px, transparent 6px 12px);
+  }
+  .zone-note { color: var(--ink-soft); font-size: 12.5px; line-height: 1.45; margin: 0 4px 12px; }
+
+  .shelf { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tile {
+    position: relative; background: var(--card);
+    border: 1px solid rgba(0,0,0,.06); border-radius: 14px;
+    padding: 14px 12px 12px; text-align: center;
+    box-shadow: 0 8px 22px -16px rgba(43,42,51,.35);
+    display: flex; flex-direction: column; align-items: center; gap: 7px;
+    transition: transform .15s ease, box-shadow .15s ease, opacity .3s ease;
+  }
+  .tile-fig { width: 44px; height: 40px; color: var(--accent); }
+  .tile-fig svg { width: 100%; height: 100%; }
+  .tile-name { font-size: 12.5px; font-weight: 800; letter-spacing: -.01em; }
+  .tile-lock {
+    position: absolute; top: 8px; right: 9px; font-size: 13px;
+    opacity: .8;
+  }
+  .tile.locked { opacity: .78; }
+  .tile.locked .tile-fig { color: #b7b3c4; }
+  /* Unlocked-but-not-yet-built: brightens, swaps the padlock for a "soon" pill. */
+  .tile.ready { opacity: 1; }
+  .tile.ready .tile-fig { color: var(--accent); }
+  .tile.ready .tile-lock { content: none; }
 
   /* ============ ACTIVITY ============ */
   #activity { display: none; }
@@ -876,170 +976,6 @@
     to { opacity: 0; transform: translate(var(--x), var(--y)) rotate(180deg) scale(.2); }
   }
 
-  /* ============ FRACTIONS ============ */
-  #fracActivity, #algActivity { display: none; }
-  .fstage {
-    position: relative;
-    background: linear-gradient(180deg, #fdfcfa, #fff3ef 90%);
-    border: 1px solid rgba(0,0,0,.06);
-    border-radius: var(--radius);
-    padding: 18px 14px;
-    display: flex; flex-direction: column; gap: 14px;
-    min-height: 210px; justify-content: center;
-  }
-  .frow {
-    display: flex; align-items: center; gap: 12px;
-    border-radius: 14px; padding: 8px;
-    transition: box-shadow .25s, background .25s;
-  }
-  .frow.pick { cursor: pointer; }
-  .frow.pick:active { transform: scale(.99); }
-  .frow.win { background: #e8fbf5; box-shadow: 0 0 0 2px var(--ok); }
-  .frow.lose { background: #fdecf1; box-shadow: 0 0 0 2px var(--warn); }
-  .frac-read {
-    display: flex; flex-direction: column; align-items: center;
-    flex: 0 0 46px; font-weight: 800; font-size: 20px; line-height: 1.1;
-  }
-  .fr-num { color: var(--warn); }
-  .fr-den { color: var(--face4); }
-  .fr-line { width: 28px; height: 3px; background: var(--ink); border-radius: 2px; margin: 3px 0; }
-  .fbar { flex: 1; display: flex; gap: 4px; height: 52px; }
-  .fseg {
-    flex: 1; border-radius: 8px;
-    background: #fff; border: 2px solid #e3dfef;
-    transition: background .25s, border-color .25s;
-  }
-  .fseg.fill { background: var(--warn); border-color: var(--warn); }
-  .fbar.teal .fseg.fill { background: var(--ok); border-color: var(--ok); }
-  .fpie {
-    flex: 0 0 auto; width: 118px; height: 118px; border-radius: 50%;
-    border: 3px solid #fff; margin: 0 auto;
-    box-shadow: 0 6px 18px -8px rgba(43,42,51,.35);
-  }
-  .equiv-badge {
-    align-self: center; font-size: 13px; font-weight: 800; color: #04795c;
-    background: #e8fbf5; border: 1px solid rgba(6,214,160,.35);
-    border-radius: 999px; padding: 6px 14px; display: none;
-  }
-  .equiv-badge.show { display: inline-block; }
-  .ctrls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-  .ctrl-group {
-    flex: 1 1 250px; background: var(--card); border: 1px solid rgba(0,0,0,.06);
-    border-radius: 14px; padding: 10px 12px;
-  }
-  .ctrl-group h4 {
-    font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
-    color: var(--ink-soft); display: flex; gap: 7px; align-items: center;
-  }
-  .swatch { width: 11px; height: 11px; border-radius: 3px; background: var(--warn); display: inline-block; }
-  .swatch.teal { background: var(--ok); }
-  .stepper { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
-  .stepper .lab { flex: 1; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
-  .st-btn {
-    width: 34px; height: 34px; border-radius: 10px; border: none;
-    background: var(--chip); color: var(--accent);
-    font-size: 18px; font-weight: 800; cursor: pointer; font-family: inherit;
-  }
-  .st-btn:active { transform: scale(.92); }
-  .st-btn:disabled { opacity: .3; cursor: default; }
-  .st-val { width: 28px; text-align: center; font-weight: 800; font-size: 18px; }
-  .st-val.num { color: var(--warn); }
-  .st-val.den { color: var(--face4); }
-  .den-lock {
-    font-size: 12px; font-weight: 800; color: var(--face4);
-    background: #e3f2fb; border-radius: 999px; padding: 5px 10px;
-  }
-
-  /* ============ ALGEBRA ============ */
-  .astage {
-    position: relative;
-    background: linear-gradient(180deg, #fdfcfa, #eef5ff 90%);
-    border: 1px solid rgba(0,0,0,.06);
-    border-radius: var(--radius);
-    padding: 14px 10px 10px;
-    overflow: hidden;
-  }
-  .eq-display { text-align: center; font-size: 27px; font-weight: 800; letter-spacing: .01em; min-height: 34px; }
-  .eq-display.solved { color: #04795c; }
-  .eq-display.broken { color: var(--warn); text-decoration: line-through; }
-  .eq-trail { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; min-height: 24px; margin-top: 5px; }
-  .op-chip { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; color: #fff; }
-  .op-chip.sub { background: var(--warn); }
-  .op-chip.add { background: var(--ok); }
-  .op-chip.div { background: var(--face4); }
-  .op-chip.bad { background: #2b2a33; }
-  .ascene { position: relative; height: 250px; margin-top: 4px; }
-  .sc-post {
-    position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
-    width: 12px; height: 128px; border-radius: 6px;
-    background: linear-gradient(180deg, #a9a6bd, #8b88a0);
-  }
-  .sc-base {
-    position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%);
-    width: 120px; height: 12px; border-radius: 6px; background: #8b88a0;
-  }
-  .sc-beam {
-    position: absolute; left: 50%; top: 96px; width: 264px; height: 10px;
-    margin-left: -132px; border-radius: 6px;
-    background: linear-gradient(180deg, #6f6c85, #57546b);
-    transform-origin: center;
-    transition: transform .7s cubic-bezier(.34,1.3,.64,1);
-    z-index: 2;
-  }
-  .sc-pivot {
-    position: absolute; left: 50%; top: 93px; transform: translateX(-50%);
-    width: 18px; height: 18px; border-radius: 50%;
-    background: #4a475e; border: 3px solid #fff;
-    box-shadow: 0 2px 6px rgba(0,0,0,.25); z-index: 3;
-  }
-  .sc-pan {
-    position: absolute; top: 104px; width: 128px;
-    display: flex; flex-direction: column; justify-content: flex-end;
-    transition: transform .7s cubic-bezier(.34,1.3,.64,1);
-  }
-  .sc-pan.left { left: calc(50% - 132px); }
-  .sc-pan.right { left: calc(50% + 4px); }
-  .sc-rod {
-    position: absolute; left: 50%; top: -6px; bottom: 8px;
-    width: 3px; margin-left: -1.5px; background: #b5b2c6; border-radius: 2px;
-  }
-  .blocks {
-    position: relative; z-index: 1; min-height: 36px;
-    display: flex; flex-wrap: wrap-reverse; gap: 4px;
-    justify-content: center; align-items: flex-end;
-    padding: 2px 2px 3px;
-  }
-  .pan-plate {
-    position: relative; z-index: 1; height: 11px;
-    border-radius: 6px 6px 12px 12px;
-    background: linear-gradient(180deg, #6f6c85, #57546b);
-    box-shadow: 0 3px 8px -2px rgba(0,0,0,.3);
-  }
-  .blk {
-    width: 30px; height: 30px; border-radius: 8px;
-    display: grid; place-items: center;
-    font-weight: 800; font-size: 14px;
-    box-shadow: 0 2px 5px rgba(0,0,0,.18);
-    transition: background .3s, transform .3s;
-  }
-  .blk.x { background: #2b2a33; color: #fff; font-style: italic; }
-  .blk.x.reveal { background: var(--ok); color: #fff; font-style: normal; animation: pop .5s ease; }
-  .blk.u { background: var(--face2); color: #7a5b00; }
-  .blocks.fl-sub .blk { animation: flashSub .55s ease; }
-  .blocks.fl-add .blk { animation: flashAdd .55s ease; }
-  .blocks.fl-div .blk { animation: flashDiv .55s ease; }
-  @keyframes flashSub { 35% { box-shadow: 0 0 0 4px var(--warn); transform: scale(.9); } }
-  @keyframes flashAdd { 35% { box-shadow: 0 0 0 4px var(--ok); transform: scale(1.1); } }
-  @keyframes flashDiv { 35% { box-shadow: 0 0 0 4px var(--face4); transform: scale(.9); } }
-  .tip-tag {
-    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-    background: var(--warn); color: #fff; font-size: 12.5px; font-weight: 800;
-    padding: 6px 13px; border-radius: 999px;
-    opacity: 0; transition: opacity .35s; pointer-events: none; z-index: 5;
-    white-space: nowrap;
-  }
-  .tip-tag.ok { background: var(--ok); }
-  .tip-tag.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -1048,19 +984,19 @@
 <div class="wrap" id="menu">
   <div class="hub-nav">
     <span class="brand-mark">🧊</span>
-    <span class="brand-name">Math Interactives</span>
+    <span class="brand-name">Unfold</span>
   </div>
 
   <header class="hub-header">
-    <span class="hub-kicker">✦ Learn by doing</span>
-    <h1>Math<span class="grad">Interactives</span></h1>
-    <p>Don't just read about the math — grab it, spin it, take it apart, and watch how the numbers work.</p>
+    <span class="hub-kicker">✦ 3D shapes, opened up</span>
+    <h1>Un<span class="grad">fold</span></h1>
+    <p>Spin a solid, unfold it flat into its net, and see exactly where every face, edge and corner lives — then measure it.</p>
   </header>
 
   <div class="dot-hero-wrap" aria-hidden="true">
-    <span class="deco plus">+</span>
-    <span class="deco divide">÷</span>
-    <span class="deco cross">✕</span>
+    <span class="deco plus">△</span>
+    <span class="deco divide">◇</span>
+    <span class="deco cross">▨</span>
     <span class="deco spot d1"></span>
     <span class="deco spot d2"></span>
     <div class="dot-hero-ring"></div>
@@ -1068,65 +1004,102 @@
       <img class="cal-img cal-hero" src="assets/cal.png" alt="Cal, your math guide">
       <div class="dot-hero-shadow"></div>
     </div>
-    <div class="dot-hero-speech">Hi! I'm <b>Cal</b>. I'll guide you through math!</div>
+    <div class="dot-hero-speech">Hi! I'm <b>Cal</b>. Follow the map — one shape at a time!</div>
   </div>
 
-  <div class="section-label">✦ Pick your adventure</div>
+  <div class="section-label">✦ Your journey</div>
 
-  <div class="cards">
-    <button class="card geo" id="startGeometry" data-activity="geometry">
-      <span class="icon-wrap">
-        <span class="card-badge">1</span>
-        <span class="icon geo">🧊</span>
-      </span>
-      <span class="meta">
-        <span class="cat">Geometry</span>
-        <h3>Unfold the Cube</h3>
-        <span class="sub">Spin a 3D cube, unfold it flat, and discover its faces, edges &amp; corners.</span>
-        <span class="progress-row">
-          <span class="progress-star">★</span>
-          <span class="progress-num">0 / 5</span>
-          <span class="progress-bar"><span class="progress-fill"></span></span>
+  <!-- MAIN PATH: cube → prism → done -->
+  <div class="journey">
+    <div class="trail">
+      <button class="stop unlocked" id="startCube" data-shape="cube">
+        <span class="stop-pin">
+          <span class="stop-num">1</span>
+          <span class="stop-ico">🧊</span>
         </span>
-      </span>
-      <span class="go">Start ›</span>
-    </button>
+        <span class="stop-body">
+          <span class="stop-cat">Main path · Stop 1</span>
+          <span class="stop-title">Unfold the Cube</span>
+          <span class="stop-sub">Six identical squares — the place to learn faces, nets &amp; surface area.</span>
+          <span class="progress-row">
+            <span class="progress-star">★</span>
+            <span class="progress-num">0 / 6</span>
+            <span class="progress-bar"><span class="progress-fill"></span></span>
+          </span>
+        </span>
+        <span class="stop-go">Start ›</span>
+      </button>
 
-    <button class="card frac" id="startFractions" data-activity="fractions">
-      <span class="icon-wrap">
-        <span class="card-badge">2</span>
-        <span class="icon frac">🍕</span>
-      </span>
-      <span class="meta">
-        <span class="cat">Fractions</span>
-        <h3>Build the Pieces</h3>
-        <span class="sub">Build, match and compare the pieces — and see why 1/2 = 4/8.</span>
-        <span class="progress-row">
-          <span class="progress-star">★</span>
-          <span class="progress-num">0 / 5</span>
-          <span class="progress-bar"><span class="progress-fill"></span></span>
-        </span>
-      </span>
-      <span class="go">Start ›</span>
-    </button>
+      <span class="trail-link" aria-hidden="true"><i></i><i></i><i></i></span>
 
-    <button class="card alg" id="startAlgebra" data-activity="algebra">
-      <span class="icon-wrap">
-        <span class="card-badge">3</span>
-        <span class="icon alg">⚖️</span>
-      </span>
-      <span class="meta">
-        <span class="cat">Algebra</span>
-        <h3>Balance the Scale</h3>
-        <span class="sub">Solve for x by keeping both sides of the scale perfectly fair.</span>
-        <span class="progress-row">
-          <span class="progress-star">★</span>
-          <span class="progress-num">0 / 5</span>
-          <span class="progress-bar"><span class="progress-fill"></span></span>
+      <button class="stop" id="startRect" data-shape="rect">
+        <span class="stop-pin">
+          <span class="stop-num">2</span>
+          <span class="stop-ico">📦</span>
+          <span class="stop-lock">🔒</span>
         </span>
-      </span>
-      <span class="go">Start ›</span>
-    </button>
+        <span class="stop-body">
+          <span class="stop-cat">Main path · Stop 2</span>
+          <span class="stop-title">Unfold the Rectangular Prism</span>
+          <span class="stop-sub">A box of three rectangle sizes — where surface area gets interesting.</span>
+          <span class="progress-row">
+            <span class="progress-star">★</span>
+            <span class="progress-num">0 / 6</span>
+            <span class="progress-bar"><span class="progress-fill"></span></span>
+          </span>
+          <span class="stop-locknote">Finish the cube to unlock</span>
+        </span>
+        <span class="stop-go">Start ›</span>
+      </button>
+    </div>
+
+    <!-- CHALLENGE ZONE: shape shelf, unlocks after the main path -->
+    <div class="zone-divider"><span>✦ Challenge Zone</span></div>
+    <p class="zone-note" id="zoneNote">Clear the main path to unlock the shelf — trickier solids to take apart.</p>
+
+    <div class="shelf" id="shelf">
+      <div class="tile locked" data-shape="triprism">
+        <span class="tile-fig">
+          <svg viewBox="0 0 44 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M6 34 L17 12 L28 34 Z"/>
+            <path d="M17 12 L30 7 M28 34 L40 29 L30 7"/>
+          </svg>
+        </span>
+        <span class="tile-name">Triangular Prism</span>
+        <span class="tile-lock">🔒</span>
+      </div>
+      <div class="tile locked" data-shape="pyramid">
+        <span class="tile-fig">
+          <svg viewBox="0 0 44 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M22 4 L8 30 L36 30 Z"/>
+            <path d="M8 30 L20 36 L36 30"/>
+            <path d="M22 4 L20 36" opacity=".6"/>
+          </svg>
+        </span>
+        <span class="tile-name">Square Pyramid</span>
+        <span class="tile-lock">🔒</span>
+      </div>
+      <div class="tile locked" data-shape="tetra">
+        <span class="tile-fig">
+          <svg viewBox="0 0 44 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M22 4 L7 32 L37 32 Z"/>
+            <path d="M22 4 L26 26 L7 32 M26 26 L37 32" opacity=".7"/>
+          </svg>
+        </span>
+        <span class="tile-name">Tetrahedron</span>
+        <span class="tile-lock">🔒</span>
+      </div>
+      <div class="tile locked" data-shape="octa">
+        <span class="tile-fig">
+          <svg viewBox="0 0 44 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+            <path d="M22 3 L6 20 L22 37 L38 20 Z"/>
+            <path d="M6 20 L38 20 M22 3 L22 37" opacity=".55"/>
+          </svg>
+        </span>
+        <span class="tile-name">Octahedron</span>
+        <span class="tile-lock">🔒</span>
+      </div>
+    </div>
   </div>
 
   <footer class="hub-foot">
@@ -1291,174 +1264,71 @@
     </div>
   </div>
 
-<!-- ================= FRACTIONS ACTIVITY ================= -->
-<div class="wrap" id="fracActivity">
-  <header class="act-header">
-    <button class="back-btn" id="fracBack" aria-label="Back to menu">←</button>
-    <div class="act-title">
-      <div class="small">Fractions</div>
-      <h2>Build the Pieces</h2>
-    </div>
-  </header>
-
-  <div class="fstage" id="fStage">
-    <div class="frow" id="fRowA">
-      <div class="frac-read">
-        <span class="fr-num" id="fReadNumA">3</span>
-        <span class="fr-line"></span>
-        <span class="fr-den" id="fReadDenA">4</span>
-      </div>
-      <div class="fbar" id="fBarA"></div>
-      <div class="fpie" id="fPieA" style="display:none"></div>
-    </div>
-    <div class="frow" id="fRowB" style="display:none">
-      <div class="frac-read">
-        <span class="fr-num" id="fReadNumB">1</span>
-        <span class="fr-line"></span>
-        <span class="fr-den" id="fReadDenB">8</span>
-      </div>
-      <div class="fbar teal" id="fBarB"></div>
-      <div class="fpie" id="fPieB" style="display:none"></div>
-    </div>
-    <span class="equiv-badge" id="equivBadge">✓ Same amount — equivalent!</span>
-  </div>
-
-  <div class="ctrls" id="fCtrls" style="display:none">
-    <div class="ctrl-group" id="fGroupA">
-      <h4><span class="swatch"></span> Pink bar</h4>
-      <div class="stepper">
-        <span class="lab">Top · numerator</span>
-        <button class="st-btn" data-bar="A" data-part="num" data-d="-1">−</button>
-        <span class="st-val num" id="fValNumA">3</span>
-        <button class="st-btn" data-bar="A" data-part="num" data-d="1">+</button>
-      </div>
-      <div class="stepper" id="fDenRowA">
-        <span class="lab">Bottom · denominator</span>
-        <button class="st-btn" data-bar="A" data-part="den" data-d="-1">−</button>
-        <span class="st-val den" id="fValDenA">4</span>
-        <button class="st-btn" data-bar="A" data-part="den" data-d="1">+</button>
-      </div>
-    </div>
-    <div class="ctrl-group" id="fGroupB" style="display:none">
-      <h4><span class="swatch teal"></span> Teal bar</h4>
-      <div class="stepper">
-        <span class="lab">Top · numerator</span>
-        <button class="st-btn" data-bar="B" data-part="num" data-d="-1">−</button>
-        <span class="st-val num" id="fValNumB">1</span>
-        <button class="st-btn" data-bar="B" data-part="num" data-d="1">+</button>
-      </div>
-      <div class="stepper" id="fDenRowB">
-        <span class="lab">Bottom · denominator</span>
-        <button class="st-btn" data-bar="B" data-part="den" data-d="-1">−</button>
-        <span class="st-val den" id="fValDenB">8</span>
-        <button class="st-btn" data-bar="B" data-part="den" data-d="1">+</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="step-dots" id="fStepDots"></div>
-
-  <div class="guide">
-    <div class="step-label" id="fStepLabel"></div>
-    <p id="fStepText"></p>
-    <div class="choices" id="fChoices" style="display:none">
-      <button class="choice" data-a="top">Top — the 3</button>
-      <button class="choice" data-a="bottom">Bottom — the 4</button>
-    </div>
-    <div class="feedback" id="fFeedback"></div>
-    <div class="actions" id="fActions"></div>
-    <div class="done-banner" id="fDoneBanner">
-      🎉 <strong>Fraction fluent!</strong> The bottom number cuts, the top number takes — and two fractions that fill the same amount are just different names for the same thing.
-    </div>
-  </div>
-</div>
-
-<!-- ================= ALGEBRA ACTIVITY ================= -->
-<div class="wrap" id="algActivity">
-  <header class="act-header">
-    <button class="back-btn" id="algBack" aria-label="Back to menu">←</button>
-    <div class="act-title">
-      <div class="small">Algebra</div>
-      <h2>Balance the Scale</h2>
-    </div>
-  </header>
-
-  <div class="astage">
-    <div class="eq-display" id="eqText">x + 3 = 7</div>
-    <div class="eq-trail" id="eqTrail"></div>
-    <div class="ascene">
-      <div class="tip-tag" id="tipTag"></div>
-      <div class="sc-base"></div>
-      <div class="sc-post"></div>
-      <div class="sc-beam" id="scBeam"></div>
-      <div class="sc-pivot"></div>
-      <div class="sc-pan left" id="scPanL">
-        <div class="sc-rod"></div>
-        <div class="blocks" id="blocksL"></div>
-        <div class="pan-plate"></div>
-      </div>
-      <div class="sc-pan right" id="scPanR">
-        <div class="sc-rod"></div>
-        <div class="blocks" id="blocksR"></div>
-        <div class="pan-plate"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="step-dots" id="aStepDots"></div>
-
-  <div class="guide">
-    <div class="step-label" id="aStepLabel"></div>
-    <p id="aStepText"></p>
-    <div class="choices" id="aChoices" style="display:none">
-      <button class="choice" data-n="3">3</button>
-      <button class="choice" data-n="4">4</button>
-      <button class="choice" data-n="7">7</button>
-      <button class="choice" data-n="10">10</button>
-    </div>
-    <div class="feedback" id="aFeedback"></div>
-    <div class="actions" id="aActions"></div>
-    <div class="done-banner" id="aDoneBanner">
-      🎉 <strong>Equation solver!</strong> The golden rule of algebra: whatever you do to one side, do to the other — and the scale never lies.
-    </div>
-  </div>
-</div>
-
 <script>
-// ---------- shared progress tracking (menu cards) ----------
+// ---------- shared progress tracking + journey-map unlocks ----------
+// Progress is stored per shape (key "cube" / "rect") so each stop on the
+// journey map tracks independently, and the map gates what unlocks next.
 var MIProgress = (function () {
   var KEY = "mi-progress-v1";
+  var MAIN = ["cube", "rect"];   // the main-path shapes, in order
   function load() {
     try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; }
   }
   function save(data) {
     try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
   }
-  function paint(activity) {
+  function isComplete(key) {
+    var d = load()[key];
+    return !!(d && d.total && d.reached >= d.total);
+  }
+  function paint(key) {
     var data = load();
-    var reached = (data[activity] && data[activity].reached) || 0;
-    var total = (data[activity] && data[activity].total) || 5;
-    var card = document.querySelector('.card[data-activity="' + activity + '"]');
-    if (!card) return;
-    var num = card.querySelector(".progress-num");
-    var fill = card.querySelector(".progress-fill");
+    var reached = (data[key] && data[key].reached) || 0;
+    var total = (data[key] && data[key].total) || 6;
+    var stop = document.querySelector('.stop[data-shape="' + key + '"]');
+    if (!stop) return;
+    var num = stop.querySelector(".progress-num");
+    var fill = stop.querySelector(".progress-fill");
     if (num) num.textContent = reached + " / " + total;
     if (fill) fill.style.width = Math.round((reached / total) * 100) + "%";
   }
-  function markStep(activity, stepIndex, totalSteps) {
+  // Gate the map: the prism unlocks once the cube is complete; the challenge
+  // shelf lights up ("ready") once the whole main path is done.
+  function refreshLocks() {
+    var rect = document.querySelector('.stop[data-shape="rect"]');
+    if (rect) {
+      var open = isComplete("cube");
+      rect.classList.toggle("unlocked", open);
+      rect.classList.toggle("locked", !open);
+    }
+    var mainDone = MAIN.every(isComplete);
+    var note = document.getElementById("zoneNote");
+    if (note) note.textContent = mainDone
+      ? "Main path cleared! These tougher solids are coming soon — the same unfold, more faces."
+      : "Clear the main path to unlock the shelf — trickier solids to take apart.";
+    Array.prototype.forEach.call(document.querySelectorAll(".tile"), function (t) {
+      t.classList.toggle("ready", mainDone);
+      t.classList.toggle("locked", !mainDone);
+      var lock = t.querySelector(".tile-lock");
+      if (lock) lock.textContent = mainDone ? "✦" : "🔒";
+    });
+  }
+  function markStep(key, stepIndex, totalSteps) {
     var data = load();
     var reached = Math.min(stepIndex + 1, totalSteps);
-    var prev = data[activity] && data[activity].reached;
+    var prev = data[key] && data[key].reached;
     if (!prev || prev < reached) {
-      data[activity] = { reached: reached, total: totalSteps };
+      data[key] = { reached: reached, total: totalSteps };
       save(data);
     }
-    paint(activity);
+    paint(key);
+    refreshLocks();
   }
   function paintAll() {
-    ["geometry", "fractions", "algebra"].forEach(paint);
+    MAIN.forEach(paint);
+    refreshLocks();
   }
-  return { markStep: markStep, paintAll: paintAll };
+  return { markStep: markStep, paintAll: paintAll, isComplete: isComplete };
 })();
 MIProgress.paintAll();
 
@@ -1983,11 +1853,11 @@ MIProgress.paintAll();
     var s = steps[i];
     var mainCount = steps.length - WARMUP_COUNT;
     if (s.warmup) {
-      MIProgress.markStep("geometry", 0, mainCount);
+      MIProgress.markStep(shape.key, 0, mainCount);
       stepLabel.textContent = "Warm-up · " + s.name;
     } else {
       var mainIdx = i - WARMUP_COUNT;
-      MIProgress.markStep("geometry", mainIdx, mainCount);
+      MIProgress.markStep(shape.key, mainIdx, mainCount);
       stepLabel.textContent = "Step " + (mainIdx + 1) + " of " + mainCount + " · " + s.name;
     }
     areaReadout.classList.remove("show");   // only the surface-area step shows it
@@ -2181,11 +2051,21 @@ MIProgress.paintAll();
     sizeFaces();
     resetActivity();
   }
-  $("startGeometry").addEventListener("click", function () { startActivity("cube"); });
+  // Journey-map stops. The cube is always open; the prism only launches once
+  // it's unlocked (the cube is complete) — a locked stop just nudges instead.
+  $("startCube").addEventListener("click", function () { startActivity("cube"); });
+  $("startRect").addEventListener("click", function () {
+    if (MIProgress.isComplete("cube")) startActivity("rect");
+    else nudgeLocked($("startRect"));
+  });
+  function nudgeLocked(el) {
+    el.classList.remove("nudge"); void el.offsetWidth; el.classList.add("nudge");
+  }
   $("backBtn").addEventListener("click", showMenu);
   function showMenu() {
     activity.style.display = "none";
     menu.style.display = "flex";
+    MIProgress.paintAll();   // refresh progress + unlocks on return
   }
   function resetActivity() {
     p = 1; orientation = Q_START; zoom = 1; velYaw = 0; velPitch = 0; dragDist = 0; hasDragged = false;
@@ -2217,570 +2097,6 @@ MIProgress.paintAll();
   sizeFaces();
 })();
 
-/* ================= FRACTIONS ================= */
-(function () {
-  "use strict";
-  var $ = function (id) { return document.getElementById(id); };
-  var menu = $("menu"), screen = $("fracActivity");
-  var rowA = $("fRowA"), rowB = $("fRowB");
-  var ctrls = $("fCtrls"), groupA = $("fGroupA"), groupB = $("fGroupB");
-  var denRowA = $("fDenRowA"), denRowB = $("fDenRowB");
-  var equivBadge = $("equivBadge");
-  var stepLabel = $("fStepLabel"), stepText = $("fStepText"),
-      feedback = $("fFeedback"), actionsEl = $("fActions"),
-      choicesEl = $("fChoices"), doneBanner = $("fDoneBanner"),
-      dotsEl = $("fStepDots");
-
-  var A = { num: 3, den: 4 }, B = { num: 1, den: 8 };
-  var pieView = false;
-  var step = 0;
-  var s1done = false, s2done = false, s3done = false;
-
-  // ---------- rendering ----------
-  function renderBar(bar, barEl, readNum, readDen, valNum, valDen, pieEl, teal) {
-    barEl.innerHTML = "";
-    for (var i = 0; i < bar.den; i++) {
-      var seg = document.createElement("div");
-      seg.className = "fseg" + (i < bar.num ? " fill" : "");
-      barEl.appendChild(seg);
-    }
-    $(readNum).textContent = bar.num;
-    $(readDen).textContent = bar.den;
-    if ($(valNum)) $(valNum).textContent = bar.num;
-    if ($(valDen)) $(valDen).textContent = bar.den;
-    // pie via conic-gradient
-    var fillCol = teal ? "#06d6a0" : "#ef476f";
-    var stops = [], segPct = 100 / bar.den, gap = Math.min(1.6, segPct * 0.14);
-    for (var j = 0; j < bar.den; j++) {
-      var s = j * segPct, e = (j + 1) * segPct;
-      var col = j < bar.num ? fillCol : "#efecf7";
-      stops.push(col + " " + s + "% " + (e - gap) + "%");
-      stops.push("#ffffff " + (e - gap) + "% " + e + "%");
-    }
-    pieEl.style.background = "conic-gradient(" + stops.join(",") + ")";
-    barEl.style.display = pieView ? "none" : "flex";
-    pieEl.style.display = pieView ? "block" : "none";
-  }
-  function render() {
-    renderBar(A, $("fBarA"), "fReadNumA", "fReadDenA", "fValNumA", "fValDenA", $("fPieA"), false);
-    renderBar(B, $("fBarB"), "fReadNumB", "fReadDenB", "fValNumB", "fValDenB", $("fPieB"), true);
-    var equal = rowB.style.display !== "none" && A.num * B.den === B.num * A.den;
-    equivBadge.classList.toggle("show", equal && (step === 2 || step === 4));
-    checkTasks(equal);
-  }
-
-  // ---------- steppers ----------
-  ctrls.addEventListener("click", function (e) {
-    var btn = e.target.closest(".st-btn");
-    if (!btn || btn.disabled) return;
-    var bar = btn.getAttribute("data-bar") === "A" ? A : B;
-    var part = btn.getAttribute("data-part"), d = +btn.getAttribute("data-d");
-    if (part === "den") bar.den = Math.max(1, Math.min(12, bar.den + d));
-    else bar.num = bar.num + d;
-    bar.num = Math.max(0, Math.min(bar.den, bar.num));
-    render();
-  });
-
-  // ---------- guided steps ----------
-  var steps = [
-    { // 0 — meet the fraction
-      label: "Step 1 of 5 · Two numbers, two jobs",
-      text: "This bar shows the fraction 3/4. One of its two numbers cuts the bar into equal pieces; the other says how many pieces you take. Which number does the cutting?",
-      enter: function () {
-        A.num = 3; A.den = 4;
-        rowB.style.display = "none"; ctrls.style.display = "none";
-        choicesEl.style.display = "flex";
-        resetChoices();
-        setActions([{ id: "next", text: "Next →", primary: true, disabled: true }]);
-      }
-    },
-    { // 1 — build 5/8
-      label: "Step 2 of 5 · Build it yourself",
-      text: "Your turn. Use the + and − buttons to make the bar show exactly 5/8 — five pieces taken out of eight.",
-      enter: function () {
-        s1done = false;
-        rowB.style.display = "none";
-        ctrls.style.display = "flex"; groupA.style.display = ""; groupB.style.display = "none";
-        denRowA.style.display = "flex";
-        setActions([{ id: "next", text: "Next →", primary: true, disabled: true }]);
-      }
-    },
-    { // 2 — equivalent fractions
-      label: "Step 3 of 5 · Same amount, new name",
-      text: "The pink bar shows 1/2. The teal bar is cut into 8 pieces. Adjust its top number until both bars fill the same amount.",
-      enter: function () {
-        s2done = false;
-        A.num = 1; A.den = 2;
-        B.num = 1; B.den = 8;
-        rowB.style.display = "flex";
-        ctrls.style.display = "flex"; groupA.style.display = "none"; groupB.style.display = "";
-        denRowB.style.display = "none";
-        setActions([{ id: "next", text: "Next →", primary: true, disabled: true }]);
-      }
-    },
-    { // 3 — compare
-      label: "Step 4 of 5 · Which is bigger?",
-      text: "Pink shows 2/3. Teal shows 3/5. Without doing any math on paper — tap the bar that holds more.",
-      enter: function () {
-        s3done = false;
-        A.num = 2; A.den = 3;
-        B.num = 3; B.den = 5;
-        rowB.style.display = "flex"; ctrls.style.display = "none";
-        rowA.classList.add("pick"); rowB.classList.add("pick");
-        setActions([{ id: "next", text: "Next →", primary: true, disabled: true }]);
-      }
-    },
-    { // 4 — free explore
-      name: "Your turn",
-      text: "Play freely: change tops and bottoms on both bars, hunt for pairs that light up the “equivalent” badge, or flip to pie view to see the same fractions as slices.",
-      enter: function () {
-        ctrls.style.display = "flex";
-        groupA.style.display = ""; groupB.style.display = "";
-        denRowA.style.display = "flex"; denRowB.style.display = "flex";
-        rowB.style.display = "flex";
-        doneBanner.classList.add("show");
-        setActions([
-          { id: "pie", text: "🥧 Pie view", ghost: true },
-          { id: "menu", text: "Back to menu", subtle: true }
-        ]);
-      }
-    }
-  ];
-
-  function checkTasks(equal) {
-    if (step === 1 && !s1done && A.num === 5 && A.den === 8) {
-      s1done = true;
-      rowA.classList.add("win");
-      showFeedback("<strong>That’s 5/8!</strong> Notice what you just did: the bottom number changed how many pieces exist, the top changed how many are taken.");
-      enableNext();
-    }
-    if (step === 2 && !s2done && equal) {
-      s2done = true;
-      rowA.classList.add("win"); rowB.classList.add("win");
-      showFeedback("<strong>1/2 and 4/8 are equivalent</strong> — different names, exactly the same amount. That’s the whole secret behind “simplifying” fractions.");
-      enableNext();
-    }
-  }
-
-  // compare taps (step 3)
-  function tapCompare(picked) {
-    if (step !== 3 || s3done) return;
-    if (picked === "A") {
-      s3done = true;
-      rowA.classList.add("win"); rowB.classList.remove("lose");
-      showFeedback("<strong>Right — 2/3 is bigger.</strong> On paper, 2/3 vs 3/5 looks like a coin flip. Drawn as bars, it’s obvious. That’s why we draw fractions.");
-      enableNext();
-    } else {
-      rowB.classList.add("lose");
-      showFeedback("Close — but look again at where each bar ends. Which one reaches further?");
-      setTimeout(function () { rowB.classList.remove("lose"); }, 900);
-    }
-  }
-  rowA.addEventListener("click", function () { tapCompare("A"); });
-  rowB.addEventListener("click", function () { tapCompare("B"); });
-
-  // quiz (step 0)
-  choicesEl.addEventListener("click", function (e) {
-    var btn = e.target.closest(".choice");
-    if (!btn || step !== 0) return;
-    Array.prototype.forEach.call(choicesEl.children, function (c) { c.disabled = true; });
-    if (btn.getAttribute("data-a") === "bottom") {
-      btn.classList.add("right");
-      showFeedback("<strong>Yes — the bottom number (the denominator) does the cutting.</strong> Cut into 4, take 3. The top number (numerator) does the taking.");
-    } else {
-      btn.classList.add("wrong");
-      choicesEl.querySelector('[data-a="bottom"]').classList.add("right");
-      showFeedback("It’s the <strong>bottom number — the denominator</strong>. It cuts the bar into 4 equal pieces. The top number (numerator) takes 3 of them.");
-    }
-    enableNext();
-  });
-
-  // ---------- plumbing ----------
-  function resetChoices() {
-    Array.prototype.forEach.call(choicesEl.children, function (c) {
-      c.disabled = false; c.classList.remove("right", "wrong");
-    });
-  }
-  function setActions(list) {
-    actionsEl.innerHTML = "";
-    list.forEach(function (a) {
-      var b = document.createElement("button");
-      b.className = "btn " + (a.primary ? "primary" : a.ghost ? "ghost" : "subtle");
-      b.id = "fact-" + a.id;
-      b.textContent = a.text;
-      if (a.disabled) b.disabled = true;
-      b.addEventListener("click", function () { onAction(a.id, b); });
-      actionsEl.appendChild(b);
-    });
-  }
-  function onAction(id, btn) {
-    if (id === "next") { goStep(step + 1); return; }
-    if (id === "menu") { screen.style.display = "none"; menu.style.display = "flex"; return; }
-    if (id === "pie") {
-      pieView = !pieView;
-      btn.textContent = pieView ? "▭ Bar view" : "🥧 Pie view";
-      btn.classList.toggle("pressed", pieView);
-      render();
-    }
-  }
-  function enableNext() {
-    var n = $("fact-next");
-    if (n) n.disabled = false;
-  }
-  function showFeedback(html) { feedback.innerHTML = html; feedback.className = "feedback show"; }
-  function renderDots() {
-    dotsEl.innerHTML = "";
-    steps.forEach(function (_, i) {
-      var d = document.createElement("i");
-      if (i < step) d.className = "done";
-      if (i === step) d.className = "on";
-      var s = document.createElement("span");
-      s.textContent = i + 1;
-      d.appendChild(s);
-      dotsEl.appendChild(d);
-    });
-  }
-  function goStep(i) {
-    step = i;
-    MIProgress.markStep("fractions", i, 5);
-    rowA.classList.remove("win", "lose", "pick");
-    rowB.classList.remove("win", "lose", "pick");
-    feedback.className = "feedback"; feedback.textContent = "";
-    choicesEl.style.display = "none";
-    var s = steps[i];
-    stepLabel.textContent = s.label;
-    stepText.textContent = s.text;
-    renderDots();
-    s.enter();
-    render();
-  }
-
-  $("startFractions").addEventListener("click", function () {
-    menu.style.display = "none";
-    screen.style.display = "flex";
-    pieView = false;
-    doneBanner.classList.remove("show");
-    goStep(0);
-  });
-  $("fracBack").addEventListener("click", function () {
-    screen.style.display = "none";
-    menu.style.display = "flex";
-  });
-})();
-
-/* ================= ALGEBRA ================= */
-(function () {
-  "use strict";
-  var $ = function (id) { return document.getElementById(id); };
-  var menu = $("menu"), screen = $("algActivity");
-  var eqText = $("eqText"), eqTrail = $("eqTrail"), tipTag = $("tipTag");
-  var beam = $("scBeam"), panL = $("scPanL"), panR = $("scPanR");
-  var blocksL = $("blocksL"), blocksR = $("blocksR");
-  var stepLabel = $("aStepLabel"), stepText = $("aStepText"),
-      feedback = $("aFeedback"), actionsEl = $("aActions"),
-      choicesEl = $("aChoices"), doneBanner = $("aDoneBanner"),
-      dotsEl = $("aStepDots");
-
-  // equation state: xc·x + lu = ru   (xval = hidden true weight of x)
-  var xc = 1, lu = 3, ru = 7, xval = 4;
-  var step = 0, solved = false, streak = 0;
-  var brokeIt = false, fixedIt = false;
-
-  // ---------- rendering ----------
-  function blocksHTML(xCount, units, showVal) {
-    var h = "";
-    for (var i = 0; i < xCount; i++)
-      h += '<div class="blk x' + (showVal ? " reveal" : "") + '">' + (showVal ? xval : "x") + "</div>";
-    for (var j = 0; j < units; j++) h += '<div class="blk u">1</div>';
-    return h;
-  }
-  function fmtEq() {
-    if (solved) return "x = " + ru + " 🎉";
-    var l = xc === 0 ? "" : xc === 1 ? "x" : xc + "x";
-    if (lu > 0) l += (l ? " + " : "") + lu;
-    if (!l) l = "0";
-    return l + " = " + ru;
-  }
-  function renderScale() {
-    blocksL.innerHTML = blocksHTML(xc, lu, solved);
-    blocksR.innerHTML = blocksHTML(0, ru, false);
-    var wl = xc * xval + lu, wr = ru;
-    var tilt = Math.max(-12, Math.min(12, (wr - wl) * 3));
-    var dy = tilt * 2.3;
-    beam.style.transform = "rotate(" + tilt + "deg)";
-    panL.style.transform = "translateY(" + (-dy) + "px)";
-    panR.style.transform = "translateY(" + dy + "px)";
-    eqText.textContent = fmtEq();
-    eqText.classList.toggle("solved", solved);
-    eqText.classList.toggle("broken", !solved && wl !== wr);
-  }
-  function flash(kind) {
-    ["fl-sub", "fl-add", "fl-div"].forEach(function (c) {
-      blocksL.classList.remove(c); blocksR.classList.remove(c);
-    });
-    void blocksL.offsetWidth;
-    blocksL.classList.add("fl-" + kind);
-    blocksR.classList.add("fl-" + kind);
-  }
-  function chip(label, cls) {
-    var c = document.createElement("span");
-    c.className = "op-chip " + cls;
-    c.textContent = label;
-    eqTrail.appendChild(c);
-  }
-  var tipTimer = null;
-  function tip(text, ok) {
-    clearTimeout(tipTimer);
-    tipTag.textContent = text;
-    tipTag.classList.toggle("ok", !!ok);
-    tipTag.classList.add("show");
-    tipTimer = setTimeout(function () { tipTag.classList.remove("show"); }, 2400);
-  }
-
-  // ---------- operations ----------
-  function checkSolved() {
-    if (!solved && xc === 1 && lu === 0) {
-      solved = true;
-      renderScale();
-      tip("Balanced — and x is revealed!", true);
-      return true;
-    }
-    return false;
-  }
-  function opSub() {
-    if (lu < 1 || ru < 1) return;
-    lu--; ru--; chip("−1", "sub"); flash("sub"); renderScale();
-    afterOp();
-  }
-  function opAdd() {
-    if (ru >= 12) return;
-    lu++; ru++; chip("+1", "add"); flash("add"); renderScale();
-    afterOp();
-  }
-  function opDiv() {
-    if (xc % 2 || lu % 2 || ru % 2 || (xc + lu + ru) === 0) return;
-    xc /= 2; lu /= 2; ru /= 2; chip("÷2", "div"); flash("div"); renderScale();
-    afterOp();
-  }
-  function canDiv() { return xc > 0 && xc % 2 === 0 && lu % 2 === 0 && ru % 2 === 0; }
-  function afterOp() {
-    if (checkSolved()) onSolved();
-    updateOpButtons();
-  }
-  function updateOpButtons() {
-    var bSub = $("aact-sub"), bAdd = $("aact-add"), bDiv = $("aact-div");
-    if (bSub) bSub.disabled = solved || lu < 1 || ru < 1;
-    if (bAdd) bAdd.disabled = solved || ru >= 12;
-    if (bDiv) bDiv.disabled = solved || !canDiv();
-  }
-
-  function newEquation() {
-    var form = Math.floor(Math.random() * 3);
-    if (form === 0) {          // x + a = b
-      xval = 1 + Math.floor(Math.random() * 6);
-      xc = 1; lu = 1 + Math.floor(Math.random() * 5); ru = xval + lu;
-    } else if (form === 1) {   // 2x = b
-      xval = 2 + Math.floor(Math.random() * 5);
-      xc = 2; lu = 0; ru = 2 * xval;
-    } else {                   // 2x + a = b  (a even so ÷2 stays clean)
-      xval = 1 + Math.floor(Math.random() * 5);
-      xc = 2; lu = 2 * (1 + Math.floor(Math.random() * 2)); ru = 2 * xval + lu;
-    }
-    solved = false;
-    eqTrail.innerHTML = "";
-    renderScale();
-    updateOpButtons();
-  }
-
-  function onSolved() {
-    if (step === 2) {
-      showFeedback("<strong>x = 4 — the mystery box weighed 4 all along.</strong> Three fair moves, and the scale stayed level the whole way down. That’s the golden rule of algebra.");
-      enableNext();
-    } else if (step === 3) {
-      showFeedback("<strong>x = 3.</strong> Splitting both sides in half is just as fair as removing the same amount — the scale doesn’t care, as long as both sides get the same treatment.");
-      enableNext();
-    } else if (step === 4) {
-      streak++;
-      showFeedback("<strong>Solved! x = " + ru + ".</strong> Streak: " + streak + " ⚡ — hit “New equation” for another.");
-    }
-  }
-
-  // ---------- guided steps ----------
-  var steps = [
-    { // 0 — meet the scale
-      label: "Step 1 of 5 · The mystery box",
-      text: "This scale is perfectly balanced: a mystery box x plus 3 unit blocks on the left weighs exactly the same as 7 unit blocks on the right. So — how heavy do you think x is?",
-      enter: function () {
-        xc = 1; lu = 3; ru = 7; xval = 4; solved = false;
-        eqTrail.innerHTML = "";
-        renderScale();
-        choicesEl.style.display = "flex";
-        resetChoices();
-        setActions([{ id: "next", text: "Next →", primary: true, disabled: true }]);
-      }
-    },
-    { // 1 — break it on purpose
-      label: "Step 2 of 5 · Break it (on purpose)",
-      text: "Before we solve it properly, let’s do it wrong on purpose. What happens if we grab the 3 blocks off the left side — and leave the right side alone?",
-      enter: function () {
-        brokeIt = false; fixedIt = false;
-        setActions([
-          { id: "break", text: "Take 3 off the left only", primary: true },
-          { id: "next", text: "Next →", primary: true, disabled: true }
-        ]);
-      }
-    },
-    { // 2 — the fair way
-      label: "Step 3 of 5 · The fair way",
-      text: "Now the golden rule: whatever you do to one side, do the same to the other. Remove one block from BOTH sides at a time until x stands alone.",
-      enter: function () {
-        xc = 1; lu = 3; ru = 7; xval = 4; solved = false;
-        eqTrail.innerHTML = "";
-        renderScale();
-        setActions([
-          { id: "sub", text: "− 1 from both sides", primary: true },
-          { id: "next", text: "Next →", primary: true, disabled: true }
-        ]);
-        updateOpButtons();
-      }
-    },
-    { // 3 — divide
-      label: "Step 4 of 5 · Two mystery boxes",
-      text: "New puzzle: TWO mystery boxes weigh the same as 6 blocks — that’s 2x = 6. Subtracting won’t help here. But what if each side gives up half of everything?",
-      enter: function () {
-        xc = 2; lu = 0; ru = 6; xval = 3; solved = false;
-        eqTrail.innerHTML = "";
-        renderScale();
-        setActions([
-          { id: "div", text: "÷ 2 on both sides", primary: true },
-          { id: "next", text: "Next →", primary: true, disabled: true }
-        ]);
-        updateOpButtons();
-      }
-    },
-    { // 4 — practice
-      name: "Your turn",
-      text: "Random equations, three fair moves: add, subtract, or halve — always on both sides. Isolate x and the box will open. How long a streak can you build?",
-      enter: function () {
-        streak = 0;
-        doneBanner.classList.add("show");
-        setActions([
-          { id: "sub", text: "− 1", ghost: true },
-          { id: "add", text: "+ 1", ghost: true },
-          { id: "div", text: "÷ 2", ghost: true },
-          { id: "new", text: "🎲 New equation", primary: true },
-          { id: "menu", text: "Back to menu", subtle: true }
-        ]);
-        newEquation();
-      }
-    }
-  ];
-
-  function onAction(id, btn) {
-    if (id === "next") { goStep(step + 1); return; }
-    if (id === "menu") { screen.style.display = "none"; menu.style.display = "flex"; return; }
-    if (id === "sub") { opSub(); return; }
-    if (id === "add") { opAdd(); return; }
-    if (id === "div") { opDiv(); return; }
-    if (id === "new") { feedback.className = "feedback"; newEquation(); return; }
-    if (id === "break") {
-      if (!brokeIt) {
-        brokeIt = true;
-        lu = 0; solved = false;
-        chip("−3 left only!", "bad");
-        flash("sub");
-        renderScale();
-        tip("Not equal anymore!");
-        showFeedback("See it tip? The moment one side gets special treatment, the equation stops being true — the “=” sign is a promise that both sides match.");
-        btn.textContent = "Put them back";
-      } else if (!fixedIt) {
-        fixedIt = true;
-        lu = 3;
-        eqTrail.innerHTML = "";
-        flash("add");
-        renderScale();
-        tip("Balanced again", true);
-        showFeedback("Balanced again. So how do we get rid of those 3 blocks <strong>fairly</strong>? That’s next.");
-        btn.disabled = true;
-        enableNext();
-      }
-    }
-  }
-
-  // quiz (step 0)
-  choicesEl.addEventListener("click", function (e) {
-    var btn = e.target.closest(".choice");
-    if (!btn || step !== 0) return;
-    Array.prototype.forEach.call(choicesEl.children, function (c) { c.disabled = true; });
-    if (+btn.getAttribute("data-n") === 4) {
-      btn.classList.add("right");
-      showFeedback("<strong>Good instinct!</strong> But a guess isn’t a proof. Let’s make the scale itself show us that x = 4.");
-    } else {
-      btn.classList.add("wrong");
-      choicesEl.querySelector('[data-n="4"]').classList.add("right");
-      showFeedback("Not quite — but that’s fine, we haven’t proved anything yet. Let’s make the scale itself reveal the answer.");
-    }
-    enableNext();
-  });
-
-  // ---------- plumbing ----------
-  function resetChoices() {
-    Array.prototype.forEach.call(choicesEl.children, function (c) {
-      c.disabled = false; c.classList.remove("right", "wrong");
-    });
-  }
-  function setActions(list) {
-    actionsEl.innerHTML = "";
-    list.forEach(function (a) {
-      var b = document.createElement("button");
-      b.className = "btn " + (a.primary ? "primary" : a.ghost ? "ghost" : "subtle");
-      b.id = "aact-" + a.id;
-      b.textContent = a.text;
-      if (a.disabled) b.disabled = true;
-      b.addEventListener("click", function () { onAction(a.id, b); });
-      actionsEl.appendChild(b);
-    });
-  }
-  function enableNext() {
-    var n = $("aact-next");
-    if (n) n.disabled = false;
-  }
-  function showFeedback(html) { feedback.innerHTML = html; feedback.className = "feedback show"; }
-  function renderDots() {
-    dotsEl.innerHTML = "";
-    steps.forEach(function (_, i) {
-      var d = document.createElement("i");
-      if (i < step) d.className = "done";
-      if (i === step) d.className = "on";
-      var s = document.createElement("span");
-      s.textContent = i + 1;
-      d.appendChild(s);
-      dotsEl.appendChild(d);
-    });
-  }
-  function goStep(i) {
-    step = i;
-    MIProgress.markStep("algebra", i, 5);
-    feedback.className = "feedback"; feedback.textContent = "";
-    choicesEl.style.display = "none";
-    var s = steps[i];
-    stepLabel.textContent = s.label;
-    stepText.textContent = s.text;
-    renderDots();
-    s.enter();
-  }
-
-  $("startAlgebra").addEventListener("click", function () {
-    menu.style.display = "none";
-    screen.style.display = "flex";
-    doneBanner.classList.remove("show");
-    goStep(0);
-  });
-  $("algBack").addEventListener("click", function () {
-    screen.style.display = "none";
-    menu.style.display = "flex";
-  });
-})();
 </script>
 </body>
 </html>
