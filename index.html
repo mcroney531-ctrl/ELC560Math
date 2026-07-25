@@ -54,6 +54,15 @@
   /* The Geometry activity uses the spotlit staging + in-scene Dot, which
      wants more room — widen it so nothing feels cramped when embedded. */
   #activity { max-width: 760px; }
+  /* Wide canvas (embeds up to 1920×1080): give the stage real room so the
+     net and Cal's bubble never fight for space. */
+  @media (min-width: 1100px) {
+    #activity { max-width: 1060px; }
+    .stage { max-height: 660px; }
+    .dot-stage { max-width: 290px; top: 16px; right: 20px; }
+    .dot-stage .dot-avatar { width: 64px; }
+    .dot-stage .dot-bubble { font-size: 13px; padding: 9px 12px; }
+  }
 
   /* ============ MENU HUB ============ */
   .hub-nav { display: flex; align-items: center; gap: 10px; padding: 6px 2px 0; }
@@ -79,30 +88,30 @@
   .hub-header p { color: var(--ink-soft); margin-top: 10px; font-size: 15.5px; line-height: 1.5; max-width: 420px; }
 
   /* Dot hero */
-  .dot-hero-wrap { position: relative; height: 190px; margin: 20px 0 6px; }
+  .dot-hero-wrap { position: relative; height: 148px; margin: 16px 0 6px; }
   .dot-hero {
     position: absolute; left: 50%; top: 50%;
-    width: 170px; height: 170px;
+    width: 130px; height: 130px;
     transform: translate(-50%, -50%);
   }
-  .dot-hero .dot-mini { transform: scale(.895); }
+  .dot-hero .dot-mini { transform: scale(.68); }
   .dot-hero-ring {
-    position: absolute; left: 50%; top: 53%; width: 246px; height: 74px;
+    position: absolute; left: 50%; top: 53%; width: 192px; height: 58px;
     transform: translate(-50%, -50%) rotate(-8deg);
     border: 2px solid rgba(91,91,214,.3); border-radius: 50%;
     pointer-events: none;
   }
   .dot-hero-shadow {
-    position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%);
-    width: 112px; height: 18px; border-radius: 50%;
+    position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%);
+    width: 86px; height: 14px; border-radius: 50%;
     background: rgba(91,91,214,.3); filter: blur(7px);
     pointer-events: none;
   }
   .dot-hero-speech {
-    position: absolute; top: -8px; right: calc(50% - 132px);
-    max-width: 148px; background: var(--card);
-    border-radius: 16px; padding: 10px 13px;
-    font-size: 12.5px; font-weight: 600; line-height: 1.35;
+    position: absolute; top: -6px; right: calc(50% - 118px);
+    max-width: 130px; background: var(--card);
+    border-radius: 14px; padding: 8px 11px;
+    font-size: 11.5px; font-weight: 600; line-height: 1.35;
     box-shadow: 0 10px 24px -12px rgba(43,42,51,.4);
     border: 1px solid rgba(0,0,0,.05);
   }
@@ -377,23 +386,25 @@
   }
 
   /* Dot lives inside the staging area (top-right), guiding from within the
-     scene with a speech bubble carrying the step instruction. */
+     scene with a speech bubble carrying the step instruction. Kept compact
+     and click-transparent so it never blocks the net underneath. */
   .dot-stage {
-    position: absolute; top: 14px; right: 22px; z-index: 6;
-    display: flex; align-items: flex-start; gap: 6px;
-    max-width: min(74%, 350px);
+    position: absolute; top: 10px; right: 14px; z-index: 6;
+    display: flex; align-items: flex-start; gap: 5px;
+    max-width: min(52%, 250px);
+    pointer-events: none;
   }
-  .dot-stage .dot-avatar { flex: 0 0 auto; order: 2; margin-top: 6px; }
+  .dot-stage .dot-avatar { flex: 0 0 auto; order: 2; margin-top: 4px; width: 54px; }
   .dot-stage .dot-bubble {
     order: 1; position: relative; flex: 1 1 auto; min-width: 0;
-    background: rgba(255,255,255,.96);
-    border-radius: 14px; padding: 10px 13px; font-size: 14px; line-height: 1.4;
-    color: var(--ink); box-shadow: 0 10px 26px -10px rgba(0,0,0,.6);
+    background: rgba(255,255,255,.93);
+    border-radius: 12px; padding: 7px 10px; font-size: 12px; line-height: 1.35;
+    color: var(--ink); box-shadow: 0 8px 20px -9px rgba(0,0,0,.55);
   }
   .dot-stage .dot-bubble strong { color: var(--accent); }
   .dot-stage .dot-bubble::before {
-    content: ""; position: absolute; right: -6px; top: 16px; width: 13px; height: 13px;
-    background: rgba(255,255,255,.96);
+    content: ""; position: absolute; right: -5px; top: 12px; width: 10px; height: 10px;
+    background: rgba(255,255,255,.93);
     transform: rotate(45deg);
   }
 
@@ -874,7 +885,7 @@
     filter: drop-shadow(0 10px 14px rgba(10,14,30,.45));
     pointer-events: none; -webkit-user-drag: none; user-select: none;
   }
-  .cal-hero { width: 152px; margin: 0 auto; }
+  .cal-hero { width: 112px; margin: 0 auto; }
   .dot-hero .cal-hero { animation: calIdle 3.4s ease-in-out infinite; }
   @keyframes calIdle {
     0%, 100% { transform: translateY(0) rotate(0deg); }
