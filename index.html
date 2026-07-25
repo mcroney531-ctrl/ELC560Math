@@ -59,9 +59,9 @@
   @media (min-width: 1100px) {
     #activity { max-width: 1060px; }
     .stage { max-height: 660px; }
-    .dot-stage { max-width: 290px; top: 16px; right: 20px; }
-    .dot-stage .dot-avatar { width: 64px; }
-    .dot-stage .dot-bubble { font-size: 13px; padding: 9px 12px; }
+    .dot-stage { max-width: 260px; top: 14px; right: 18px; }
+    .dot-stage .dot-avatar { width: 54px; }
+    .dot-stage .dot-bubble { font-size: 12.5px; padding: 8px 11px; }
   }
 
   /* ============ MENU HUB ============ */
@@ -88,30 +88,30 @@
   .hub-header p { color: var(--ink-soft); margin-top: 10px; font-size: 15.5px; line-height: 1.5; max-width: 420px; }
 
   /* Dot hero */
-  .dot-hero-wrap { position: relative; height: 148px; margin: 16px 0 6px; }
+  .dot-hero-wrap { position: relative; height: 126px; margin: 14px 0 6px; pointer-events: none; }
   .dot-hero {
     position: absolute; left: 50%; top: 50%;
-    width: 130px; height: 130px;
+    width: 110px; height: 110px;
     transform: translate(-50%, -50%);
   }
-  .dot-hero .dot-mini { transform: scale(.68); }
+  .dot-hero .dot-mini { transform: scale(.58); }
   .dot-hero-ring {
-    position: absolute; left: 50%; top: 53%; width: 192px; height: 58px;
+    position: absolute; left: 50%; top: 53%; width: 162px; height: 50px;
     transform: translate(-50%, -50%) rotate(-8deg);
     border: 2px solid rgba(91,91,214,.3); border-radius: 50%;
     pointer-events: none;
   }
   .dot-hero-shadow {
-    position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%);
-    width: 86px; height: 14px; border-radius: 50%;
+    position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+    width: 72px; height: 12px; border-radius: 50%;
     background: rgba(91,91,214,.3); filter: blur(7px);
     pointer-events: none;
   }
   .dot-hero-speech {
-    position: absolute; top: -6px; right: calc(50% - 118px);
-    max-width: 130px; background: var(--card);
-    border-radius: 14px; padding: 8px 11px;
-    font-size: 11.5px; font-weight: 600; line-height: 1.35;
+    position: absolute; top: -10px; right: calc(50% - 122px);
+    max-width: 120px; background: var(--card);
+    border-radius: 13px; padding: 7px 10px;
+    font-size: 11px; font-weight: 600; line-height: 1.35;
     box-shadow: 0 10px 24px -12px rgba(43,42,51,.4);
     border: 1px solid rgba(0,0,0,.05);
   }
@@ -389,21 +389,21 @@
      scene with a speech bubble carrying the step instruction. Kept compact
      and click-transparent so it never blocks the net underneath. */
   .dot-stage {
-    position: absolute; top: 10px; right: 14px; z-index: 6;
-    display: flex; align-items: flex-start; gap: 5px;
-    max-width: min(52%, 250px);
+    position: absolute; top: 8px; right: 12px; z-index: 6;
+    display: flex; align-items: flex-start; gap: 4px;
+    max-width: min(46%, 230px);
     pointer-events: none;
   }
-  .dot-stage .dot-avatar { flex: 0 0 auto; order: 2; margin-top: 4px; width: 54px; }
+  .dot-stage .dot-avatar { flex: 0 0 auto; order: 2; margin-top: 3px; width: 46px; }
   .dot-stage .dot-bubble {
     order: 1; position: relative; flex: 1 1 auto; min-width: 0;
     background: rgba(255,255,255,.93);
-    border-radius: 12px; padding: 7px 10px; font-size: 12px; line-height: 1.35;
+    border-radius: 11px; padding: 6px 9px; font-size: 11.5px; line-height: 1.35;
     color: var(--ink); box-shadow: 0 8px 20px -9px rgba(0,0,0,.55);
   }
   .dot-stage .dot-bubble strong { color: var(--accent); }
   .dot-stage .dot-bubble::before {
-    content: ""; position: absolute; right: -5px; top: 12px; width: 10px; height: 10px;
+    content: ""; position: absolute; right: -4px; top: 10px; width: 9px; height: 9px;
     background: rgba(255,255,255,.93);
     transform: rotate(45deg);
   }
@@ -885,7 +885,7 @@
     filter: drop-shadow(0 10px 14px rgba(10,14,30,.45));
     pointer-events: none; -webkit-user-drag: none; user-select: none;
   }
-  .cal-hero { width: 112px; margin: 0 auto; }
+  .cal-hero { width: 92px; margin: 0 auto; }
   .dot-hero .cal-hero { animation: calIdle 3.4s ease-in-out infinite; }
   @keyframes calIdle {
     0%, 100% { transform: translateY(0) rotate(0deg); }
@@ -1389,12 +1389,12 @@ MIProgress.paintAll();
       dim: { a: 3, b: 3, c: 3 }, unit: "cm",  // a=width, b=height, c=depth (match W:H:D ratio)
       title: "Unfold the Cube",
       solidLabel: "Cube",
-      buildup: "Straight on, a cube looks like a flat square. Drag it — as it turns, the depth appears and the square becomes a solid you can walk around.",
-      buildupDone: "<strong>There it is — 3D!</strong> That “flat square” was a cube all along; it was just facing you head-on. A solid is a 2D shape given <strong>depth</strong>.",
-      intro: "This is a cube. Drag it to spin it around. A “face” is one flat side — how many faces can you count?",
-      netDesc: "This flat pattern is called the cube’s net. Every face is an identical square. Tap each square to check it off — all 6 of them.",
-      counted: "<strong>All 6 counted!</strong> Six identical squares, joined edge to edge. Fold them up the right way and they wrap perfectly into a cube.",
-      done: "🎉 <strong>You did it!</strong> A cube = <strong>6 square faces</strong>, <strong>12 edges</strong> and <strong>8 corners</strong> — and now you’ve seen exactly where every one of them lives.",
+      buildup: "Straight on, a cube looks like a flat square. Drag it — as it turns, the depth appears.",
+      buildupDone: "<strong>There it is — 3D!</strong> That “flat square” was a cube all along. A solid is a 2D shape given <strong>depth</strong>.",
+      intro: "This is a cube. Drag to spin it. A “face” is one flat side — how many can you count?",
+      netDesc: "This flat pattern is the cube’s net. All 6 faces are identical squares — tap each one to check it off.",
+      counted: "<strong>All 6 counted!</strong> Fold these squares back up and they wrap perfectly into the cube.",
+      done: "🎉 <strong>You did it!</strong> 6 square faces, 12 edges, 8 corners — and you’ve seen exactly where each one lives.",
       next: "rect"
     },
     rect: {
@@ -1402,12 +1402,12 @@ MIProgress.paintAll();
       dim: { a: 4, b: 3, c: 2 }, unit: "cm",  // 4×3×2 → three distinct face areas: 12, 8, 6
       title: "Unfold the Rectangular Prism",
       solidLabel: "Prism",
-      buildup: "Head-on, this prism looks like a plain flat rectangle. Give it a drag — turn it and the depth appears, and the rectangle becomes a solid box.",
-      buildupDone: "<strong>3D!</strong> A flat rectangle, pushed back to give it <strong>depth</strong>, becomes a rectangular prism — a box you can see from every side.",
-      intro: "This is a rectangular prism — a box. Drag it to spin it around. It still has flat faces — how many can you count?",
-      netDesc: "Here’s the prism’s net. The faces aren’t all identical this time — they come in three matching pairs of rectangles. Tap each of the 6 to check it off.",
-      counted: "<strong>All 6 counted!</strong> Six rectangles in three matching pairs — fold them up and they wrap into the box: top with bottom, front with back, end with end.",
-      done: "🎉 <strong>Nice — a rectangular prism has the same 6 faces, 12 edges and 8 corners as a cube.</strong> The difference is its faces are rectangles of three sizes, which is exactly what makes its surface area more interesting.",
+      buildup: "Head-on, this prism looks like a flat rectangle. Drag it — the depth appears and it becomes a box.",
+      buildupDone: "<strong>3D!</strong> A flat rectangle given <strong>depth</strong> becomes a rectangular prism — a box.",
+      intro: "A rectangular prism — a box. Drag to spin it. How many flat faces can you count?",
+      netDesc: "The prism’s net: 6 rectangles in three matching pairs. Tap each one to check it off.",
+      counted: "<strong>All 6 counted!</strong> Three matching pairs — top &amp; bottom, front &amp; back, end &amp; end.",
+      done: "🎉 <strong>Same 6 faces, 12 edges and 8 corners as the cube</strong> — but with three face sizes, which makes its surface area more interesting.",
       next: null
     }
   };
@@ -1700,7 +1700,7 @@ MIProgress.paintAll();
       key: "warmup",
       name: "Build it up",
       textKey: "buildup",
-      text: "Straight on, a solid can look completely flat. Drag it — as it turns, its depth appears.",
+      text: "Straight on, a solid can look flat. Drag it — as it turns, its depth appears.",
       learnMore: {
         title: "From a dot to a solid",
         html: '<p>Every solid is built by adding one <strong>dimension</strong> at a time — climb the ladder:</p>' +
@@ -1729,7 +1729,7 @@ MIProgress.paintAll();
       key: "faces",
       name: "Look closely",
       textKey: "intro",
-      text: "This is a cube. Drag it to spin it around. A “face” is one flat side — how many faces can you count?",
+      text: "This is a cube. Drag to spin it. A “face” is one flat side — how many can you count?",
       learnMore: {
         title: "What’s a face?",
         html: '<p>A <strong>face</strong> is one flat side of a solid shape. A cube’s faces are all squares.</p>' +
@@ -1748,7 +1748,7 @@ MIProgress.paintAll();
     { // unfold
       key: "unfold",
       name: "The big reveal",
-      text: "Counting is hard when half the faces hide behind the cube. So let’s cheat — in a good way. Unfold it flat and see every face at once.",
+      text: "Half the faces always hide around the back. So let’s cheat — unfold it flat and see all of them at once.",
       enter: function () {
         setActions([
           { id: "unfold", text: "▶ Unfold the cube", primary: true },
@@ -1760,7 +1760,7 @@ MIProgress.paintAll();
       key: "net",
       name: "Meet the net",
       textKey: "netDesc",
-      text: "This flat pattern is called the cube’s net. Every face is an identical square. Tap each square to check it off — all 6 of them.",
+      text: "This flat pattern is the cube’s net. All 6 faces are identical squares — tap each one to check it off.",
       learnMore: {
         title: "The net is the cube, unfolded",
         html: '<p>A <strong>net</strong> is what you get when you cut a solid along its edges and lay it out flat. These six squares aren’t new shapes — they <em>are</em> the cube, opened up.</p>' +
@@ -1777,7 +1777,7 @@ MIProgress.paintAll();
     { // fold back, edges & corners
       key: "edges",
       name: "Edges & corners",
-      text: "Now fold it back up. Where two faces meet, they make an edge. Where edges meet, they make a corner. Light them up and count.",
+      text: "Fold it back up. Faces meet at edges; edges meet at corners. Light them up and count.",
       enter: function () {
         faces.forEach(function (f) { f.classList.remove("counted"); });
         setActions([
@@ -1791,7 +1791,7 @@ MIProgress.paintAll();
     { // surface area
       key: "sa",
       name: "Surface area",
-      text: "Here's the real payoff of a net: flat, the outside is easy to measure. Tap each face to add up its area — that's the surface area, the paper it'd take to wrap the shape.",
+      text: "The net’s payoff: flat, every face is easy to measure. Tap each face to add up its area — that total is the surface area.",
       learnMore: {
         title: "What is surface area?",
         html: '<p><strong>Surface area</strong> is the total area of all the faces — literally how much wrapping paper (or paint, or cardboard) it takes to cover the outside.</p>' +
@@ -1810,7 +1810,7 @@ MIProgress.paintAll();
     { // free explore
       key: "free",
       name: "Your turn",
-      text: "You’ve got the whole picture. Now play with it: tap to fold and unfold, spin it mid-fold, and light up the edges and corners whenever you like.",
+      text: "Now play: fold and unfold, spin it mid-fold, and light up the edges and corners whenever you like.",
       enter: function () {
         dotSay(shape.done, true);
         var acts = [
@@ -1946,7 +1946,7 @@ MIProgress.paintAll();
     if (edgesSeen && cornersSeen) {
       var n = $("act-next");
       if (n) n.disabled = false;
-      dotSay("<strong>12 edges and 8 corners.</strong> Notice the pattern: 6 faces + 8 corners − 12 edges = 2. That’s true for every box-like shape — mathematicians call it Euler’s formula.", true);
+      dotSay("<strong>12 edges, 8 corners.</strong> And a pattern: faces + corners − edges = 2. True for every box-like solid (Euler’s formula).", true);
     }
   }
 
@@ -1984,12 +1984,12 @@ MIProgress.paintAll();
     Array.prototype.forEach.call(choicesEl.children, function (c) { c.disabled = true; });
     if (n === 6) {
       btn.classList.add("right");
-      dotSay("<strong>Nice — 6 is right!</strong> But be honest: keeping track of the hidden faces while spinning is tricky. Let’s prove it beyond doubt.", true);
+      dotSay("<strong>Nice — 6 is right!</strong> But tracking the hidden faces is tricky. Let’s prove it beyond doubt.", true);
     } else {
       btn.classList.add("wrong");
       var right = choicesEl.querySelector('[data-n="6"]');
       if (right) right.classList.add("right");
-      dotSay("Tricky, right? Some faces always hide behind the cube while you spin it. Let’s find a way to see <strong>every</strong> face at once.", false);
+      dotSay("Tricky, right? Some faces always hide around the back. Let’s find a way to see <strong>every</strong> face at once.", false);
     }
     var next = $("act-next");
     if (next) next.disabled = false;
@@ -2028,7 +2028,7 @@ MIProgress.paintAll();
         updateAreaReadout();
         if (saCount >= 6) {
           var terms = uniqueAreaTerms();
-          dotSay("<strong>Surface area = " + saTotal + " " + shape.unit + "²</strong> — " + terms + ". That's exactly how much paper it takes to wrap the " + shape.solidLabel.toLowerCase() + ".", true);
+          dotSay("<strong>Surface area = " + saTotal + " " + shape.unit + "²</strong> — " + terms + ". The paper it takes to wrap the " + shape.solidLabel.toLowerCase() + ".", true);
           var n2 = $("act-next");
           if (n2) n2.disabled = false;
         }
