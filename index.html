@@ -380,11 +380,19 @@
      everywhere else — theatrical, so the shape reads as the star. */
   .spotlight {
     position: absolute; inset: 0; z-index: 3; pointer-events: none;
-    background: radial-gradient(circle at 50% 46%, transparent 0, transparent 20%, rgba(3,4,12,.78) 62%, rgba(2,3,9,.92) 100%);
+    background: radial-gradient(circle at 50% 46%, transparent 0, transparent 17%, rgba(3,4,12,.88) 58%, rgba(1,2,6,.97) 100%);
     transition: background .55s ease;
   }
   .stage.net-mode .spotlight {
-    background: radial-gradient(circle at 50% 46%, transparent 0, transparent 24%, rgba(52,38,12,.5) 66%, rgba(40,30,10,.62) 100%);
+    background: radial-gradient(circle at 50% 46%, transparent 0, transparent 21%, rgba(46,33,10,.66) 62%, rgba(30,22,6,.82) 100%);
+  }
+  /* Guided moments (measuring, focused tapping) pull the house lights down
+     further so the one thing Cal is talking about is unmistakable. */
+  .stage.guided .spotlight {
+    background: radial-gradient(circle at 50% 46%, transparent 0, transparent 14%, rgba(2,3,9,.93) 52%, rgba(0,1,4,.99) 100%);
+  }
+  .stage.net-mode.guided .spotlight {
+    background: radial-gradient(circle at 50% 46%, transparent 0, transparent 17%, rgba(38,27,8,.78) 56%, rgba(24,17,4,.9) 100%);
   }
 
   /* Dot lives inside the staging area (top-right), guiding from within the
@@ -675,6 +683,149 @@
     box-shadow: 0 2px 6px rgba(0,0,0,.2);
   }
   .face.sa-shown .area-label { display: block; }
+
+  /* ---- Per-item focus system -------------------------------------------
+     Guides attention to exactly the face Cal is talking about. Dimming uses
+     a dedicated child overlay (never filter/opacity on .face itself, which
+     would cascade into the nested faces 2-6). The overlay is inset to the
+     face's own box, so neighbours are untouched. */
+  .fx-dim {
+    position: absolute; inset: 0; border-radius: 7%;
+    background: rgba(2,3,10,.68);
+    opacity: 0; pointer-events: none; z-index: 6;
+    transition: opacity .45s ease;
+  }
+  .face.dimmed > .fx-dim { opacity: 1; }
+  .stage.net-mode .fx-dim { background: rgba(28,20,6,.62); }
+  /* Focused face: a breathing halo. box-shadow draws only on this element's
+     own box, so it is safe on a face that has nested children. */
+  .face.focused { animation: faceFocus 1.9s ease-in-out infinite; z-index: 4; }
+  @keyframes faceFocus {
+    0%, 100% { box-shadow: inset 0 0 0 1px rgba(0,0,0,.15), 0 0 0 3px rgba(255,255,255,.55), 0 0 16px 4px rgba(255,255,255,.32); }
+    50%      { box-shadow: inset 0 0 0 1px rgba(0,0,0,.15), 0 0 0 5px rgba(255,255,255,.8),  0 0 26px 9px rgba(255,255,255,.5); }
+  }
+
+  /* ---- Hashmarks: the ruler's reading, drawn onto the measured edge ---- */
+  .hashes { position: absolute; pointer-events: none; z-index: 5; opacity: 0; }
+  .hashes.show { opacity: 1; }
+  .hashes.h { left: 0; right: 0; bottom: 0; height: 34%; }
+  .hashes.v { top: 0; bottom: 0; left: 0; width: 34%; }
+  .hash {
+    position: absolute; background: #fffdf5;
+    box-shadow: 0 0 4px rgba(0,0,0,.35);
+    opacity: 0; transform-origin: center;
+  }
+  .hashes.h .hash { bottom: 0; width: 2px; height: 34%; }
+  .hashes.h .hash.major { height: 58%; width: 3px; }
+  .hashes.v .hash { left: 0; height: 2px; width: 34%; }
+  .hashes.v .hash.major { width: 58%; height: 3px; }
+  .hashes.show .hash { animation: hashIn .34s ease forwards; }
+  @keyframes hashIn { from { opacity: 0; transform: scale(.3); } to { opacity: .95; transform: scale(1); } }
+  .hash-num {
+    position: absolute; font-size: calc(var(--s) * .13); font-weight: 800;
+    color: #fffdf5; text-shadow: 0 1px 3px rgba(0,0,0,.6);
+    opacity: 0; transform: translate(-50%, 0);
+  }
+  .hashes.v .hash-num { transform: translate(0, -50%); }
+  .hashes.show .hash-num { animation: hashIn .34s ease forwards; }
+  /* The measured span, called out beside the edge */
+  .span-tag {
+    position: absolute; z-index: 7; opacity: 0;
+    background: #fffdf5; color: #2b2a33;
+    font-size: calc(var(--s) * .15); font-weight: 800;
+    padding: 1px 7px; border-radius: 999px; white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(0,0,0,.4);
+    transition: opacity .3s ease;
+  }
+  .span-tag.show { opacity: 1; }
+  .span-tag.h { left: 50%; bottom: 36%; transform: translateX(-50%); }
+  .span-tag.v { top: 50%; left: 36%; transform: translateY(-50%); }
+
+  /* ---- Unit grid: the face carved into its cm² squares ---- */
+  .unit-grid { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+  .unit-cell {
+    position: absolute; border: 1px dashed rgba(255,255,255,.75);
+    background: rgba(255,255,255,.13);
+    opacity: 0; transform: scale(.55);
+  }
+  .unit-grid.show .unit-cell { animation: cellIn .3s ease forwards; }
+  @keyframes cellIn { to { opacity: 1; transform: scale(1); } }
+
+  /* ---- The ruler ------------------------------------------------------- */
+  .ruler {
+    position: absolute; z-index: 8; left: 0; top: 0;
+    height: 34px; width: 120px;
+    border-radius: 6px; cursor: grab;
+    background: linear-gradient(180deg, #ffe9a8 0%, #ffd979 55%, #f2c14e 100%);
+    box-shadow: 0 6px 18px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.7);
+    border: 1px solid #d8a83c;
+    touch-action: none; user-select: none;
+    display: none;
+  }
+  .ruler.on { display: block; }
+  .ruler:active { cursor: grabbing; }
+  .ruler.parked { animation: rulerPulse 1.6s ease-in-out infinite; }
+  @keyframes rulerPulse {
+    0%, 100% { box-shadow: 0 6px 18px rgba(0,0,0,.5), 0 0 0 0 rgba(255,214,110,.6), inset 0 1px 0 rgba(255,255,255,.7); }
+    50%      { box-shadow: 0 6px 18px rgba(0,0,0,.5), 0 0 0 12px rgba(255,214,110,0), inset 0 1px 0 rgba(255,255,255,.7); }
+  }
+  .ruler.snapping { transition: left .28s cubic-bezier(.3,1.4,.5,1), top .28s cubic-bezier(.3,1.4,.5,1); }
+  .ruler.locked { cursor: default; filter: saturate(1.25); }
+  .ruler .r-tick { position: absolute; top: 0; width: 1.5px; background: rgba(90,60,10,.75); height: 34%; }
+  .ruler .r-tick.major { height: 62%; width: 2px; }
+  .ruler .r-lab {
+    position: absolute; bottom: 1px; font-size: 9px; font-weight: 800;
+    color: #7a5410; transform: translateX(-50%);
+  }
+  .ruler .r-face { position: absolute; inset: 0; }
+  .ruler.vert .r-face { transform: rotate(-90deg); transform-origin: center; }
+  /* Drop zone hint on the face being measured */
+  .drop-hint {
+    position: absolute; z-index: 3; border-radius: 4px;
+    border: 2px dashed rgba(255,240,180,.85);
+    background: rgba(255,238,170,.16);
+    opacity: 0; transition: opacity .3s;
+    pointer-events: none;
+  }
+  .drop-hint.show { opacity: 1; animation: dropBreathe 1.5s ease-in-out infinite; }
+  @keyframes dropBreathe { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+
+  /* ---- "Why measure?" panel: real-world reasons surface area matters --- */
+  /* Sits below Cal (z-index 5 < .dot-stage's 6) and is padded clear of him,
+     so he narrates over the panel rather than fighting it. */
+  .why-panel {
+    position: absolute; inset: 0; z-index: 5; display: none;
+    padding: 12px 14px 10px; overflow-y: auto;
+    align-content: center; justify-content: center;
+    background: linear-gradient(180deg, rgba(8,10,26,.9), rgba(4,6,18,.96));
+  }
+  .why-panel.show { display: grid; }
+  .why-inner { width: 100%; max-width: 460px; }
+  .why-lead {
+    color: #eef1ff; font-size: 12px; line-height: 1.45; text-align: center;
+    margin: 0 auto 10px; max-width: 340px;
+  }
+  .why-lead b { color: #ffd979; }
+  .why-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+  .why-card {
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
+    border-radius: 11px; padding: 8px 9px; text-align: left;
+    display: flex; gap: 7px; align-items: flex-start;
+  }
+  .why-card .wc-ico { font-size: 17px; line-height: 1.1; flex: 0 0 auto; }
+  .why-card b { display: block; color: #fff; font-size: 11.5px; margin-bottom: 1px; }
+  .why-card span { color: #b9c2e6; font-size: 10.5px; line-height: 1.3; }
+  .why-foot {
+    margin-top: 10px; text-align: center; color: #ffd979;
+    font-size: 11.5px; font-weight: 700; line-height: 1.4;
+  }
+  /* Narrow phones: keep the 2×2 grid (stacking makes the panel too tall to
+     fit the stage) but drop the sub-labels. */
+  @media (max-width: 430px) {
+    .why-panel { padding-top: 58px; }
+    .why-card { flex-direction: column; gap: 3px; padding: 7px 8px; }
+    .why-card span { display: none; }
+  }
 
   .scene {
     position: absolute; inset: 0; z-index: 2;
@@ -1217,6 +1368,22 @@
     <div class="big-count" id="bigCount">1</div>
     <div class="overlay-tag" id="overlayTag"></div>
     <div class="area-readout" id="areaReadout"></div>
+    <div class="drop-hint" id="dropHint" aria-hidden="true"></div>
+    <div class="ruler" id="ruler" role="button" tabindex="0" aria-label="Measuring ruler — drag onto the highlighted edge">
+      <div class="r-face" id="rulerFace"></div>
+    </div>
+    <div class="why-panel" id="whyPanel">
+      <div class="why-inner">
+        <p class="why-lead">Counting faces gave us <b>numbers</b>. To know how much <b>material</b> covers a shape, we have to measure — and measuring needs a <b>unit</b>, like centimetres.</p>
+        <div class="why-cards">
+          <div class="why-card"><span class="wc-ico">🎁</span><div><b>Wrapping a gift</b><span>How much paper before it runs out?</span></div></div>
+          <div class="why-card"><span class="wc-ico">🎨</span><div><b>Painting a room</b><span>How many tins of paint to buy?</span></div></div>
+          <div class="why-card"><span class="wc-ico">📦</span><div><b>Making a box</b><span>How much cardboard per box?</span></div></div>
+          <div class="why-card"><span class="wc-ico">📱</span><div><b>Screen protector</b><span>Will the sheet cover the whole face?</span></div></div>
+        </div>
+        <p class="why-foot">Every one of these is surface area — the total of all the faces.</p>
+      </div>
+    </div>
     <div class="atmos-track" id="stepTrack" aria-hidden="true">
       <span class="tnode"></span><span class="tnode"></span><span class="tnode"></span><span class="tnode"></span><span class="tnode"></span>
     </div>
@@ -1379,6 +1546,28 @@ MIProgress.paintAll();
     f.appendChild(el);
     return el;
   });
+  // Dim overlay per face, for the focus system. A dedicated child (rather
+  // than a filter on .face) keeps nested faces 2-6 unaffected.
+  faces.forEach(function (f) {
+    var d = document.createElement("span");
+    d.className = "fx-dim";
+    f.appendChild(d);
+  });
+
+  var ruler = $("ruler"), rulerFace = $("rulerFace"),
+      dropHint = $("dropHint"), whyPanel = $("whyPanel");
+
+  // ---------- focus system ----------
+  // keep: array of face indices to leave lit (others dim), or null to clear.
+  function setFocus(keep, guided) {
+    stage.classList.toggle("guided", !!guided);
+    faces.forEach(function (f, i) {
+      var lit = !keep || keep.indexOf(i) !== -1;
+      f.classList.toggle("dimmed", !!keep && !lit);
+      f.classList.toggle("focused", !!(keep && guided && lit && keep.length === 1));
+    });
+  }
+  function clearFocus() { setFocus(null, false); }
 
   // ---------- geometry state ----------
   var S = 96;                 // base unit in px (pixels per shape-unit; responsive)
@@ -1401,7 +1590,9 @@ MIProgress.paintAll();
       buildupDone: "<strong>There it is — 3D!</strong> That “flat square” was a cube all along. A solid is a 2D shape given <strong>depth</strong>.",
       intro: "This is a cube. Drag to spin it. A “face” is one flat side — how many can you count?",
       netDesc: "This flat pattern is the cube’s net. All 6 faces are identical squares — tap each one to check it off.",
-      saIntro: "Each edge is <strong>3 cm</strong> — so every face is a 3 × 3 square: 9 cm². Tap each face to add them up.",
+      whyIntro: "We’ve counted faces, edges and corners. New question: how much <strong>paper</strong> would wrap this cube?",
+      saRuler: true,   // first shape: measure one face by hand before tapping
+      saIntro: "Let’s measure a face properly — with a ruler, like you would in real life.",
       counted: "<strong>All 6 counted!</strong> Fold these squares back up and they wrap perfectly into the cube.",
       done: "🎉 <strong>You did it!</strong> 6 square faces, 12 edges, 8 corners — and you’ve seen exactly where each one lives.",
       next: "rect"
@@ -1415,7 +1606,8 @@ MIProgress.paintAll();
       buildupDone: "<strong>3D!</strong> A flat rectangle given <strong>depth</strong> becomes a rectangular prism — a box.",
       intro: "A rectangular prism — a box. Drag to spin it. How many flat faces can you count?",
       netDesc: "The prism’s net: 6 rectangles in three matching pairs. Tap each one to check it off.",
-      saIntro: "This box is <strong>4 × 3 × 2 cm</strong>, so its faces come in three sizes — each label is that face’s width × height. Tap each one to add them up.",
+      whyIntro: "Same question, trickier shape: how much paper wraps this box? Its faces aren’t all the same, so the measuring matters more.",
+      saIntro: "You measured by hand last time — now the labels do it for you. This box is <strong>4 × 3 × 2 cm</strong>, so tap each face to add up three different sizes.",
       counted: "<strong>All 6 counted!</strong> Three matching pairs — top &amp; bottom, front &amp; back, end &amp; end.",
       done: "🎉 <strong>Same 6 faces, 12 edges and 8 corners as the cube</strong> — but with three face sizes, which makes its surface area more interesting.",
       next: null
@@ -1693,6 +1885,280 @@ MIProgress.paintAll();
     areaReadout.innerHTML = "Surface area: <strong>" + saTotal + "</strong> " + shape.unit + "²";
   }
 
+  /* ---------- guided measuring: drag the ruler onto a face --------------
+     Runs on the first shape only (scaffold, then release). The net is flat
+     and face-on during this step, so every face is an axis-aligned rect on
+     screen and we can work in simple scene-local pixel coordinates. */
+  var MEASURE_IDX = 0;            // face 1 — the anchor at the centre of the net
+  var measure = { active: false, phase: null, dragging: false, grabDX: 0, grabDY: 0 };
+
+  function sceneRect() { return sceneRegion.getBoundingClientRect(); }
+  function faceLocalRect(idx) {
+    var r = faces[idx].getBoundingClientRect(), s = sceneRect();
+    return { left: r.left - s.left, top: r.top - s.top, width: r.width, height: r.height,
+             cx: r.left - s.left + r.width / 2, cy: r.top - s.top + r.height / 2,
+             right: r.right - s.left, bottom: r.bottom - s.top };
+  }
+  function rulerH() { return Math.max(26, Math.min(38, S * 0.42)); }
+  // Bounding box of the whole flat net, in scene-local px.
+  function netLocalRect() {
+    var l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
+    faces.forEach(function (_, i) {
+      var f = faceLocalRect(i);
+      l = Math.min(l, f.left); t = Math.min(t, f.top);
+      r = Math.max(r, f.right); b = Math.max(b, f.bottom);
+    });
+    return { left: l, top: t, right: r, bottom: b, cx: (l + r) / 2, cy: (t + b) / 2 };
+  }
+
+  // Draw the ruler's own tick marks for a span of `units` over `len` px.
+  function buildRuler(units, len) {
+    var h = rulerH();
+    ruler.style.width = len + "px";
+    ruler.style.height = h + "px";
+    rulerFace.innerHTML = "";
+    for (var i = 0; i <= units; i++) {
+      var t = document.createElement("span");
+      t.className = "r-tick major";
+      t.style.left = (i / units * 100) + "%";
+      rulerFace.appendChild(t);
+      var lab = document.createElement("span");
+      lab.className = "r-lab";
+      lab.textContent = i;
+      lab.style.left = (i / units * 100) + "%";
+      rulerFace.appendChild(lab);
+      if (i < units) {  // half-unit minor tick
+        var m = document.createElement("span");
+        m.className = "r-tick";
+        m.style.left = ((i + 0.5) / units * 100) + "%";
+        rulerFace.appendChild(m);
+      }
+    }
+  }
+  function placeRuler(cx, cy) {
+    var w = parseFloat(ruler.style.width), h = parseFloat(ruler.style.height);
+    ruler.style.left = (cx - w / 2) + "px";
+    ruler.style.top = (cy - h / 2) + "px";
+  }
+  function rulerCenter() {
+    var w = parseFloat(ruler.style.width), h = parseFloat(ruler.style.height);
+    return { x: parseFloat(ruler.style.left) + w / 2, y: parseFloat(ruler.style.top) + h / 2 };
+  }
+  // Where the ruler must land for the current phase.
+  function snapTarget() {
+    var f = faceLocalRect(MEASURE_IDX), h = rulerH(), pad = Math.max(4, S * 0.06);
+    return measure.phase === "h"
+      ? { x: f.cx, y: f.bottom - pad - h / 2 }
+      : { x: f.left + pad + h / 2, y: f.cy };
+  }
+  function showDropHint() {
+    var f = faceLocalRect(MEASURE_IDX), h = rulerH(), pad = Math.max(4, S * 0.06);
+    if (measure.phase === "h") {
+      dropHint.style.left = f.left + "px";
+      dropHint.style.top = (f.bottom - h - pad * 2) + "px";
+      dropHint.style.width = f.width + "px";
+      dropHint.style.height = (h + pad * 2) + "px";
+    } else {
+      dropHint.style.left = f.left + "px";
+      dropHint.style.top = f.top + "px";
+      dropHint.style.width = (h + pad * 2) + "px";
+      dropHint.style.height = f.height + "px";
+    }
+    dropHint.classList.add("show");
+  }
+
+  // Paint the hashmarks + span callout onto the measured edge of the face.
+  function revealHashes(axis, units) {
+    var face = faces[MEASURE_IDX];
+    var box = document.createElement("span");
+    box.className = "hashes " + axis;
+    for (var i = 0; i <= units; i++) {
+      var pct = i / units * 100;
+      var t = document.createElement("span");
+      t.className = "hash major";
+      if (axis === "h") t.style.left = "calc(" + pct + "% - 1.5px)";
+      else t.style.top = "calc(" + pct + "% - 1.5px)";
+      t.style.animationDelay = (i * 70) + "ms";
+      box.appendChild(t);
+      var n = document.createElement("span");
+      n.className = "hash-num";
+      n.textContent = i;
+      if (axis === "h") { n.style.left = pct + "%"; n.style.top = "0"; }
+      else { n.style.top = pct + "%"; n.style.left = "2px"; }
+      n.style.animationDelay = (i * 70 + 40) + "ms";
+      box.appendChild(n);
+    }
+    face.appendChild(box);
+    requestAnimationFrame(function () { box.classList.add("show"); });
+
+    var tag = document.createElement("span");
+    tag.className = "span-tag " + axis;
+    tag.textContent = units + " " + shape.unit;
+    face.appendChild(tag);
+    setTimeout(function () { tag.classList.add("show"); }, units * 70 + 220);
+  }
+
+  // The face carved into its unit squares — the bridge from "3 × 3" to "9 cm²".
+  function revealUnitGrid(cols, rows) {
+    var face = faces[MEASURE_IDX];
+    var g = document.createElement("span");
+    g.className = "unit-grid";
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var cell = document.createElement("span");
+        cell.className = "unit-cell";
+        cell.style.left = (c / cols * 100) + "%";
+        cell.style.top = (r / rows * 100) + "%";
+        cell.style.width = (100 / cols) + "%";
+        cell.style.height = (100 / rows) + "%";
+        cell.style.animationDelay = ((r * cols + c) * 55) + "ms";
+        g.appendChild(cell);
+      }
+    }
+    face.appendChild(g);
+    requestAnimationFrame(function () { g.classList.add("show"); });
+  }
+  function clearMeasureArt() {
+    faces.forEach(function (f) {
+      f.querySelectorAll(".hashes, .span-tag, .unit-grid").forEach(function (el) { el.remove(); });
+    });
+  }
+  // Retire the ruler's readings once the unit grid takes over, so the face
+  // ends up clean: grid + area label, nothing competing.
+  function fadeMeasureArt() {
+    faces[MEASURE_IDX].querySelectorAll(".hashes, .span-tag").forEach(function (el) {
+      el.style.transition = "opacity .5s ease";
+      el.style.opacity = "0";
+      setTimeout(function () { el.remove(); }, 560);
+    });
+  }
+
+  function startMeasure() {
+    measure.active = true;
+    measure.phase = "h";
+    clearMeasureArt();
+    setFocus([MEASURE_IDX], true);
+    beginPhase();
+  }
+  function beginPhase() {
+    var f = faceLocalRect(MEASURE_IDX);
+    var horiz = measure.phase === "h";
+    var units = horiz ? shape.dim.a : shape.dim.b;
+    var len = horiz ? f.width : f.height;
+    ruler.classList.remove("vert", "locked", "snapping");
+    if (!horiz) ruler.classList.add("vert");
+    buildRuler(units, len);
+    // Park it clear of the net but plainly in view: below it for the width
+    // pass, beside it for the height pass — clamped inside the scene.
+    var s = sceneRect(), net = netLocalRect(), h = rulerH(), pad = 12;
+    var parkX, parkY;
+    if (horiz) {
+      parkX = net.cx;
+      parkY = Math.min(net.bottom + h / 2 + 20, s.height - h / 2 - pad);
+    } else {
+      parkX = Math.max(h / 2 + pad, net.left - h / 2 - 18);
+      parkY = net.cy;
+    }
+    var halfW = (horiz ? len : h) / 2, halfH = (horiz ? h : len) / 2;
+    parkX = Math.max(halfW + pad, Math.min(s.width - halfW - pad, parkX));
+    parkY = Math.max(halfH + pad, Math.min(s.height - halfH - pad, parkY));
+    placeRuler(parkX, parkY);
+    ruler.classList.add("on", "parked");
+    showDropHint();
+    dotSay(horiz
+      ? "Grab the ruler and lay it across the <strong>bottom</strong> of the glowing face."
+      : "Now stand it up — drag it onto the <strong>left side</strong> to measure the height.", false);
+  }
+  function finishPhase() {
+    var horiz = measure.phase === "h";
+    var units = horiz ? shape.dim.a : shape.dim.b;
+    ruler.classList.remove("parked");
+    ruler.classList.add("locked");
+    dropHint.classList.remove("show");
+    revealHashes(horiz ? "h" : "v", units);
+    dotSay("<strong>" + units + " " + shape.unit + "</strong> " + (horiz ? "across" : "tall") + " — the marks show each centimetre.", true);
+    setTimeout(function () {
+      ruler.classList.remove("on");
+      if (horiz) { measure.phase = "v"; beginPhase(); }
+      else { completeMeasure(); }
+    }, 1500);
+  }
+  function completeMeasure() {
+    measure.active = false;
+    var d = shape.dim, area = d.a * d.b;
+    // The ruler's readings have done their job; the grid now carries the idea.
+    fadeMeasureArt();
+    revealUnitGrid(d.a, d.b);
+    setTimeout(function () {
+      dotSay("<strong>" + d.a + " × " + d.b + " = " + area + "</strong> — " + area + " little squares, each 1 " +
+             shape.unit + "². That's why the label reads " + d.a + "×" + d.b + ".", true);
+      applyFaceArea(MEASURE_IDX);
+      // Stay lit through the payoff — this face is the point right now.
+      setTimeout(function () {
+        dotSay("Your turn — <strong>tap the other 5 faces</strong> to add them up. No ruler needed; the labels do the measuring now.", false);
+        refreshSAFocus();   // now the finished face dims and the to-do list lights
+      }, 2600);
+    }, d.a * d.b * 55 + 320);
+  }
+
+  // Light whatever is still to be tapped. Derived from live state (rather
+  // than captured up front) so a delayed call can never fight a later tap.
+  function refreshSAFocus() {
+    if (!steps[step] || steps[step].key !== "sa") return;
+    var left = [];
+    faces.forEach(function (ff, i) { if (!ff.classList.contains("sa-shown")) left.push(i); });
+    setFocus(left.length ? left : null, false);
+  }
+
+  // Shared by the ruler path and the tap path: reveal a face's dims + area.
+  function applyFaceArea(idx) {
+    var f = faces[idx];
+    if (f.classList.contains("sa-shown")) return false;
+    var areas = faceAreas(), d = shape.dim;
+    var faceDims = [[d.a, d.b], [d.a, d.c], [d.c, d.b], [d.a, d.c], [d.c, d.b], [d.a, d.b]][idx];
+    f.classList.add("sa-shown");
+    areaLabels[idx].textContent = faceDims[0] + "×" + faceDims[1];
+    saTotal += areas[idx]; saCount++;
+    updateAreaReadout();
+    return true;
+  }
+
+  // ---------- ruler dragging ----------
+  ruler.addEventListener("pointerdown", function (e) {
+    if (!measure.active || ruler.classList.contains("locked")) return;
+    e.stopPropagation();
+    measure.dragging = true;
+    var c = rulerCenter();
+    var s = sceneRect();
+    measure.grabDX = (e.clientX - s.left) - c.x;
+    measure.grabDY = (e.clientY - s.top) - c.y;
+    ruler.classList.remove("parked", "snapping");
+    ruler.setPointerCapture(e.pointerId);
+  });
+  ruler.addEventListener("pointermove", function (e) {
+    if (!measure.dragging) return;
+    e.stopPropagation();
+    var s = sceneRect();
+    placeRuler((e.clientX - s.left) - measure.grabDX, (e.clientY - s.top) - measure.grabDY);
+  });
+  function endRulerDrag(e) {
+    if (!measure.dragging) return;
+    measure.dragging = false;
+    var c = rulerCenter(), t = snapTarget();
+    var dist = Math.hypot(c.x - t.x, c.y - t.y);
+    var tol = Math.max(38, S * 0.55);
+    ruler.classList.add("snapping");
+    if (dist <= tol) {
+      placeRuler(t.x, t.y);
+      setTimeout(finishPhase, 260);
+    } else {
+      ruler.classList.add("parked");
+      dotSay("Close! Line it up with the <strong>dashed outline</strong> on the glowing face.", false);
+    }
+  }
+  ruler.addEventListener("pointerup", endRulerDrag);
+  ruler.addEventListener("pointercancel", endRulerDrag);
+
   var WARMUP_COUNT = 1;   // leading warm-up steps that sit outside the numbered main arc
   var warmupBuilt = false;
   function onWarmupBuilt() {
@@ -1798,6 +2264,25 @@ MIProgress.paintAll();
         ]);
       }
     },
+    { // why measure at all? — earns the jump from counting to units
+      key: "why",
+      name: "Why measure?",
+      textKey: "whyIntro",
+      text: "So far we’ve counted things. Now a different question: how much material would it take to cover this shape?",
+      learnMore: {
+        title: "Counting vs. measuring",
+        html: '<p>Faces, edges and corners are things you <strong>count</strong> — you get a plain number: 6, 12, 8.</p>' +
+              '<p>“How much paper covers it?” is different. You can’t count paper, you have to <strong>measure</strong> it — and every measurement needs a <strong>unit</strong> to be meaningful.</p>' +
+              '<p>“This face is 3 big” means nothing. <strong>3 centimetres</strong> means something: it’s 3 of a length everyone agrees on. Areas use squared units — a <strong>square centimetre</strong> (cm²) is a square 1 cm on each side.</p>' +
+              '<div class="lm-placeholder">Interactive coming here: swap between cm, inches and squares to see the same face measured in different units.</div>'
+      },
+      enter: function () {
+        if (p > 0.05) animateFold(0, 900);
+        whyPanel.classList.add("show");
+        setFocus(null, true);
+        setActions([{ id: "next", text: "Got it — let’s measure →", primary: true }]);
+      }
+    },
     { // surface area
       key: "sa",
       name: "Surface area",
@@ -1814,9 +2299,14 @@ MIProgress.paintAll();
         if (p > 0.05) animateFold(0, 900);
         saTotal = 0; saCount = 0;
         faces.forEach(function (f) { f.classList.remove("counted", "sa-shown"); });
+        clearMeasureArt();
         updateAreaReadout();
         areaReadout.classList.add("show");
         setActions([{ id: "next", text: "Next →", primary: true, disabled: true }]);
+        // Scaffold on the first shape: measure one face with the ruler, then
+        // release to tapping. The second shape goes straight to tapping.
+        if (shape.saRuler) setTimeout(startMeasure, p > 0.05 ? 1000 : 260);
+        else setFocus(null, false);
       }
     },
     { // free explore
@@ -1884,6 +2374,12 @@ MIProgress.paintAll();
       stepLabel.textContent = "Step " + (mainIdx + 1) + " of " + mainCount + " · " + s.name;
     }
     areaReadout.classList.remove("show");   // only the surface-area step shows it
+    // Guided-attention state is per-step; never let it leak forward.
+    measure.active = false; measure.dragging = false;
+    ruler.classList.remove("on", "parked", "locked", "vert", "snapping");
+    dropHint.classList.remove("show");
+    whyPanel.classList.remove("show");
+    clearFocus();
     dotSay(s.textKey && shape[s.textKey] ? shape[s.textKey] : s.text, false);
     choicesEl.style.display = "none";
     learnMoreBtn.hidden = !s.learnMore;   // the scale-down door only shows where there's depth
@@ -1969,6 +2465,7 @@ MIProgress.paintAll();
       if (i >= faces.length) {
         bigCount.classList.remove("show");
         revealCounter("cFaces", 6);
+        clearFocus();
         dotSay("<strong>6 faces</strong> — and now you can see all of them at once. No more hiding.", false);
         var n = $("act-next");
         if (n) { n.style.display = ""; n.disabled = false; }
@@ -1977,6 +2474,8 @@ MIProgress.paintAll();
         return;
       }
       var f = faces[i];
+      // Spotlight each face as its number lands, so the count is unambiguous.
+      setFocus([i], false);
       f.classList.remove("pulse");
       void f.offsetWidth;
       f.classList.add("pulse");
@@ -2019,6 +2518,10 @@ MIProgress.paintAll();
         tappedCount++;
         bigCount.textContent = tappedCount;
         bigCount.classList.add("show");
+        // Dim what's done so the faces still to tap stay obvious.
+        var todo = [];
+        faces.forEach(function (ff, i) { if (!ff.classList.contains("counted")) todo.push(i); });
+        setFocus(todo.length ? todo : null, false);
         if (tappedCount >= 6) {
           setTimeout(function () { bigCount.classList.remove("show"); }, 900);
           dotSay(shape.counted, true);
@@ -2029,15 +2532,9 @@ MIProgress.paintAll();
       }
 
       if (steps[step].key === "sa") {  // surface area: reveal each face's area, sum them
-        if (f.classList.contains("sa-shown")) return;
-        var areas = faceAreas();
-        var d = shape.dim;
-        // dims of this face, for the "w × h" label
-        var faceDims = [[d.a, d.b], [d.a, d.c], [d.c, d.b], [d.a, d.c], [d.c, d.b], [d.a, d.b]][idx];
-        f.classList.add("sa-shown");
-        areaLabels[idx].textContent = faceDims[0] + "×" + faceDims[1];
-        saTotal += areas[idx]; saCount++;
-        updateAreaReadout();
+        if (measure.active) return;    // ruler phase owns the stage
+        if (!applyFaceArea(idx)) return;
+        refreshSAFocus();   // keep whatever's left to tap clearly lit
         if (saCount >= 6) {
           var terms = uniqueAreaTerms();
           dotSay("<strong>Surface area = " + saTotal + " " + shape.unit + "²</strong> — " + terms + ". The paper it takes to wrap the " + shape.solidLabel.toLowerCase() + ".", true);
@@ -2103,6 +2600,7 @@ MIProgress.paintAll();
     faces.forEach(function (f) { f.classList.remove("counted", "sa-shown"); });
     areaLabels.forEach(function (l) { l.textContent = ""; });
     areaReadout.classList.remove("show");
+    clearMeasureArt();
     Array.prototype.forEach.call(choicesEl.children, function (c) {
       c.disabled = false; c.classList.remove("right", "wrong");
     });
