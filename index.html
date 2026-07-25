@@ -108,8 +108,10 @@
     pointer-events: none;
   }
   .dot-hero-speech {
-    position: absolute; top: -10px; right: calc(50% - 122px);
-    max-width: 120px; background: var(--card);
+    /* Anchored fully to Cal's right (he spans ±46px of center) so it can
+       never sit on his face; width clamped so it stays inside the wrap. */
+    position: absolute; top: -8px; left: calc(50% + 54px);
+    max-width: min(140px, calc(50% - 66px)); background: var(--card);
     border-radius: 13px; padding: 7px 10px;
     font-size: 11px; font-weight: 600; line-height: 1.35;
     box-shadow: 0 10px 24px -12px rgba(43,42,51,.4);
@@ -117,9 +119,9 @@
   }
   .dot-hero-speech b { color: var(--accent); }
   .dot-hero-speech::after {
-    content: ""; position: absolute; left: 16px; bottom: -7px;
-    width: 14px; height: 14px; background: var(--card);
-    border-right: 1px solid rgba(0,0,0,.05); border-bottom: 1px solid rgba(0,0,0,.05);
+    content: ""; position: absolute; left: -6px; top: 18px;
+    width: 12px; height: 12px; background: var(--card);
+    border-left: 1px solid rgba(0,0,0,.05); border-bottom: 1px solid rgba(0,0,0,.05);
     transform: rotate(45deg);
   }
   .deco { position: absolute; font-weight: 800; pointer-events: none; }
