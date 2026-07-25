@@ -1440,10 +1440,20 @@ MIProgress.paintAll();
   var faces = [1, 2, 3, 4, 5, 6].map(function (n) { return $("face" + n); });
 
   // ---------- geometry state ----------
-  var S = 96;                 // face size in px (responsive, set below)
-  var p = 1;                  // fold progress: 1 = cube, 0 = flat net
+  var S = 96;                 // base unit in px (pixels per shape-unit; responsive)
+  var p = 1;                  // fold progress: 1 = solid, 0 = flat net
   var zoom = 1;                // wheel-zoom multiplier
   var overlays = { edges: false, corners: false };
+
+  // ---------- shape config (box family) ----------
+  // The cube and rectangular prism share one net + hinge tree — a 6-face cross:
+  //   front (anchor) with top/bottom/left/right folding off it, and back off right.
+  // Only the per-axis dimensions differ, so the engine is driven by W/H/D (in units).
+  // Adding a box-shaped solid = a new entry here; other topologies extend the engine.
+  var SHAPES = {
+    cube: { W: 1, H: 1, D: 1 }
+  };
+  var shape = SHAPES.cube;
 
   // ---------- orbit rotation, stored as a quaternion (no Euler-angle gimbal lock) ----------
   var DEG = Math.PI / 180;
@@ -1495,26 +1505,39 @@ MIProgress.paintAll();
     orientation = qNormalize(qMul(qDelta, orientation));
   }
 
+  function setBox(el, w, h) { el.style.width = w + "px"; el.style.height = h + "px"; }
+
   function sizeFaces() {
-    // Net is 4 faces wide, 3 tall; make sure it fits the stage flat.
+    // The flat cross-net spans (2D + 2W) units wide and (2D + H) units tall;
+    // scale units→px so it fits the scene with a little margin.
     var w = sceneRegion.clientWidth, h = sceneRegion.clientHeight;
-    S = Math.floor(Math.min(w / 4.6, h / 3.6, 120));
+    var netW = 2 * shape.D + 2 * shape.W;
+    var netH = 2 * shape.D + shape.H;
+    S = Math.floor(Math.min(w / (netW + 0.6), h / (netH + 0.6), 120));
     document.documentElement.style.setProperty("--s", S + "px");
     layout();
   }
 
   function layout() {
-    // static positions of hinges relative to the anchor face
-    hingeT.style.left = "0px";      hingeT.style.top = (-S) + "px";
-    hingeT.style.transformOrigin = "center bottom";
-    hingeB.style.left = "0px";      hingeB.style.top = S + "px";
-    hingeB.style.transformOrigin = "center top";
-    hingeL.style.left = (-S) + "px"; hingeL.style.top = "0px";
-    hingeL.style.transformOrigin = "right center";
-    hingeR.style.left = S + "px";   hingeR.style.top = "0px";
-    hingeR.style.transformOrigin = "left center";
-    hingeK.style.left = S + "px";   hingeK.style.top = "0px";
-    hingeK.style.transformOrigin = "left center";
+    // Per-face pixel dimensions from the shape's unit dims.
+    var W = shape.W * S, H = shape.H * S, D = shape.D * S;
+    // anchor (front): W × H
+    setBox(face1, W, H);
+    // top: W × D, hinged on the front's top edge
+    setBox(hingeT, W, D); setBox(face2, W, D);
+    hingeT.style.left = "0px"; hingeT.style.top = (-D) + "px"; hingeT.style.transformOrigin = "center bottom";
+    // bottom: W × D, hinged on the front's bottom edge
+    setBox(hingeB, W, D); setBox(face4, W, D);
+    hingeB.style.left = "0px"; hingeB.style.top = H + "px"; hingeB.style.transformOrigin = "center top";
+    // left: D × H, hinged on the front's left edge
+    setBox(hingeL, D, H); setBox(face5, D, H);
+    hingeL.style.left = (-D) + "px"; hingeL.style.top = "0px"; hingeL.style.transformOrigin = "right center";
+    // right: D × H, hinged on the front's right edge
+    setBox(hingeR, D, H); setBox(face3, D, H);
+    hingeR.style.left = W + "px"; hingeR.style.top = "0px"; hingeR.style.transformOrigin = "left center";
+    // back: W × H, hinged on the right face's outer edge
+    setBox(hingeK, W, H); setBox(face6, W, H);
+    hingeK.style.left = D + "px"; hingeK.style.top = "0px"; hingeK.style.transformOrigin = "left center";
     render();
   }
 
@@ -1530,10 +1553,12 @@ MIProgress.paintAll();
     var eased = p > 0.999 ? orientation : qSlerp(Q_IDENTITY, orientation, p);
     orbit.style.transform = qToMatrix3d(eased);
 
-    // Center: cube occupies [0,S]^2 x [-S,0]; flat net spans x:[-S,2S], y:[-S,2S].
-    var cx = -S / 2 - (S / 4) * (1 - p);   // shift left a bit when flat (net is wider right)
-    var cy = -S / 2;
-    var cz = (S / 2) * p;
+    // Center the assembly: solid centers on the front face; when flat, nudge
+    // left because the net extends further right (right face + back).
+    var W = shape.W * S, H = shape.H * S, D = shape.D * S;
+    var cx = -W / 2 - (W / 4) * (1 - p);
+    var cy = -H / 2;
+    var cz = (D / 2) * p;
     var scale = (1 - 0.18 * (1 - p)) * zoom; // shrink slightly when flat so net fits, plus wheel-zoom
     centerer.style.transform =
       "scale3d(" + scale + "," + scale + "," + scale + ") " +
