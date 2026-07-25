@@ -1451,7 +1451,26 @@ MIProgress.paintAll();
   // Only the per-axis dimensions differ, so the engine is driven by W/H/D (in units).
   // Adding a box-shaped solid = a new entry here; other topologies extend the engine.
   var SHAPES = {
-    cube: { W: 1, H: 1, D: 1 }
+    cube: {
+      key: "cube", W: 1, H: 1, D: 1,
+      title: "Unfold the Cube",
+      solidLabel: "Cube",
+      intro: "This is a cube. Drag it to spin it around. A “face” is one flat side — how many faces can you count?",
+      netDesc: "This flat pattern is called the cube’s net. Every face is an identical square. Tap each square to check it off — all 6 of them.",
+      counted: "<strong>All 6 counted!</strong> Six identical squares, joined edge to edge. Fold them up the right way and they wrap perfectly into a cube.",
+      done: "🎉 <strong>You did it!</strong> A cube = <strong>6 square faces</strong>, <strong>12 edges</strong> and <strong>8 corners</strong> — and now you’ve seen exactly where every one of them lives.",
+      next: "rect"
+    },
+    rect: {
+      key: "rect", W: 1.4, H: 1, D: 0.72,
+      title: "Unfold the Rectangular Prism",
+      solidLabel: "Prism",
+      intro: "This is a rectangular prism — a box. Drag it to spin it around. It still has flat faces — how many can you count?",
+      netDesc: "Here’s the prism’s net. The faces aren’t all identical this time — they come in three matching pairs of rectangles. Tap each of the 6 to check it off.",
+      counted: "<strong>All 6 counted!</strong> Six rectangles in three matching pairs — fold them up and they wrap into the box: top with bottom, front with back, end with end.",
+      done: "🎉 <strong>Nice — a rectangular prism has the same 6 faces, 12 edges and 8 corners as a cube.</strong> The difference is its faces are rectangles of three sizes, which is exactly what makes its surface area more interesting.",
+      next: null
+    }
   };
   var shape = SHAPES.cube;
 
@@ -1569,7 +1588,7 @@ MIProgress.paintAll();
 
     // Mode indicator: which side of the fold are we looking at.
     var netMode = p < 0.5;
-    modeTagTitle.textContent = netMode ? "▦ Net Mode" : "🧊 Cube Mode";
+    modeTagTitle.textContent = netMode ? "▦ Net Mode" : "🧊 " + shape.solidLabel + " Mode";
     modeTagSub.textContent = netMode ? "Study the unfolded structure" : "Explore the 3D shape";
     modeTag.classList.toggle("net", netMode);
     stage.classList.toggle("net-mode", netMode);
@@ -1711,6 +1730,7 @@ MIProgress.paintAll();
   var steps = [
     { // 0 — count the faces
       label: "Step 1 of 5 · Look closely",
+      textKey: "intro",
       text: "This is a cube. Drag it to spin it around. A “face” is one flat side — how many faces can you count?",
       learnMore: {
         title: "What’s a face?",
@@ -1720,7 +1740,7 @@ MIProgress.paintAll();
       },
       enter: function () {
         choicesEl.style.display = "flex";
-        hint.textContent = "Drag to spin the cube";
+        hint.textContent = "Drag to spin the " + shape.solidLabel.toLowerCase();
         hint.classList.add("show");
         setTimeout(function () { hint.classList.remove("show"); }, 3500);
         setActions([{ id: "next", text: "Next →", primary: true, disabled: true }]);
@@ -1738,6 +1758,7 @@ MIProgress.paintAll();
     },
     { // 2 — meet the net
       label: "Step 3 of 5 · Meet the net",
+      textKey: "netDesc",
       text: "This flat pattern is called the cube’s net. Every face is an identical square. Tap each square to check it off — all 6 of them.",
       learnMore: {
         title: "The net is the cube, unfolded",
@@ -1769,13 +1790,16 @@ MIProgress.paintAll();
       label: "Step 5 of 5 · Your turn",
       text: "You’ve got the whole picture. Now play with it: tap to fold and unfold, spin the cube mid-fold, and light up the edges and corners whenever you like.",
       enter: function () {
-        dotSay("🎉 <strong>You did it!</strong> A cube = <strong>6 square faces</strong>, <strong>12 edges</strong> and <strong>8 corners</strong> — and now you’ve seen exactly where every one of them lives.", true);
-        setActions([
+        dotSay(shape.done, true);
+        var acts = [
           { id: "toggleFold", text: "▦ Unfold flat", ghost: true },
           { id: "edges", text: "Edges", overlay: "edges", ghost: true },
-          { id: "corners", text: "Corners", overlay: "corners", ghost: true },
-          { id: "menu", text: "Back to menu", subtle: true }
-        ]);
+          { id: "corners", text: "Corners", overlay: "corners", ghost: true }
+        ];
+        // Main path chains cube → prism → done.
+        if (shape.next) acts.push({ id: "nextshape", text: "Next shape: " + SHAPES[shape.next].solidLabel + " →", primary: true });
+        acts.push({ id: "menu", text: "Back to menu", subtle: true });
+        setActions(acts);
       }
     }
   ];
@@ -1806,7 +1830,7 @@ MIProgress.paintAll();
     MIProgress.markStep("geometry", i, 5);
     var s = steps[i];
     stepLabel.textContent = s.label;
-    dotSay(s.text, false);
+    dotSay(s.textKey && shape[s.textKey] ? shape[s.textKey] : s.text, false);
     choicesEl.style.display = "none";
     learnMoreBtn.hidden = !s.learnMore;   // the scale-down door only shows where there's depth
     renderDots();
@@ -1832,6 +1856,7 @@ MIProgress.paintAll();
 
   function onAction(id, btn) {
     if (id === "next") { goStep(step + 1); return; }
+    if (id === "nextshape") { startActivity(shape.next); return; }
     if (id === "menu") { showMenu(); return; }
     if (id === "unfold") {
       btn.disabled = true;
@@ -1940,7 +1965,7 @@ MIProgress.paintAll();
       bigCount.classList.add("show");
       if (tappedCount >= 6) {
         setTimeout(function () { bigCount.classList.remove("show"); }, 900);
-        dotSay("<strong>All 6 counted!</strong> Six identical squares, joined edge to edge. Fold them up the right way and they wrap perfectly into a cube.", true);
+        dotSay(shape.counted, true);
         var n = $("act-next");
         if (n) n.disabled = false;
       }
@@ -1955,12 +1980,16 @@ MIProgress.paintAll();
   }
 
   // ---------- screen switching ----------
-  $("startGeometry").addEventListener("click", function () {
+  var actTitle = activity.querySelector(".act-title h2");
+  function startActivity(key) {
+    shape = SHAPES[key] || SHAPES.cube;
+    if (actTitle) actTitle.textContent = shape.title;
     menu.style.display = "none";
     activity.style.display = "flex";
     sizeFaces();
     resetActivity();
-  });
+  }
+  $("startGeometry").addEventListener("click", function () { startActivity("cube"); });
   $("backBtn").addEventListener("click", showMenu);
   function showMenu() {
     activity.style.display = "none";
@@ -1975,6 +2004,9 @@ MIProgress.paintAll();
       num.textContent = "?"; num.classList.add("unknown");
     });
     faces.forEach(function (f) { f.classList.remove("counted"); });
+    Array.prototype.forEach.call(choicesEl.children, function (c) {
+      c.disabled = false; c.classList.remove("right", "wrong");
+    });
     setOverlay(null);
     render();
     goStep(0);
