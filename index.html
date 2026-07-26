@@ -514,9 +514,25 @@
     border: 3px solid var(--accent); box-shadow: 0 2px 6px rgba(0,0,0,.2); cursor: pointer;
   }
 
-  /* 1 · dimension scrubber: point → line → square → cube */
-  .dsc-stage { height: 132px; display: grid; place-items: center; margin-bottom: 4px; }
-  .dsc-box { background: var(--accent); border-radius: 2px; transition: none; }
+  /* 1 · dimension scrubber: point → line → the shape's own base → the solid */
+  .dsc-stage { position: relative; height: 132px; display: grid; place-items: center; margin-bottom: 4px; }
+  .dsc-box { background: var(--accent); border-radius: 2px; grid-area: 1/1; }
+  .dsc-box.triangle { clip-path: polygon(50% 0, 100% 100%, 0 100%); border-radius: 0; }
+  .dsc-box.diamond { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); border-radius: 0; }
+  .dsc-solid { grid-area: 1/1; opacity: 0; pointer-events: none; }
+  .dsc-solid .mini-solid { width: 150px; height: 120px; }
+  .mini-solid { display: block; overflow: visible; }
+  .mini-solid .ms-front { fill: var(--accent); opacity: .9; }
+  .mini-solid .ms-back { fill: var(--accent); opacity: .28; }
+  .mini-solid .ms-edge { stroke: #fff; stroke-width: 1.4; fill: none; }
+  .mini-solid .ms-edge.hid { stroke: rgba(255,255,255,.55); stroke-dasharray: 3 2.5; }
+  /* the ladder's 2D rung, cut to whichever base this solid is built on */
+  .dim-flat { width: 30px; height: 30px; background: rgba(91,91,214,.22); border: 2px solid var(--accent); }
+  .dim-flat.square, .dim-flat.rectangle { border-radius: 5px; }
+  .dim-flat.rectangle { width: 34px; height: 24px; }
+  .dim-flat.triangle { clip-path: polygon(50% 0, 100% 100%, 0 100%); border: none; background: var(--accent); opacity: .75; }
+  .dim-flat.diamond { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); border: none; background: var(--accent); opacity: .75; }
+  .dim-rung .mini-solid { width: 46px; height: 40px; }
 
   /* 2 · cube anatomy explorer */
   .anat { width: 100%; max-width: 260px; height: 150px; display: block; margin: 0 auto 10px; }
@@ -1905,6 +1921,26 @@ MIProgress.paintAll();
     return s + "</svg>";
   }
 
+  // A small filled wireframe of the solid, for the dimension ladder.
+  function miniSolidSvg(key, w, h) {
+    var pr = projectSolid(key, w, h);
+    var pt = function (i) { return pr.pts[i][0].toFixed(1) + "," + pr.pts[i][1].toFixed(1); };
+    var s = '<svg class="mini-solid" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true">';
+    [true, false].forEach(function (wantBack) {
+      pr.faces.forEach(function (face, fi) {
+        if (pr.back[fi] !== wantBack) return;
+        s += '<polygon class="' + (pr.back[fi] ? "ms-back" : "ms-front") +
+             '" points="' + face.map(pt).join(" ") + '"/>';
+      });
+    });
+    pr.edges.forEach(function (e) {
+      s += '<line class="ms-edge' + (e.hid ? " hid" : "") + '" x1="' + pr.pts[e.a][0].toFixed(1) +
+           '" y1="' + pr.pts[e.a][1].toFixed(1) + '" x2="' + pr.pts[e.b][0].toFixed(1) +
+           '" y2="' + pr.pts[e.b][1].toFixed(1) + '"/>';
+    });
+    return s + "</svg>";
+  }
+
   // The shape's own net, drawn small — used in the net sheet.
   function netSvg(sh) {
     var b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
@@ -1953,6 +1989,9 @@ MIProgress.paintAll();
   var SHAPES = {
     cube: {
       key: "cube",
+      base2D: "square",
+      ladderStep: "A cube is a <strong>prism</strong>: push the square straight back through the air and it sweeps out the solid. Every slice you cut across it is that same square.",
+      ladderFinal: "Slide the square straight back and it carves out a cube.",
       flat2D: "square",
       faceBlurb: "A cube’s faces are all identical squares.",
       netBlurb: "Six identical squares: a row of four wraps into a band, and the other two cap the ends.",
@@ -1973,6 +2012,9 @@ MIProgress.paintAll();
     },
     rect: {
       key: "rect",
+      base2D: "rectangle",
+      ladderStep: "A box is a <strong>prism</strong>: push the rectangle straight back and it sweeps out the solid. Every slice across it is that same rectangle.",
+      ladderFinal: "Slide the rectangle straight back and it carves out the box.",
       flat2D: "rectangle",
       faceBlurb: "A rectangular prism’s faces are all rectangles, in three matching pairs.",
       netBlurb: "Six rectangles in three matching pairs — front with back, top with bottom, end with end.",
@@ -1994,6 +2036,9 @@ MIProgress.paintAll();
     /* ---- Challenge Zone: the first solids that aren't boxes ---- */
     triprism: {
       key: "triprism",
+      base2D: "triangle",
+      ladderStep: "A triangular prism is — as the name says — a <strong>prism</strong>: push the triangle straight back and it sweeps out the solid. Every slice across it is that same triangle.",
+      ladderFinal: "Slide the triangle straight back and it carves out the prism.",
       flat2D: "triangle",
       faceBlurb: "This prism has two kinds of face: three rectangles and two triangles.",
       netBlurb: "The three rectangles wrap around the outside like a belt, and the two triangles cap the ends. Each rectangle is as wide as the triangle side it joins — 3, 4 and 5.", challenge: true,
@@ -2013,6 +2058,9 @@ MIProgress.paintAll();
     },
     pyramid: {
       key: "pyramid",
+      base2D: "square",
+      ladderStep: "A pyramid is <strong>not</strong> made by sliding. Lift a single point above the square and join it to all four corners — the base stays put and the sides lean in to meet at the top. That lift is the third dimension.",
+      ladderFinal: "Lift one point above the square and join it to every corner.",
       flat2D: "square",
       faceBlurb: "A square pyramid has one square face — the base — and four triangles.",
       netBlurb: "One square base with four triangles fanned off its edges. Fold all four up and their tips meet at a single point: the apex.", challenge: true,
@@ -2032,6 +2080,9 @@ MIProgress.paintAll();
     },
     tetra: {
       key: "tetra",
+      base2D: "triangle",
+      ladderStep: "A tetrahedron is <strong>not</strong> made by sliding. Lift a single point above the triangle and join it to all three corners. That lift is the third dimension — and it only takes 4 triangles in total.",
+      ladderFinal: "Lift one point above the triangle and join it to every corner.",
       flat2D: "triangle",
       faceBlurb: "Every face of a tetrahedron is a triangle — four of them, all identical.",
       netBlurb: "One triangle in the middle with three more mirrored off its edges, which happens to make one big triangle. Fold the outer three up and they close to a point.", challenge: true,
@@ -2051,6 +2102,9 @@ MIProgress.paintAll();
     },
     octa: {
       key: "octa",
+      base2D: "square",
+      ladderStep: "An octahedron takes it one step further: lift a point <strong>above</strong> the square and another <strong>below</strong> it, joining both to all four corners. It is two pyramids glued base to base.",
+      ladderFinal: "Lift a point above the square and another below it — two pyramids, back to back.",
       flat2D: "diamond",
       faceBlurb: "All eight faces of an octahedron are identical triangles.",
       netBlurb: "Eight triangles in two zigzag rows of four. Each row rolls into a cone-like cap, and the two caps meet at the middle — like two square pyramids glued base to base.", challenge: true,
@@ -2748,48 +2802,55 @@ MIProgress.paintAll();
               '<div class="dim-ladder">' +
                 '<div class="dim-rung"><span class="dim-fig"><span class="dim-dot"></span></span><b>Point</b><em>0D · no size</em></div>' +
                 '<div class="dim-rung"><span class="dim-fig"><span class="dim-line"></span></span><b>Line</b><em>1D · length</em></div>' +
-                '<div class="dim-rung"><span class="dim-fig"><span class="dim-square"></span></span><b>Square</b><em>2D · + width</em></div>' +
-                '<div class="dim-rung"><span class="dim-fig"><span class="dim-cube"><i></i><i></i></span></span><b>Solid</b><em>3D · + depth</em></div>' +
+                '<div class="dim-rung"><span class="dim-fig"><span class="dim-flat ' + sh.base2D + '"></span></span><b>' +
+                  sh.base2D.charAt(0).toUpperCase() + sh.base2D.slice(1) + '</b><em>2D · + width</em></div>' +
+                '<div class="dim-rung"><span class="dim-fig">' + miniSolidSvg(sh.key, 46, 40) + '</span><b>' +
+                  sh.solidLabel + '</b><em>3D · + depth</em></div>' +
               '</div>' +
-              '<p>Slide a point and you draw a line. Slide a line sideways and you sweep out a square. Slide a square through the air and it carves out a cube. <strong>Depth</strong> is the one new thing that turns a flat shape into a solid.</p>' +
-              '<p>Your <strong>' + sh.solidLabel.toLowerCase() + '</strong> is 3D for the same reason: head-on it can pass for a flat ' + sh.flat2D + ', but it has depth — which is why it can’t be shown truthfully without unfolding it.</p>' +
+              '<p>Slide a point and you draw a line. Slide that line sideways and you sweep out a flat <strong>' +
+                sh.base2D + '</strong>. Getting from there to a solid is where the third dimension arrives — and it happens differently depending on the shape.</p>' +
+              '<p>' + sh.ladderStep + '</p>' +
               '<div class="lmi">' +
                 '<div class="lmi-head">✦ Slide to climb the ladder</div>' +
-                '<div class="dsc-stage"><div class="dsc-box" id="dscBox"></div></div>' +
+                '<div class="dsc-stage">' +
+                  '<div class="dsc-box ' + sh.base2D + '" id="dscBox"></div>' +
+                  '<div class="dsc-solid" id="dscSolid">' + miniSolidSvg(sh.key, 150, 120) + '</div>' +
+                '</div>' +
                 '<input type="range" class="lmi-range" id="dscRange" min="0" max="300" value="0" aria-label="Dimension">' +
                 '<div class="lmi-out" id="dscOut"></div>' +
-              '</div>'
-      }; },
-      onOpen: function (body) {
-        var box = body.querySelector("#dscBox"),
-            rng = body.querySelector("#dscRange"),
-            outEl = body.querySelector("#dscOut");
-        var STAGES = [
-          { n: "Point", d: "0D", t: "No size at all — just a position." },
-          { n: "Line", d: "1D", t: "Slide the point and you sweep out <b>length</b>." },
-          { n: "Square", d: "2D", t: "Slide the line sideways and you add <b>width</b>. Now it has area." },
-          { n: "Cube", d: "3D", t: "Slide the square through the air and you add <b>depth</b>. Now it's a solid." }
-        ];
-        function draw() {
-          var v = +rng.value;
-          var lw = Math.min(1, v / 100);                       // 0→1 length
-          var lh = Math.min(1, Math.max(0, (v - 100) / 100));  // 0→1 height
-          var ld = Math.min(1, Math.max(0, (v - 200) / 100));  // 0→1 depth
-          var w = 7 + lw * 79, h = 7 + lh * 79, dpx = Math.round(ld * 24);
-          box.style.width = w + "px";
-          box.style.height = h + "px";
-          var sh = [];
-          for (var i = 1; i <= dpx; i++) sh.push(i + "px " + (-i) + "px 0 #a5a1e8");
-          box.style.boxShadow = sh.join(",");
-          // Strictly-greater, so a stage is only named once it actually
-          // has the new dimension (at v=100 the line is done, not a square).
-          var si = v > 200 ? 3 : v > 100 ? 2 : v > 0 ? 1 : 0;
-          var s = STAGES[si];
-          outEl.innerHTML = '<b>' + s.n + '</b> · ' + s.d + ' — ' + s.t;
+              '</div>',
+        onOpen: function (body) {
+          var box = body.querySelector("#dscBox"),
+              solid = body.querySelector("#dscSolid"),
+              rng = body.querySelector("#dscRange"),
+              outEl = body.querySelector("#dscOut");
+          var cap = sh.base2D.charAt(0).toUpperCase() + sh.base2D.slice(1);
+          var STAGES = [
+            { n: "Point", d: "0D", t: "No size at all — just a position." },
+            { n: "Line", d: "1D", t: "Slide the point and you sweep out <b>length</b>." },
+            { n: cap, d: "2D", t: "Slide the line sideways and you add <b>width</b>. Now it has area." },
+            { n: sh.solidLabel, d: "3D", t: sh.ladderFinal }
+          ];
+          function draw() {
+            var v = +rng.value;
+            var lw = Math.min(1, v / 100);                       // 0→1 length
+            var lh = Math.min(1, Math.max(0, (v - 100) / 100));  // 0→1 width
+            var ld = Math.min(1, Math.max(0, (v - 200) / 100));  // 0→1 the third dimension
+            box.style.width = (7 + lw * 79) + "px";
+            box.style.height = (7 + lh * 79) + "px";
+            // The flat shape hands over to the real solid, whatever it is —
+            // no pretending every solid is an extruded square.
+            box.style.opacity = 1 - ld;
+            solid.style.opacity = ld;
+            solid.style.transform = "scale(" + (0.72 + 0.28 * ld) + ")";
+            var si = v > 200 ? 3 : v > 100 ? 2 : v > 0 ? 1 : 0;
+            var st = STAGES[si];
+            outEl.innerHTML = '<b>' + st.n + '</b> · ' + st.d + ' — ' + st.t;
+          }
+          rng.addEventListener("input", draw);
+          draw();
         }
-        rng.addEventListener("input", draw);
-        draw();
-      },
+      }; },
       enter: function () {
         warmupBuilt = false;
         if (p < 0.999) p = 1;          // must be solid, not a net
