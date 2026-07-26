@@ -514,6 +514,39 @@
     border: 3px solid var(--accent); box-shadow: 0 2px 6px rgba(0,0,0,.2); cursor: pointer;
   }
 
+  /* Detented slider: icons sit along the track as hard stops, so the phases
+     read as discrete steps. The thumb travels between the track's inset
+     ends, so marks are placed the same way to stay under it. */
+  .slider-rail { position: relative; margin: 8px 0 2px; padding-bottom: 44px; }
+  .slider-rail .lmi-range { margin: 0; display: block; height: 6px; position: relative; z-index: 2; }
+  .rail-mark {
+    position: absolute; top: -5px; transform: translateX(-50%);
+    width: 60px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    background: none; border: none; padding: 0; cursor: pointer; font: inherit; z-index: 1;
+  }
+  .rail-mark:active { transform: translateX(-50%) scale(.94); }
+  .rm-notch {
+    width: 3px; height: 16px; border-radius: 2px; background: #cbc7e6;
+    transition: background .2s, height .2s;
+  }
+  .rm-fig { height: 22px; display: grid; place-items: center; margin-top: 3px; opacity: .5; transition: opacity .2s; }
+  .rm-lab {
+    font-size: 8.5px; font-weight: 800; letter-spacing: .02em; text-transform: uppercase;
+    color: var(--ink-soft); transition: color .2s; text-align: center; line-height: 1.15;
+  }
+  .rail-mark.on .rm-notch { background: var(--accent); height: 20px; }
+  .rail-mark.on .rm-fig { opacity: 1; }
+  .rail-mark.on .rm-lab { color: var(--accent); }
+  .rail-mark.done .rm-notch { background: #a5a1e8; }
+  .rm-fig .mini-solid { width: 26px; height: 22px; }
+  .rm-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  .rm-line { width: 20px; height: 3px; border-radius: 2px; background: var(--accent); }
+  .rm-sq { background: var(--accent); opacity: .85; }
+  .rm-sq.square { width: 16px; height: 16px; border-radius: 3px; }
+  .rm-sq.rectangle { width: 20px; height: 14px; border-radius: 3px; }
+  .rm-sq.triangle { width: 18px; height: 16px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .rm-sq.diamond { width: 18px; height: 18px; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+
   /* 1 · dimension scrubber: point → line → the shape's own base → the solid */
   .dsc-stage { position: relative; height: 132px; display: grid; place-items: center; margin-bottom: 4px; }
   .dsc-box { background: var(--accent); border-radius: 2px; grid-area: 1/1; }
@@ -588,6 +621,9 @@
   .fb-row label { flex: 0 0 74px; font-size: 12px; font-weight: 800; color: var(--ink); }
   .fb-row .lmi-range { margin: 0; flex: 1; }
   .fb-row output { flex: 0 0 34px; text-align: right; font-size: 13px; font-weight: 800; color: var(--accent); }
+  .sc-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .sc-head label { font-size: 12px; font-weight: 800; color: var(--ink); }
+  .sc-head output { font-size: 15px; font-weight: 800; color: var(--accent); }
   .fb-terms { display: grid; gap: 4px; margin: 10px 0 8px; }
   .fb-term {
     display: flex; justify-content: space-between; gap: 8px;
@@ -1962,6 +1998,80 @@ MIProgress.paintAll();
     return s + "</svg>";
   }
 
+  /* Turn a range input into a detented one: icon stops along the track that
+     the thumb snaps into on release, and that can be tapped to jump.
+     Dragging stays continuous so the morph between phases is still visible;
+     the snap happens when you let go. */
+  function attachRail(input, stops, onSettle) {
+    var rail = document.createElement("div");
+    rail.className = "slider-rail";
+    input.parentNode.insertBefore(rail, input);
+    rail.appendChild(input);
+
+    var min = +input.min, max = +input.max, span = max - min || 1;
+    var marks = stops.map(function (st) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "rail-mark";
+      b.setAttribute("aria-label", st.lab);
+      // The thumb centre travels between 12px and (100% - 12px).
+      b.style.left = "calc(12px + " + ((st.v - min) / span) + " * (100% - 24px))";
+      b.innerHTML = '<i class="rm-notch"></i><span class="rm-fig">' + st.fig + '</span>' +
+                    '<span class="rm-lab">' + st.lab + '</span>';
+      b.addEventListener("click", function () { glideTo(st.v); });
+      rail.appendChild(b);
+      return b;
+    });
+
+    function paint() {
+      var v = +input.value;
+      // Nearest stop wins "on"; everything before it reads as already passed.
+      var best = 0, bd = Infinity;
+      stops.forEach(function (st, i) {
+        var d = Math.abs(st.v - v);
+        if (d < bd) { bd = d; best = i; }
+      });
+      marks.forEach(function (m, i) {
+        m.classList.toggle("on", i === best);
+        m.classList.toggle("done", i < best);
+      });
+    }
+    function fire() { if (onSettle) onSettle(); paint(); }
+
+    // Ease to a stop rather than teleporting, so the shape animates there.
+    var anim = null;
+    function glideTo(target) {
+      if (anim) { cancelAnimationFrame(anim); anim = null; }
+      var from = +input.value, t0 = null, dur = 260;
+      if (from === target) { fire(); return; }
+      function step(ts) {
+        if (t0 === null) t0 = ts;
+        var k = Math.min(1, (ts - t0) / dur);
+        var e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        input.value = from + (target - from) * e;
+        fire();
+        if (k < 1) { anim = requestAnimationFrame(step); }
+        else { anim = null; input.value = target; fire(); }
+      }
+      anim = requestAnimationFrame(step);
+    }
+    function snap() {
+      var v = +input.value, best = stops[0].v, bd = Infinity;
+      stops.forEach(function (st) {
+        var d = Math.abs(st.v - v);
+        if (d < bd) { bd = d; best = st.v; }
+      });
+      glideTo(best);
+    }
+
+    input.addEventListener("input", function () { if (!anim) paint(); });
+    // `change` fires on pointer release and on each keyboard step, so the
+    // control clicks into a phase either way.
+    input.addEventListener("change", snap);
+    paint();
+    return { paint: paint };
+  }
+
   // Faces grouped by area — the shared basis for every surface-area breakdown.
   function areaGroups(sh) {
     var g = {};
@@ -2848,6 +2958,15 @@ MIProgress.paintAll();
             outEl.innerHTML = '<b>' + st.n + '</b> · ' + st.d + ' — ' + st.t;
           }
           rng.addEventListener("input", draw);
+          // Hard stops: one per rung of the ladder.
+          attachRail(rng, [
+            { v: 0,   lab: "Point",  fig: '<i class="rm-dot"></i>' },
+            { v: 100, lab: "Line",   fig: '<i class="rm-line"></i>' },
+            { v: 200, lab: cap,      fig: '<i class="rm-sq ' + sh.base2D + '"></i>' },
+            // "Solid" rather than the full name: a long one ("Tetrahedron")
+            // overhangs the end of the track. The readout below names it.
+            { v: 300, lab: "Solid",  fig: miniSolidSvg(sh.key, 26, 22) }
+          ], draw);
           draw();
         }
       }; },
@@ -3078,7 +3197,8 @@ MIProgress.paintAll();
                   '</div>'
                 : '<div class="lmi">' +
                     '<div class="lmi-head">✦ Scale it up — what happens to the area?</div>' +
-                    '<div class="fb-row"><label>Scale</label><input type="range" class="lmi-range" id="scK" min="1" max="4" step="0.5" value="1"><output id="scKv">×1</output></div>' +
+                    '<div class="sc-head"><label>Scale every length</label><output id="scKv">×1</output></div>' +
+                    '<input type="range" class="lmi-range" id="scK" min="1" max="4" step="0.5" value="1" aria-label="Scale">' +
                     '<div class="fb-terms" id="scTerms"></div>' +
                     '<div class="fb-total" id="scTotal"></div>' +
                     '<div class="fb-formula">' + groups.map(function (g) { return g.n + " × " + fmtArea(g.area); }).join(" + ") + " = " + fmtArea(total) + ' cm²</div>' +
@@ -3131,6 +3251,12 @@ MIProgress.paintAll();
                               ', but the area ×' + fmtArea(f) + ' — areas grow by the <b>square</b> of the scale.</span>');
           };
           k.addEventListener("input", draw2);
+          // Whole multiples are the meaningful stops here; halves still show
+          // while dragging, but it settles on ×1 … ×4.
+          attachRail(k, [1, 2, 3, 4].map(function (n) {
+            return { v: n, lab: "×" + n,
+                     fig: '<i class="rm-sq square" style="width:' + (7 + n * 3) + 'px;height:' + (7 + n * 3) + 'px"></i>' };
+          }), draw2);
           draw2();
         }
         };
