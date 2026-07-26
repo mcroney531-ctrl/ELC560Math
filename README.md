@@ -35,7 +35,7 @@ Each shape runs the same arc, with copy tailored to that solid.
 | **1 · Look closely** | Spin it and try to count the faces. You run straight into the hidden-faces problem. |
 | **2 · The big reveal** | It unfolds flat, each colour-coded face peeling away with a running count. |
 | **3 · Meet the net** | Tap all six squares to check them off. Counted faces dim so what's left stands out. |
-| **4 · Edges & corners** | Fold it back up, light up the 12 edges and 8 corners, with a nod to Euler's formula. |
+| **4 · Edges & corners** | One pulsing **Refold** button puts the solid back together. Then you find the parts by tapping the shape itself — one edge, one corner — and each tap lights the whole set and its count, with a nod to Euler's formula. |
 | **5 · Why measure?** | Counting gives plain numbers; "how much material covers this?" needs a *unit*. Four real-world cases (gift wrap, paint, cardboard, screen protector). This is where centimetres get earned. |
 | **6 · Surface area** | On the cube: drag a ruler onto the glowing face, twice, and watch hashmarks and unit squares appear. Then tap the rest. The prism skips the ruler — scaffold first, release second. |
 | **7 · Your turn** | Free play: fold, unfold, spin mid-fold, toggle the overlays. |
@@ -58,4 +58,5 @@ Vanilla HTML/CSS/JS in a single file — no framework, no build, no network call
 - **Correctness is testable**: because every polygon corner gets a vertex dot, folding a net correctly means all dots for a shared vertex land on the same point. Clustering them and comparing the count to the solid's true vertex count verifies a net folds properly — that's how all six shapes are checked.
 - **Two worlds**: folded shapes live in a dark "cube mode" space; the flat net switches the stage to a warm blueprint-paper "net mode".
 - **Guided attention**: a per-face dim overlay lets any moment light exactly one thing. It's an overlay rather than a CSS `filter` because filters cascade into the nested faces.
+- **Parts are tappable**: every polygon side carries a hit bar laid along it, so edges can be found on the solid itself. A shared edge ends up with two bars, which costs nothing — tapping either reveals the set. They sit on the face *node* rather than the face, so the clip-path can't trim them, and 3D depth sorting means a bar round the back sits behind an opaque front face and can't be tapped through the solid.
 - **Shapes are data** — dimensions, copy and per-step behaviour come from a `SHAPES` config, so adding a solid is mostly a new entry.

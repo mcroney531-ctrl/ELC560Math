@@ -14,6 +14,8 @@
     --ink-soft: #6b6a75;
     --card: #ffffff;
     --accent: #5b5bd6;
+    /* A deep purple for "earned" states that need white type on top. */
+    --accent-deep: #3d3a9e;
     --accent-ink: #ffffff;
     --ok: #06d6a0;
     --warn: #ef476f;
@@ -352,7 +354,15 @@
   .counter .num { font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
   .counter .num.unknown { color: #c9c6bf; }
   .counter .lbl { font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-top: 1px; }
-  .counter.pop .num { animation: pop .5s ease; color: var(--accent); }
+  .counter.pop .num { animation: pop .5s ease; }
+  /* Earned: the card flips to deep purple with white type, so the top row
+     shows at a glance which of the three have been worked out. */
+  .counter {
+    transition: background .45s ease, border-color .45s ease, box-shadow .45s ease;
+  }
+  .counter.solved { background: var(--accent-deep); border-color: transparent; }
+  .counter.solved .num { color: #fff; }
+  .counter.solved .lbl { color: rgba(255,255,255,.78); }
   @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
 
   /* Stage = the staging area: a spotlit scene with Dot living inside it.
@@ -1140,6 +1150,39 @@
   }
   .scene.show-corners .corner { opacity: 1; }
 
+  /* Edges & corners are found by tapping the solid itself, so each polygon
+     side gets an invisible hit bar laid along it (one per side, so a shared
+     edge carries two — harmless, since tapping any one reveals the set).
+     Bars live on the face node rather than the face so the clip-path can't
+     trim them, and depth sorting means a bar round the back sits behind an
+     opaque front face and can't be tapped through the solid. */
+  .edge-hit {
+    position: absolute; height: 20px; margin-top: -10px;
+    transform-origin: 0 50%; pointer-events: none; z-index: 5;
+    opacity: 0; transition: opacity .3s;
+  }
+  .edge-hit:before {
+    content: ""; position: absolute; left: 0; right: 0; top: 50%;
+    height: 3px; margin-top: -1.5px; border-radius: 2px;
+    background: rgba(255,255,255,.5); transition: background .15s, box-shadow .15s;
+  }
+  .scene.hunt-edges .edge-hit {
+    opacity: 1; pointer-events: auto; cursor: pointer;
+    animation: huntPulse 1.7s ease-in-out infinite;
+  }
+  .scene.hunt-edges .edge-hit:hover:before {
+    background: #fff; box-shadow: 0 0 9px rgba(255,255,255,.95);
+  }
+  .scene.hunt-corners .corner {
+    opacity: .5; pointer-events: auto; cursor: pointer;
+    animation: huntPulse 1.7s ease-in-out infinite;
+  }
+  .scene.hunt-corners .corner:hover { opacity: 1; transform: scale(1.3); }
+  @keyframes huntPulse { 0%, 100% { opacity: .38; } 50% { opacity: .95; } }
+  @media (prefers-reduced-motion: reduce) {
+    .scene.hunt-edges .edge-hit, .scene.hunt-corners .corner { animation: none; opacity: .8; }
+  }
+
   /* guide panel */
   .guide {
     background: var(--card); border: 1px solid rgba(0,0,0,.06);
@@ -1311,6 +1354,14 @@
       inset 0 3px 5px rgba(255,255,255,.95),
       inset 0 -5px 8px rgba(43,42,51,.08),
       0 8px 16px -9px rgba(43,42,51,.3);
+  }
+  /* On the deep-purple card the bright inner highlight would read as a
+     white smear, so the puff is re-lit for a dark surface. */
+  #activity .counter.solved {
+    box-shadow:
+      inset 0 3px 6px rgba(255,255,255,.28),
+      inset 0 -6px 10px rgba(0,0,0,.3),
+      0 9px 18px -9px rgba(61,58,158,.75);
   }
 
   /* Cal — rendered guide character (image asset) */
@@ -2465,6 +2516,16 @@ MIProgress.paintAll();
         node.appendChild(dot);
       });
 
+      // A tap target along every polygon side, for finding edges by hand.
+      fs.poly.forEach(function (pt, k) {
+        var nxt = fs.poly[(k + 1) % fs.poly.length];
+        var bar = document.createElement("span");
+        bar.className = "edge-hit";
+        bar.setAttribute("data-x1", pt[0]); bar.setAttribute("data-y1", pt[1]);
+        bar.setAttribute("data-x2", nxt[0]); bar.setAttribute("data-y2", nxt[1]);
+        node.appendChild(bar);
+      });
+
       faces.push(face);
       areaLabels.push(face.querySelector(".area-label"));
       fnodes.push({ el: node, spec: fs, minX: minX, minY: minY, maxX: maxX, maxY: maxY });
@@ -2509,9 +2570,19 @@ MIProgress.paintAll();
       // and label stay inside it.
       faceEl.style.setProperty("--fs", Math.min(fw, fh) + "px");
       Array.prototype.forEach.call(fn.el.children, function (c) {
-        if (!c.classList.contains("corner")) return;
-        c.style.left = (+c.getAttribute("data-vx") * S) + "px";
-        c.style.top = (+c.getAttribute("data-vy") * S) + "px";
+        if (c.classList.contains("corner")) {
+          c.style.left = (+c.getAttribute("data-vx") * S) + "px";
+          c.style.top = (+c.getAttribute("data-vy") * S) + "px";
+          return;
+        }
+        if (!c.classList.contains("edge-hit")) return;
+        // Lay the bar from the side's first endpoint along to its second.
+        var x1 = +c.getAttribute("data-x1") * S, y1 = +c.getAttribute("data-y1") * S;
+        var dx = +c.getAttribute("data-x2") * S - x1, dy = +c.getAttribute("data-y2") * S - y1;
+        c.style.left = x1 + "px";
+        c.style.top = y1 + "px";
+        c.style.width = Math.sqrt(dx * dx + dy * dy) + "px";
+        c.style.transform = "rotate(" + Math.atan2(dy, dx) + "rad)";
       });
       if (fs.parent < 0) return;
       // Rotation axis = the hinge, anchored at its first endpoint.
@@ -2660,7 +2731,7 @@ MIProgress.paintAll();
     var el = $(id), num = el.querySelector(".num");
     num.textContent = n;
     num.classList.remove("unknown");
-    el.classList.add("pop");
+    el.classList.add("solved", "pop");
     setTimeout(function () { el.classList.remove("pop"); }, 600);
   }
 
@@ -3239,7 +3310,7 @@ MIProgress.paintAll();
     { // fold back, edges & corners
       key: "edges",
       name: "Edges & corners",
-      text: "Fold it back up. Faces meet at edges; edges meet at corners. Light them up and count.",
+      text: "Fold it back up. Faces meet at edges; edges meet at corners — and you're going to find them on the shape yourself.",
       enter: function () {
         faces.forEach(function (f) { f.classList.remove("counted"); });
         // One move, one button: a wide pulsing "Refold" and nothing else.
@@ -3473,6 +3544,7 @@ MIProgress.paintAll();
     dropHint.classList.remove("show");
     closeWhyModal();
     clearFocus();
+    setHunt(null);
     dotSay(s.textKey && shape[s.textKey] ? shape[s.textKey] : s.text, false);
     choicesEl.style.display = "none";
     learnMoreBtn.hidden = !s.learnMore;   // the scale-down door only shows where there's depth
@@ -3516,12 +3588,8 @@ MIProgress.paintAll();
     if (id === "refold") {
       btn.disabled = true;   // also stops the pulse, without a layout shift
       animateFold(1, 1600, function () {
-        setActions([
-          { id: "edges", text: "Edges", overlay: "edges", ghost: true },
-          { id: "corners", text: "Corners", overlay: "corners", ghost: true },
-          { id: "next", text: "Next →", primary: true, disabled: true }
-        ]);
-        dotSay("Tap <strong>Edges</strong> and <strong>Corners</strong> to light them up. (Spin the cube to check the back, too.)", false);
+        setActions([{ id: "next", text: "Next →", primary: true, disabled: true }]);
+        setHunt("edges");
       });
       return;
     }
@@ -3545,6 +3613,32 @@ MIProgress.paintAll();
       });
       return;
     }
+  }
+
+  // ---------- finding edges & corners by tapping the solid ----------
+  // The learner taps one edge, then one corner, on the shape itself: naming
+  // a part you pointed at beats naming one a button lit up for you. Tapping
+  // a single example reveals the whole set (and its count), so the ones
+  // round the back are credited without a hunt.
+  var hunting = null;
+  function setHunt(kind) {
+    hunting = kind;
+    scene.classList.toggle("hunt-edges", kind === "edges");
+    scene.classList.toggle("hunt-corners", kind === "corners");
+    if (kind === "edges") {
+      dotSay("An <strong>edge</strong> is a line where two faces meet. Tap one on the " +
+             shape.solidLabel.toLowerCase() + " to light them all up.", false);
+    } else if (kind === "corners") {
+      dotSay("Now a <strong>corner</strong> — a point where edges meet. Tap one.", false);
+    }
+  }
+  function onHunt(kind) {
+    if (hunting !== kind) return;
+    setHunt(null);
+    setOverlay(kind);
+    afterOverlay(kind);
+    // One found, one to go: roll straight on to corners.
+    if (kind === "edges" && !cornersSeen) setTimeout(function () { setHunt("corners"); }, 1500);
   }
 
   function afterOverlay(kind) {
@@ -3610,6 +3704,16 @@ MIProgress.paintAll();
   /* Face tapping — step "net" (count them) and step "sa" (add up the areas).
      Delegated from the scene because the faces are rebuilt for every shape. */
   scene.addEventListener("click", function (e) {
+    // Edge/corner hunting owns the tap while it's running. These targets are
+    // siblings of .face inside the node, so they'd never match below.
+    if (hunting && !hasDraggedSince(e)) {
+      if (hunting === "edges" && e.target.classList.contains("edge-hit")) {
+        e.stopPropagation(); onHunt("edges"); return;
+      }
+      if (hunting === "corners" && e.target.classList.contains("corner")) {
+        e.stopPropagation(); onHunt("corners"); return;
+      }
+    }
     var f = e.target.closest(".face");
     if (!f) return;
     var idx = +f.getAttribute("data-fi");
@@ -3724,8 +3828,9 @@ MIProgress.paintAll();
     saTotal = 0; saCount = 0;
     revealed = {};
     ["cFaces", "cEdges", "cCorners"].forEach(function (id) {
-      var num = $(id).querySelector(".num");
+      var el = $(id), num = el.querySelector(".num");
       num.textContent = "?"; num.classList.add("unknown");
+      el.classList.remove("solved", "pop");
     });
     faces.forEach(function (f) { f.classList.remove("counted", "sa-shown"); });
     areaLabels.forEach(function (l) { l.textContent = ""; });
@@ -3735,6 +3840,7 @@ MIProgress.paintAll();
       c.disabled = false; c.classList.remove("right", "wrong");
     });
     setOverlay(null);
+    setHunt(null);
     render();
     goStep(0);
   }
