@@ -788,14 +788,19 @@
 
   /* Per-face area label, shown during the surface-area step */
   .area-label {
-    position: absolute; bottom: 8%; left: 50%; transform: translateX(-50%);
+    /* hung just under the centroid, so it stays inside triangles too */
+    position: absolute; top: calc(var(--cy, 50%) + 21%); left: var(--cx, 50%);
+    transform: translate(-50%, -50%);
     display: none; white-space: nowrap;
     background: rgba(255,255,255,.95); color: #2b2a33;
-    font-size: calc(var(--s) * .16); font-weight: 800;
-    padding: 2px 7px; border-radius: 999px; z-index: 3;
+    font-size: calc(var(--fs, 60px) * .19); font-weight: 800;
+    padding: 1px 6px; border-radius: 999px; z-index: 3;
     box-shadow: 0 2px 6px rgba(0,0,0,.2);
   }
   .face.sa-shown .area-label { display: block; }
+  /* Triangle captions ("½·4·4") are longer than a rectangle's "4×6" and the
+     shape narrows towards its apex, so they get a tighter size. */
+  .face:not(.rect) .area-label { font-size: calc(var(--fs, 60px) * .135); padding: 1px 5px; }
 
   /* ---- Per-item focus system -------------------------------------------
      Guides attention to exactly the face Cal is talking about. Dimming uses
@@ -945,13 +950,15 @@
     perspective: 900px;
     display: grid; place-items: center;
   }
-  .orbit, .centerer, .face, .hinge { transform-style: preserve-3d; }
+  .orbit, .centerer, .face, .fnode { transform-style: preserve-3d; }
   .orbit { width: 0; height: 0; }
   .centerer { position: absolute; }
-  .hinge { position: absolute; width: var(--s); height: var(--s); }
+  /* A face node is a zero-size frame pinned to the net's origin. Its only
+     job is to carry the hinge rotation for its whole subtree; the visible
+     skin and any child nodes sit inside it at absolute net coordinates. */
+  .fnode { position: absolute; left: 0; top: 0; width: 0; height: 0; }
   .face {
-    position: absolute; width: var(--s); height: var(--s);
-    border-radius: 6%;
+    position: absolute;
     display: grid; place-items: center;
     backface-visibility: visible;
     box-shadow:
@@ -960,18 +967,25 @@
       inset 0 -10px 18px rgba(0,0,0,.18);
     transition: filter .25s, box-shadow .25s, border-color .25s;
   }
+  .face.rect { border-radius: 6%; }
   .face:after {
     content: ""; position: absolute; inset: -1px; border-radius: 7%;
     box-shadow: 0 0 8px currentColor; opacity: .5; pointer-events: none;
   }
+  /* Anchored to the polygon's centroid, not the bounding box: on a triangle
+     the box centre can sit on (or past) an edge, which would clip the number
+     in half and push the tap target off the visible face. */
   .face .badge {
-    width: 40%; height: 40%; border-radius: 50%;
+    position: absolute;
+    left: var(--cx, 50%); top: var(--cy, 50%);
+    transform: translate(-50%, -50%);
+    width: calc(var(--fs, 60px) * .46); aspect-ratio: 1; border-radius: 50%;
     background: rgba(255,255,255,.88);
     display: grid; place-items: center;
-    font-weight: 800; font-size: calc(var(--s) * .22);
+    font-weight: 800; font-size: calc(var(--fs, 60px) * .28);
     color: #2b2a33;
     box-shadow: 0 2px 6px rgba(0,0,0,.12);
-    position: relative; z-index: 1;
+    z-index: 1;
   }
   .face.f1 { background: var(--face1); color: var(--glow1); }
   .face.f2 { background: var(--face2); color: var(--glow2); }
@@ -992,11 +1006,13 @@
   @keyframes faceFlash { 0%, 100% { opacity: 0; } 40% { opacity: 1; } }
   @keyframes badgePop { 40% { transform: scale(1.3); } }
   .face .check {
-    position: absolute; top: 6px; right: 6px;
-    width: 26%; height: 26%; border-radius: 50%;
+    position: absolute;
+    top: calc(var(--cy, 50%) - 24%); left: calc(var(--cx, 50%) + 20%);
+    transform: translate(-50%, -50%);
+    width: calc(var(--fs, 60px) * .3); aspect-ratio: 1; border-radius: 50%;
     background: #fff; color: var(--ok);
     display: none; place-items: center;
-    font-size: calc(var(--s) * .16); font-weight: 900;
+    font-size: calc(var(--fs, 60px) * .19); font-weight: 900;
     box-shadow: 0 2px 6px rgba(0,0,0,.15);
     z-index: 2;
   }
@@ -1004,23 +1020,30 @@
      so a descendant selector here would reveal a checked face's nested
      faces' checkmarks too. `>` keeps each check tied to its own face. */
   .face.counted > .check { display: grid; }
-  .cube-root.show-edges .face,
-  .face.cube-root.show-edges {
-    box-shadow:
-      inset 0 0 0 2px #fff, 0 0 16px rgba(255,255,255,.85),
-      inset 0 8px 14px rgba(255,255,255,.22), inset 0 -10px 18px rgba(0,0,0,.18);
+  /* Edge overlay: an SVG tracing each face's own polygon, so it works for
+     triangles as well as rectangles (a CSS border would be clipped away by
+     the face's clip-path). */
+  .edge-svg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    overflow: visible; pointer-events: none; z-index: 3;
+    opacity: 0; transition: opacity .3s;
   }
+  .edge-svg polygon {
+    fill: none; stroke: #fff; stroke-width: 3; vector-effect: non-scaling-stroke;
+    stroke-linejoin: round; filter: drop-shadow(0 0 5px rgba(255,255,255,.9));
+  }
+  .scene.show-edges .edge-svg { opacity: 1; }
+  /* Vertex dots sit at every polygon corner. In the net that means shared
+     corners show twice; folded up they land on top of each other, which is
+     exactly the point being made. */
   .corner {
-    position: absolute; width: 14px; height: 14px; border-radius: 50%;
+    position: absolute; width: 13px; height: 13px; border-radius: 50%;
+    margin: -6.5px 0 0 -6.5px;
     background: #fff; border: 3px solid #fff;
     box-shadow: 0 0 12px rgba(255,255,255,.9), 0 0 4px rgba(0,0,0,.4);
-    display: none; z-index: 3;
+    opacity: 0; transition: opacity .3s; z-index: 4; pointer-events: none;
   }
-  .cube-root.show-corners .corner { display: block; }
-  .corner.tl { top: -7px; left: -7px; }
-  .corner.tr { top: -7px; right: -7px; }
-  .corner.bl { bottom: -7px; left: -7px; }
-  .corner.br { bottom: -7px; right: -7px; }
+  .scene.show-corners .corner { opacity: 1; }
 
   /* guide panel */
   .guide {
@@ -1503,34 +1526,8 @@
     <div class="spotlight" id="spotlight"></div>
     <div class="scene">
       <div class="orbit" id="orbit">
-        <div class="centerer" id="centerer">
-          <!-- Face 1 (front) is the anchor; all other faces hinge off it -->
-          <div class="face f1 cube-root" id="face1">
-            <span class="badge">1</span><span class="check">✓</span>
-            <span class="corner tl"></span><span class="corner tr"></span>
-            <span class="corner bl"></span><span class="corner br"></span>
-
-            <div class="hinge" id="hingeT">
-              <div class="face f2" id="face2"><span class="badge">2</span><span class="check">✓</span></div>
-            </div>
-            <div class="hinge" id="hingeR">
-              <div class="face f3" id="face3"><span class="badge">3</span><span class="check">✓</span>
-                <div class="hinge" id="hingeK">
-                  <div class="face f6" id="face6"><span class="badge">6</span><span class="check">✓</span>
-                    <span class="corner tl"></span><span class="corner tr"></span>
-                    <span class="corner bl"></span><span class="corner br"></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="hinge" id="hingeB">
-              <div class="face f4" id="face4"><span class="badge">4</span><span class="check">✓</span></div>
-            </div>
-            <div class="hinge" id="hingeL">
-              <div class="face f5" id="face5"><span class="badge">5</span><span class="check">✓</span></div>
-            </div>
-          </div>
-        </div>
+        <!-- Faces and hinges are generated from the active shape's net spec -->
+        <div class="centerer" id="centerer"></div>
       </div>
     </div>
     </div><!-- /scene-region -->
@@ -1541,12 +1538,8 @@
       <div class="step-label" id="stepLabel"></div>
       <button class="learn-more-btn" id="learnMoreBtn" type="button" hidden>✦ Learn more</button>
     </div>
-    <div class="choices" id="choices" style="display:none">
-      <button class="choice" data-n="4">4</button>
-      <button class="choice" data-n="5">5</button>
-      <button class="choice" data-n="6">6</button>
-      <button class="choice" data-n="8">8</button>
-    </div>
+    <!-- options are rebuilt per shape around its true face count -->
+    <div class="choices" id="choices" style="display:none"></div>
     <div class="actions" id="actions"></div>
   </div>
 
@@ -1603,7 +1596,7 @@ var MIProgress = (function () {
     var mainDone = MAIN.every(isComplete);
     var note = document.getElementById("zoneNote");
     if (note) note.textContent = mainDone
-      ? "Main path cleared! These tougher solids are coming soon — the same unfold, more faces."
+      ? "Main path cleared — the shelf is open. Same unfold, trickier solids: triangles, points and all."
       : "Clear the main path to unlock the shelf — trickier solids to take apart.";
     Array.prototype.forEach.call(document.querySelectorAll(".tile"), function (t) {
       t.classList.toggle("ready", mainDone);
@@ -1650,22 +1643,10 @@ MIProgress.paintAll();
   var trackNodes = [];   // built to match steps.length in buildTrack()
   var learnMoreBtn = $("learnMoreBtn"), lmSheet = $("lmSheet"), lmTitle = $("lmTitle"), lmBody = $("lmBody");
   var areaReadout = $("areaReadout");
-  var cubeRoot = $("face1"); // overlay classes go on the anchor face's parent chain
-  var faces = [1, 2, 3, 4, 5, 6].map(function (n) { return $("face" + n); });
-  // Each face gets an area label used in the surface-area step.
-  var areaLabels = faces.map(function (f) {
-    var el = document.createElement("span");
-    el.className = "area-label";
-    f.appendChild(el);
-    return el;
-  });
-  // Dim overlay per face, for the focus system. A dedicated child (rather
-  // than a filter on .face) keeps nested faces 2-6 unaffected.
-  faces.forEach(function (f) {
-    var d = document.createElement("span");
-    d.className = "fx-dim";
-    f.appendChild(d);
-  });
+  var scene = document.querySelector(".scene");
+  // Rebuilt per shape by buildNet(); every downstream system (focus, tapping,
+  // measuring, area labels) talks to these two arrays and nothing else.
+  var faces = [], areaLabels = [], fnodes = [];
 
   var ruler = $("ruler"), rulerFace = $("rulerFace"),
       dropHint = $("dropHint"), whyPanel = $("whyPanel");
@@ -1688,15 +1669,135 @@ MIProgress.paintAll();
   var zoom = 1;                // wheel-zoom multiplier
   var overlays = { edges: false, corners: false };
 
-  // ---------- shape config (box family) ----------
-  // The cube and rectangular prism share one net + hinge tree — a 6-face cross:
-  //   front (anchor) with top/bottom/left/right folding off it, and back off right.
-  // Only the per-axis dimensions differ, so the engine is driven by W/H/D (in units).
-  // Adding a box-shaped solid = a new entry here; other topologies extend the engine.
+  /* ---------- net geometry ------------------------------------------------
+     A shape is a tree of faces. Each face carries a polygon in net space
+     (centimetres, so areas fall straight out of the coordinates) plus the
+     edge it hinges on and the solid's dihedral angle along that edge.
+
+     Folding rotates a face about its hinge by (180° − dihedral). The
+     rotation is `rotate(θ) rotateX(φ) rotate(-θ)`, which is a rotation of φ
+     about the in-plane axis at angle θ — so any edge works, not just the
+     axis-aligned ones a box needs. Which way it folds is derived from which
+     side of the directed hinge the face sits on, so specs never carry
+     hand-tuned signs. */
+  function polyArea(poly) {   // shoelace
+    var a = 0;
+    for (var i = 0, n = poly.length; i < n; i++) {
+      var j = (i + 1) % n;
+      a += poly[i][0] * poly[j][1] - poly[j][0] * poly[i][1];
+    }
+    return Math.abs(a) / 2;
+  }
+  function polyCentroid(poly) {
+    var x = 0, y = 0;
+    poly.forEach(function (p) { x += p[0]; y += p[1]; });
+    return [x / poly.length, y / poly.length];
+  }
+  // Mirror point q across the line through a and b.
+  function reflect(q, a, b) {
+    var dx = b[0] - a[0], dy = b[1] - a[1];
+    var len2 = dx * dx + dy * dy || 1;
+    var t = ((q[0] - a[0]) * dx + (q[1] - a[1]) * dy) / len2;
+    var fx = a[0] + t * dx, fy = a[1] + t * dy;
+    return [2 * fx - q[0], 2 * fy - q[1]];
+  }
+  // The triangle sharing edge (i,j) with `tri`, folded flat — i.e. the third
+  // vertex mirrored across that edge. Used to lay out all-triangle nets.
+  function mirrorTri(tri, i, j) {
+    var k = 3 - i - j;
+    return [tri[i], tri[j], reflect(tri[k], tri[i], tri[j])];
+  }
+
+  var T_H = Math.sqrt(3) / 2;          // height of a unit equilateral triangle
+  var DIH_TETRA = Math.acos(1 / 3) * 180 / Math.PI;        // ≈ 70.53°
+  var DIH_OCTA = Math.acos(-1 / 3) * 180 / Math.PI;        // ≈ 109.47°
+
+  // --- net builders -------------------------------------------------------
+  // Box family: the familiar 6-face cross.
+  function boxNet(a, b, c) {   // a = width, b = height, c = depth
+    var R = function (x, y, w, h) { return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]; };
+    return [
+      { poly: R(0, 0, a, b), parent: -1, name: "front" },
+      { poly: R(0, -c, a, c), parent: 0, hinge: [[0, 0], [a, 0]], dih: 90, name: "top" },
+      { poly: R(a, 0, c, b), parent: 0, hinge: [[a, 0], [a, b]], dih: 90, name: "right" },
+      { poly: R(0, b, a, c), parent: 0, hinge: [[0, b], [a, b]], dih: 90, name: "bottom" },
+      { poly: R(-c, 0, c, b), parent: 0, hinge: [[0, 0], [0, b]], dih: 90, name: "left" },
+      { poly: R(a + c, 0, a, b), parent: 2, hinge: [[a + c, 0], [a + c, b]], dih: 90, name: "back" }
+    ];
+  }
+  // Right-triangle prism: three rectangles in a row (widths = the triangle's
+  // sides) with the two triangular ends hinged off the middle one.
+  function triPrismNet(legX, legY, L) {
+    var hyp = Math.sqrt(legX * legX + legY * legY);
+    var x0 = legY, x1 = legY + legX;           // middle rectangle spans [x0, x1]
+    var R = function (x, y, w, h) { return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]; };
+    // Interior angles of the cross-section give the dihedral along each long edge.
+    var angA = 90;                                                    // between the two legs
+    var angB = Math.atan(legY / legX) * 180 / Math.PI;                // at the far end of legX
+    return [
+      { poly: R(x0, 0, legX, L), parent: -1, name: "side" },
+      { poly: R(0, 0, legY, L), parent: 0, hinge: [[x0, 0], [x0, L]], dih: angA, name: "side" },
+      { poly: R(x1, 0, hyp, L), parent: 0, hinge: [[x1, 0], [x1, L]], dih: angB, name: "slope" },
+      { poly: [[x0, 0], [x1, 0], [x0, -legY]], parent: 0, hinge: [[x0, 0], [x1, 0]], dih: 90, name: "end" },
+      { poly: [[x0, L], [x1, L], [x0, L + legY]], parent: 0, hinge: [[x0, L], [x1, L]], dih: 90, name: "end" }
+    ];
+  }
+  // Square pyramid: base square with four triangles fanned off its edges.
+  function pyramidNet(a, slant) {
+    var dih = Math.atan(Math.sqrt(slant * slant - (a / 2) * (a / 2)) / (a / 2)) * 180 / Math.PI;
+    return [
+      { poly: [[0, 0], [a, 0], [a, a], [0, a]], parent: -1, name: "base" },
+      { poly: [[0, 0], [a, 0], [a / 2, -slant]], parent: 0, hinge: [[0, 0], [a, 0]], dih: dih, name: "side" },
+      { poly: [[a, 0], [a, a], [a + slant, a / 2]], parent: 0, hinge: [[a, 0], [a, a]], dih: dih, name: "side" },
+      { poly: [[0, a], [a, a], [a / 2, a + slant]], parent: 0, hinge: [[0, a], [a, a]], dih: dih, name: "side" },
+      { poly: [[0, 0], [0, a], [-slant, a / 2]], parent: 0, hinge: [[0, 0], [0, a]], dih: dih, name: "side" }
+    ];
+  }
+  // Tetrahedron: a central triangle with its three neighbours mirrored out,
+  // which lays out as one big triangle.
+  function tetraNet(a) {
+    var c = [[0, 0], [a, 0], [a / 2, a * T_H]];
+    var kids = [mirrorTri(c, 0, 1), mirrorTri(c, 1, 2), mirrorTri(c, 2, 0)];
+    return [
+      { poly: c, parent: -1, name: "face" },
+      { poly: kids[0], parent: 0, hinge: [c[0], c[1]], dih: DIH_TETRA, name: "face" },
+      { poly: kids[1], parent: 0, hinge: [c[1], c[2]], dih: DIH_TETRA, name: "face" },
+      { poly: kids[2], parent: 0, hinge: [c[2], c[0]], dih: DIH_TETRA, name: "face" }
+    ];
+  }
+  // Octahedron: the classic two-row strip of eight triangles. Each row is a
+  // zigzag; the rows are chained through one shared horizontal edge.
+  function octaNet(a) {
+    var h = a * T_H, F = [];
+    // row A occupies y ∈ [0, h] with apexes alternating up/down
+    var A1 = [[0, h], [a, h], [a / 2, 0]];
+    var A2 = [[a / 2, 0], [a * 1.5, 0], [a, h]];
+    var A3 = [[a, h], [a * 2, h], [a * 1.5, 0]];
+    var A4 = [[a * 1.5, 0], [a * 2.5, 0], [a * 2, h]];
+    // row B mirrors it below
+    var B1 = [[0, h], [a, h], [a / 2, 2 * h]];
+    var B2 = [[a / 2, 2 * h], [a * 1.5, 2 * h], [a, h]];
+    var B3 = [[a, h], [a * 2, h], [a * 1.5, 2 * h]];
+    var B4 = [[a * 1.5, 2 * h], [a * 2.5, 2 * h], [a * 2, h]];
+    var D = DIH_OCTA;
+    F.push({ poly: A1, parent: -1, name: "face" });
+    F.push({ poly: A2, parent: 0, hinge: [A1[1], A1[2]], dih: D, name: "face" });
+    F.push({ poly: A3, parent: 1, hinge: [A2[1], A2[2]], dih: D, name: "face" });
+    F.push({ poly: A4, parent: 2, hinge: [A3[1], A3[2]], dih: D, name: "face" });
+    F.push({ poly: B1, parent: 0, hinge: [A1[0], A1[1]], dih: D, name: "face" });
+    F.push({ poly: B2, parent: 4, hinge: [B1[1], B1[2]], dih: D, name: "face" });
+    F.push({ poly: B3, parent: 5, hinge: [B2[1], B2[2]], dih: D, name: "face" });
+    F.push({ poly: B4, parent: 6, hinge: [B3[1], B3[2]], dih: D, name: "face" });
+    return F;
+  }
+
+  // ---------- shape config ----------
+  // Each entry is a net spec plus its copy. Adding a solid = a new entry.
   var SHAPES = {
     cube: {
-      key: "cube", W: 1, H: 1, D: 1,
-      dim: { a: 3, b: 3, c: 3 }, unit: "cm",  // a=width, b=height, c=depth (match W:H:D ratio)
+      key: "cube",
+      net: boxNet(3, 3, 3), F: 6, E: 12, V: 8, faceWord: "squares",
+      dim: { a: 3, b: 3, c: 3 }, unit: "cm",
       title: "Unfold the Cube",
       solidLabel: "Cube",
       buildup: "Straight on, a cube looks like a flat square. Drag it — as it turns, the depth appears.",
@@ -1711,7 +1812,8 @@ MIProgress.paintAll();
       next: "rect"
     },
     rect: {
-      key: "rect", W: 1.333, H: 1, D: 0.667,
+      key: "rect",
+      net: boxNet(4, 3, 2), F: 6, E: 12, V: 8, faceWord: "rectangles",
       dim: { a: 4, b: 3, c: 2 }, unit: "cm",  // 4×3×2 → three distinct face areas: 12, 8, 6
       title: "Unfold the Rectangular Prism",
       solidLabel: "Prism",
@@ -1723,6 +1825,72 @@ MIProgress.paintAll();
       saIntro: "You measured by hand last time — now the labels do it for you. This box is <strong>4 × 3 × 2 cm</strong>, so tap each face to add up three different sizes.",
       counted: "<strong>All 6 counted!</strong> Three matching pairs — top &amp; bottom, front &amp; back, end &amp; end.",
       done: "🎉 <strong>Same 6 faces, 12 edges and 8 corners as the cube</strong> — but with three face sizes, which makes its surface area more interesting.",
+      next: null
+    },
+
+    /* ---- Challenge Zone: the first solids that aren't boxes ---- */
+    triprism: {
+      key: "triprism", challenge: true,
+      net: triPrismNet(4, 3, 6), F: 5, E: 9, V: 6, faceWord: "faces",
+      unit: "cm",
+      title: "Unfold the Triangular Prism",
+      solidLabel: "Triangular prism",
+      buildup: "Face-on it reads as a plain triangle. Drag it — the depth appears and it becomes a wedge.",
+      buildupDone: "<strong>3D!</strong> A triangle given <strong>depth</strong> becomes a prism — a wedge with two matching ends.",
+      intro: "A triangular prism. Its faces aren’t all the same shape any more — drag to spin it and count them.",
+      netDesc: "Three rectangles in a row, capped by two triangles. Tap each of the 5 to check it off.",
+      whyIntro: "New wrinkle: this one has <strong>triangles</strong>. How much paper wraps a shape whose faces aren’t all rectangles?",
+      saIntro: "Rectangles are width × height. Triangles are <strong>half</strong> of that — ½ × base × height. Tap each face.",
+      counted: "<strong>All 5 counted!</strong> Three rectangles wrap around, and the two triangles cap the ends.",
+      done: "🎉 <strong>5 faces, 9 edges, 6 corners.</strong> Fewer faces than a cube — but two different face shapes to measure.",
+      next: null
+    },
+    pyramid: {
+      key: "pyramid", challenge: true,
+      net: pyramidNet(4, 4), F: 5, E: 8, V: 5, faceWord: "faces",
+      unit: "cm",
+      title: "Unfold the Square Pyramid",
+      solidLabel: "Square pyramid",
+      buildup: "From straight above, a pyramid is just a square. Drag it — the point rises out of the page.",
+      buildupDone: "<strong>3D!</strong> Four triangles leaning in from a square base, meeting at a single point on top.",
+      intro: "A square pyramid. One face is a square, the rest are triangles — drag to spin it and count them.",
+      netDesc: "A square base with four triangles fanned off its edges. Tap each of the 5 to check it off.",
+      whyIntro: "How much paper wraps a pyramid? One square plus four triangles — and they’re measured differently.",
+      saIntro: "The base is 4 × 4. Each triangle is ½ × base × slant height. Tap each face to add them up.",
+      counted: "<strong>All 5 counted!</strong> Fold the four triangles up and they meet at a single point — the apex.",
+      done: "🎉 <strong>5 faces, 8 edges, 5 corners.</strong> Notice the odd one out: four corners on the base, one at the top.",
+      next: null
+    },
+    tetra: {
+      key: "tetra", challenge: true,
+      net: tetraNet(4), F: 4, E: 6, V: 4, faceWord: "triangles",
+      unit: "cm",
+      title: "Unfold the Tetrahedron",
+      solidLabel: "Tetrahedron",
+      buildup: "It looks like a flat triangle head-on. Drag it — and a fourth face appears behind.",
+      buildupDone: "<strong>3D!</strong> Four triangles, and that’s the whole shape — the simplest solid there is.",
+      intro: "A tetrahedron — the smallest possible solid. Drag to spin it and count the faces.",
+      netDesc: "Its net is one big triangle made of four smaller ones. Tap each of the 4 to check it off.",
+      whyIntro: "Every face here is a triangle, so every measurement uses ½ × base × height.",
+      saIntro: "Four identical triangles, each ½ × 4 × 3.46. Tap each face to add them up.",
+      counted: "<strong>All 4 counted!</strong> Fold the three outer triangles up and they close into a point.",
+      done: "🎉 <strong>4 faces, 6 edges, 4 corners.</strong> You can’t build a solid from fewer — this is the minimum.",
+      next: null
+    },
+    octa: {
+      key: "octa", challenge: true,
+      net: octaNet(4), F: 8, E: 12, V: 6, faceWord: "triangles",
+      unit: "cm",
+      title: "Unfold the Octahedron",
+      solidLabel: "Octahedron",
+      buildup: "Edge-on it looks like a flat diamond. Drag it — and it opens into eight faces.",
+      buildupDone: "<strong>3D!</strong> Eight triangles — like two square pyramids glued base to base.",
+      intro: "An octahedron: eight triangular faces. Spinning and counting is genuinely hard here — try it.",
+      netDesc: "Eight triangles in two zigzag rows. Tap each of the 8 to check it off.",
+      whyIntro: "Eight faces to wrap. Same rule though — every one is ½ × base × height.",
+      saIntro: "Eight identical triangles, each ½ × 4 × 3.46. Tap each face to add them up.",
+      counted: "<strong>All 8 counted!</strong> Those two rows roll up into a diamond with a point at the top and bottom.",
+      done: "🎉 <strong>8 faces, 12 edges, 6 corners.</strong> Same 12 edges as a cube — but eight faces instead of six.",
       next: null
     }
   };
@@ -1778,64 +1946,158 @@ MIProgress.paintAll();
     orientation = qNormalize(qMul(qDelta, orientation));
   }
 
-  function setBox(el, w, h) { el.style.width = w + "px"; el.style.height = h + "px"; }
+  /* ---------- build the net's DOM ---------------------------------------
+     One `.fnode` per face, nested to match the hinge tree. Every node is a
+     zero-size frame sharing the net's origin, so a face's skin can be placed
+     at plain net coordinates and each node only has to carry its own hinge
+     rotation — the nesting composes the rest. */
+  var netInfo = null;   // { faces: [...], bbox, anchorH }
+
+  function buildNet() {
+    centerer.innerHTML = "";
+    faces = []; areaLabels = []; fnodes = [];
+    var spec = shape.net;
+    var nodes = [];
+    var bbox = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+
+    spec.forEach(function (fs, i) {
+      var node = document.createElement("div");
+      node.className = "fnode";
+      (fs.parent < 0 ? centerer : nodes[fs.parent]).appendChild(node);
+      nodes[i] = node;
+
+      var xs = fs.poly.map(function (pt) { return pt[0]; });
+      var ys = fs.poly.map(function (pt) { return pt[1]; });
+      var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+      var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+      bbox.x0 = Math.min(bbox.x0, minX); bbox.x1 = Math.max(bbox.x1, maxX);
+      bbox.y0 = Math.min(bbox.y0, minY); bbox.y1 = Math.max(bbox.y1, maxY);
+
+      var isRect = fs.poly.length === 4;
+      var face = document.createElement("div");
+      face.className = "face f" + ((i % 6) + 1) + (isRect ? " rect" : "");
+      // Centroid as a % of the bounding box — drives badge/label/check
+      // placement so nothing lands outside a clipped polygon.
+      var ctr = polyCentroid(fs.poly);
+      face.style.setProperty("--cx", ((ctr[0] - minX) / (maxX - minX) * 100).toFixed(2) + "%");
+      face.style.setProperty("--cy", ((ctr[1] - minY) / (maxY - minY) * 100).toFixed(2) + "%");
+      face.setAttribute("data-fi", i);
+      face.id = "face" + (i + 1);   // stable hook for tests and deep links
+      // Non-rectangles are cut out of their bounding box with a clip path.
+      if (!isRect) {
+        face.style.clipPath = "polygon(" + fs.poly.map(function (pt) {
+          return ((pt[0] - minX) / (maxX - minX) * 100).toFixed(3) + "% " +
+                 ((pt[1] - minY) / (maxY - minY) * 100).toFixed(3) + "%";
+        }).join(",") + ")";
+      }
+      face.innerHTML =
+        '<span class="badge">' + (i + 1) + '</span>' +
+        '<span class="check">✓</span>' +
+        '<span class="area-label"></span>' +
+        '<span class="fx-dim"></span>' +
+        '<svg class="edge-svg" viewBox="0 0 100 100" preserveAspectRatio="none">' +
+          '<polygon points="' + fs.poly.map(function (pt) {
+            return ((pt[0] - minX) / (maxX - minX) * 100).toFixed(2) + "," +
+                   ((pt[1] - minY) / (maxY - minY) * 100).toFixed(2);
+          }).join(" ") + '"/>' +
+        '</svg>';
+      node.appendChild(face);
+
+      // A vertex dot at each polygon corner, placed on the node (not the
+      // face) so the face's clip-path can't cut it in half.
+      fs.poly.forEach(function (pt) {
+        var dot = document.createElement("span");
+        dot.className = "corner";
+        dot.setAttribute("data-vx", pt[0]);
+        dot.setAttribute("data-vy", pt[1]);
+        node.appendChild(dot);
+      });
+
+      faces.push(face);
+      areaLabels.push(face.querySelector(".area-label"));
+      fnodes.push({ el: node, spec: fs, minX: minX, minY: minY, maxX: maxX, maxY: maxY });
+    });
+
+    netInfo = {
+      bbox: bbox,
+      w: bbox.x1 - bbox.x0,
+      h: bbox.y1 - bbox.y0,
+      anchorH: fnodes[0].maxY - fnodes[0].minY
+    };
+    sizeFaces();
+  }
+
+  // The mode tag and Cal's bubble sit across the top of the scene; the area
+  // readout and step track across the bottom. The flat net is fitted into the
+  // band between them rather than the whole box.
+  var TOP_CHROME = 46, BOTTOM_CHROME = 58;
 
   function sizeFaces() {
-    // The flat cross-net spans (2D + 2W) units wide and (2D + H) units tall;
-    // scale units→px so it fits the scene with a little margin.
-    var w = sceneRegion.clientWidth, h = sceneRegion.clientHeight;
-    var netW = 2 * shape.D + 2 * shape.W;
-    var netH = 2 * shape.D + shape.H;
-    S = Math.floor(Math.min(w / (netW + 0.6), h / (netH + 0.6), 120));
-    document.documentElement.style.setProperty("--s", S + "px");
+    if (!netInfo) return;
+    // Scale cm → px so the whole flat net fits the scene with a margin.
+    var w = sceneRegion.clientWidth;
+    var h = sceneRegion.clientHeight - TOP_CHROME - BOTTOM_CHROME;
+    var pad = 1.1;
+    S = Math.min(w / (netInfo.w * pad), h / (netInfo.h * pad), 46);
+    // --s drives the ruler and hashmark sizing (cube only, where the anchor
+    // face is representative); per-face type uses --fs, set in layout().
+    document.documentElement.style.setProperty("--s", (netInfo.anchorH * S) + "px");
     layout();
   }
 
   function layout() {
-    // Per-face pixel dimensions from the shape's unit dims.
-    var W = shape.W * S, H = shape.H * S, D = shape.D * S;
-    // anchor (front): W × H
-    setBox(face1, W, H);
-    // top: W × D, hinged on the front's top edge
-    setBox(hingeT, W, D); setBox(face2, W, D);
-    hingeT.style.left = "0px"; hingeT.style.top = (-D) + "px"; hingeT.style.transformOrigin = "center bottom";
-    // bottom: W × D, hinged on the front's bottom edge
-    setBox(hingeB, W, D); setBox(face4, W, D);
-    hingeB.style.left = "0px"; hingeB.style.top = H + "px"; hingeB.style.transformOrigin = "center top";
-    // left: D × H, hinged on the front's left edge
-    setBox(hingeL, D, H); setBox(face5, D, H);
-    hingeL.style.left = (-D) + "px"; hingeL.style.top = "0px"; hingeL.style.transformOrigin = "right center";
-    // right: D × H, hinged on the front's right edge
-    setBox(hingeR, D, H); setBox(face3, D, H);
-    hingeR.style.left = W + "px"; hingeR.style.top = "0px"; hingeR.style.transformOrigin = "left center";
-    // back: W × H, hinged on the right face's outer edge
-    setBox(hingeK, W, H); setBox(face6, W, H);
-    hingeK.style.left = D + "px"; hingeK.style.top = "0px"; hingeK.style.transformOrigin = "left center";
+    fnodes.forEach(function (fn) {
+      var fs = fn.spec;
+      var fw = (fn.maxX - fn.minX) * S, fh = (fn.maxY - fn.minY) * S;
+      var faceEl = fn.el.querySelector(".face");
+      faceEl.style.cssText +=
+        ";left:" + (fn.minX * S) + "px;top:" + (fn.minY * S) + "px" +
+        ";width:" + fw + "px;height:" + fh + "px";
+      // Type scales with the face it sits on, so a small triangle's number
+      // and label stay inside it.
+      faceEl.style.setProperty("--fs", Math.min(fw, fh) + "px");
+      Array.prototype.forEach.call(fn.el.children, function (c) {
+        if (!c.classList.contains("corner")) return;
+        c.style.left = (+c.getAttribute("data-vx") * S) + "px";
+        c.style.top = (+c.getAttribute("data-vy") * S) + "px";
+      });
+      if (fs.parent < 0) return;
+      // Rotation axis = the hinge, anchored at its first endpoint.
+      var h0 = fs.hinge[0], h1 = fs.hinge[1];
+      fn.el.style.transformOrigin = (h0[0] * S) + "px " + (h0[1] * S) + "px";
+      fn.theta = Math.atan2(h1[1] - h0[1], h1[0] - h0[0]) * 180 / Math.PI;
+      // Which side of the directed hinge the face sits on decides the sign,
+      // so specs never need hand-tuned fold directions.
+      var c = polyCentroid(fs.poly);
+      var cross = (h1[0] - h0[0]) * (c[1] - h0[1]) - (h1[1] - h0[1]) * (c[0] - h0[0]);
+      fn.fold = (cross < 0 ? 1 : -1) * (180 - fs.dih);
+    });
     render();
   }
 
   function render() {
-    var a = p * 90;
-    hingeT.style.transform = "rotateX(" + a + "deg)";
-    hingeB.style.transform = "rotateX(" + (-a) + "deg)";
-    hingeL.style.transform = "rotateY(" + (-a) + "deg)";
-    hingeR.style.transform = "rotateY(" + a + "deg)";
-    hingeK.style.transform = "rotateY(" + a + "deg)";
+    fnodes.forEach(function (fn) {
+      if (fn.spec.parent < 0) return;
+      fn.el.style.transform =
+        "rotate(" + fn.theta + "deg) rotateX(" + (fn.fold * p) + "deg) rotate(" + (-fn.theta) + "deg)";
+    });
 
     // Ease the whole assembly: face-on when flat, free orbit when folded.
     var eased = p > 0.999 ? orientation : qSlerp(Q_IDENTITY, orientation, p);
     orbit.style.transform = qToMatrix3d(eased);
 
-    // Center the assembly: solid centers on the front face; when flat, nudge
-    // left because the net extends further right (right face + back).
-    var W = shape.W * S, H = shape.H * S, D = shape.D * S;
-    var cx = -W / 2 - (W / 4) * (1 - p);
-    var cy = -H / 2;
-    var cz = (D / 2) * p;
-    var scale = (1 - 0.18 * (1 - p)) * zoom; // shrink slightly when flat so net fits, plus wheel-zoom
+    // Centre on the anchor face when folded (it's the piece everything else
+    // wraps around); on the whole net's middle when flat.
+    var a = fnodes[0];
+    var solidX = (a.minX + a.maxX) / 2, solidY = (a.minY + a.maxY) / 2;
+    var netX = (netInfo.bbox.x0 + netInfo.bbox.x1) / 2, netY = (netInfo.bbox.y0 + netInfo.bbox.y1) / 2;
+    var cx = -(solidX * p + netX * (1 - p)) * S;
+    // Sit the flat net in the band between the top and bottom chrome.
+    var cy = -(solidY * p + netY * (1 - p)) * S + ((TOP_CHROME - BOTTOM_CHROME) / 2) * (1 - p);
+    var scale = zoom;
     centerer.style.transform =
       "scale3d(" + scale + "," + scale + "," + scale + ") " +
-      "translate3d(" + cx + "px," + cy + "px," + cz + "px)";
+      "translate3d(" + cx + "px," + cy + "px,0px)";
 
     // Overlays only make sense on the folded cube.
     if (p < 0.92 && (overlays.edges || overlays.corners)) setOverlay(null);
@@ -1915,14 +2177,14 @@ MIProgress.paintAll();
   function setOverlay(kind) {
     overlays.edges = kind === "edges";
     overlays.corners = kind === "corners";
-    cubeRoot.classList.toggle("show-edges", overlays.edges);
-    cubeRoot.classList.toggle("show-corners", overlays.corners);
+    scene.classList.toggle("show-edges", overlays.edges);
+    scene.classList.toggle("show-corners", overlays.corners);
     var edgeBtn = document.querySelector('[data-overlay="edges"]');
     var cornerBtn = document.querySelector('[data-overlay="corners"]');
     if (edgeBtn) edgeBtn.classList.toggle("pressed", overlays.edges);
     if (cornerBtn) cornerBtn.classList.toggle("pressed", overlays.corners);
-    if (overlays.edges) { showTag("A cube has 12 edges"); revealCounter("cEdges", 12); }
-    else if (overlays.corners) { showTag("A cube has 8 corners (vertices)"); revealCounter("cCorners", 8); }
+    if (overlays.edges) { showTag("This solid has " + shape.E + " edges"); revealCounter("cEdges", shape.E); }
+    else if (overlays.corners) { showTag("This solid has " + shape.V + " corners (vertices)"); revealCounter("cCorners", shape.V); }
     else showTag(null);
   }
   var tagTimer = null;
@@ -1989,13 +2251,30 @@ MIProgress.paintAll();
   var edgesSeen = false, cornersSeen = false, tappedCount = 0;
   var saTotal = 0, saCount = 0;  // surface-area running total + faces tapped
 
-  // Per-face areas (units²), by face index 0-5 = front,top,right,bottom,left,back.
+  // Per-face areas, straight off the net polygons (which are in cm).
   function faceAreas() {
-    var d = shape.dim;
-    return [d.a * d.b, d.a * d.c, d.c * d.b, d.a * d.c, d.c * d.b, d.a * d.b];
+    return shape.net.map(function (fs) { return polyArea(fs.poly); });
+  }
+  // Areas can be irrational once triangles are involved, so show at most one
+  // decimal and never a trailing ".0".
+  function fmtArea(v) {
+    return (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, "");
+  }
+  // The "w × h" / "½ × b × h" caption for a face.
+  function faceDimLabel(i) {
+    var fs = shape.net[i];
+    var xs = fs.poly.map(function (p) { return p[0]; });
+    var ys = fs.poly.map(function (p) { return p[1]; });
+    var w = Math.max.apply(null, xs) - Math.min.apply(null, xs);
+    var h = Math.max.apply(null, ys) - Math.min.apply(null, ys);
+    if (fs.poly.length === 4) return fmtArea(w) + "×" + fmtArea(h);
+    // Triangle: label it with the base and height that produce its area.
+    var area = polyArea(fs.poly);
+    var base = Math.max.apply(null, [w, h]);
+    return "½·" + fmtArea(base) + "·" + fmtArea(2 * area / base);
   }
   function updateAreaReadout() {
-    areaReadout.innerHTML = "Surface area: <strong>" + saTotal + "</strong> " + shape.unit + "²";
+    areaReadout.innerHTML = "Surface area: <strong>" + fmtArea(saTotal) + "</strong> " + shape.unit + "²";
   }
 
   /* ---------- guided measuring: drag the ruler onto a face --------------
@@ -2227,11 +2506,9 @@ MIProgress.paintAll();
   function applyFaceArea(idx) {
     var f = faces[idx];
     if (f.classList.contains("sa-shown")) return false;
-    var areas = faceAreas(), d = shape.dim;
-    var faceDims = [[d.a, d.b], [d.a, d.c], [d.c, d.b], [d.a, d.c], [d.c, d.b], [d.a, d.b]][idx];
     f.classList.add("sa-shown");
-    areaLabels[idx].textContent = faceDims[0] + "×" + faceDims[1];
-    saTotal += areas[idx]; saCount++;
+    areaLabels[idx].textContent = faceDimLabel(idx);
+    saTotal += faceAreas()[idx]; saCount++;
     updateAreaReadout();
     return true;
   }
@@ -2769,7 +3046,8 @@ MIProgress.paintAll();
     if (edgesSeen && cornersSeen) {
       var n = $("act-next");
       if (n) n.disabled = false;
-      dotSay("<strong>12 edges, 8 corners.</strong> And a pattern: faces + corners − edges = 2. True for every box-like solid (Euler’s formula).", true);
+      dotSay("<strong>" + shape.E + " edges, " + shape.V + " corners.</strong> And a pattern: " +
+             shape.F + " + " + shape.V + " − " + shape.E + " = 2. Faces + corners − edges = 2 for <em>every</em> solid like this (Euler’s formula).", true);
     }
   }
 
@@ -2779,9 +3057,9 @@ MIProgress.paintAll();
     function tick() {
       if (i >= faces.length) {
         bigCount.classList.remove("show");
-        revealCounter("cFaces", 6);
+        revealCounter("cFaces", shape.F);
         clearFocus();
-        dotSay("<strong>6 faces</strong> — and now you can see all of them at once. No more hiding.", false);
+        dotSay("<strong>" + shape.F + " faces</strong> — and now you can see all of them at once. No more hiding.", false);
         var n = $("act-next");
         if (n) { n.style.display = ""; n.disabled = false; }
         var u = $("act-unfold");
@@ -2808,12 +3086,12 @@ MIProgress.paintAll();
     if (!btn || steps[step].key !== "faces") return;
     var n = +btn.getAttribute("data-n");
     Array.prototype.forEach.call(choicesEl.children, function (c) { c.disabled = true; });
-    if (n === 6) {
+    if (n === shape.F) {
       btn.classList.add("right");
-      dotSay("<strong>Nice — 6 is right!</strong> But tracking the hidden faces is tricky. Let’s prove it beyond doubt.", true);
+      dotSay("<strong>Nice — " + shape.F + " is right!</strong> But tracking the hidden faces is tricky. Let’s prove it beyond doubt.", true);
     } else {
       btn.classList.add("wrong");
-      var right = choicesEl.querySelector('[data-n="6"]');
+      var right = choicesEl.querySelector('[data-n="' + shape.F + '"]');
       if (right) right.classList.add("right");
       dotSay("Tricky, right? Some faces always hide around the back. Let’s find a way to see <strong>every</strong> face at once.", false);
     }
@@ -2821,51 +3099,57 @@ MIProgress.paintAll();
     if (next) next.disabled = false;
   });
 
-  // face tapping — step 2 (count the net) and step 4 (surface area)
-  faces.forEach(function (f, idx) {
-    f.addEventListener("click", function (e) {
-      e.stopPropagation(); // faces 2-6 are nested inside face 1
-      if (p > 0.1 || hasDraggedSince(e)) return;
+  /* Face tapping — step "net" (count them) and step "sa" (add up the areas).
+     Delegated from the scene because the faces are rebuilt for every shape. */
+  scene.addEventListener("click", function (e) {
+    var f = e.target.closest(".face");
+    if (!f) return;
+    var idx = +f.getAttribute("data-fi");
+    e.stopPropagation();               // faces nest inside one another
+    if (p > 0.1 || hasDraggedSince(e)) return;
 
-      if (steps[step].key === "net") {
-        if (f.classList.contains("counted")) return;
-        f.classList.add("counted");
-        tappedCount++;
-        bigCount.textContent = tappedCount;
-        bigCount.classList.add("show");
-        // Dim what's done so the faces still to tap stay obvious.
-        var todo = [];
-        faces.forEach(function (ff, i) { if (!ff.classList.contains("counted")) todo.push(i); });
-        setFocus(todo.length ? todo : null, false);
-        if (tappedCount >= 6) {
-          setTimeout(function () { bigCount.classList.remove("show"); }, 900);
-          dotSay(shape.counted, true);
-          var n = $("act-next");
-          if (n) n.disabled = false;
-        }
-        return;
+    if (steps[step].key === "net") {
+      if (f.classList.contains("counted")) return;
+      f.classList.add("counted");
+      tappedCount++;
+      bigCount.textContent = tappedCount;
+      bigCount.classList.add("show");
+      // Dim what's done so the faces still to tap stay obvious.
+      var todo = [];
+      faces.forEach(function (ff, i) { if (!ff.classList.contains("counted")) todo.push(i); });
+      setFocus(todo.length ? todo : null, false);
+      if (tappedCount >= shape.F) {
+        setTimeout(function () { bigCount.classList.remove("show"); }, 900);
+        dotSay(shape.counted, true);
+        var n = $("act-next");
+        if (n) n.disabled = false;
       }
+      return;
+    }
 
-      if (steps[step].key === "sa") {  // surface area: reveal each face's area, sum them
-        if (measure.active) return;    // ruler phase owns the stage
-        if (!applyFaceArea(idx)) return;
-        refreshSAFocus();   // keep whatever's left to tap clearly lit
-        if (saCount >= 6) {
-          var terms = uniqueAreaTerms();
-          dotSay("<strong>Surface area = " + saTotal + " " + shape.unit + "²</strong> — " + terms + ". The paper it takes to wrap the " + shape.solidLabel.toLowerCase() + ".", true);
-          var n2 = $("act-next");
-          if (n2) n2.disabled = false;
-        }
-        return;
+    if (steps[step].key === "sa") {  // surface area: reveal each face's area, sum them
+      if (measure.active) return;    // ruler phase owns the stage
+      if (!applyFaceArea(idx)) return;
+      refreshSAFocus();   // keep whatever's left to tap clearly lit
+      if (saCount >= shape.F) {
+        var terms = uniqueAreaTerms();
+        dotSay("<strong>Surface area = " + fmtArea(saTotal) + " " + shape.unit + "²</strong> — " + terms +
+               ". The paper it takes to wrap the " + shape.solidLabel.toLowerCase() + ".", true);
+        var n2 = $("act-next");
+        if (n2) n2.disabled = false;
       }
-    });
+      return;
+    }
   });
 
   // Build the "2×12 + 2×8 + 2×6" style summary of the surface-area sum.
   function uniqueAreaTerms() {
     var counts = {};
-    faceAreas().forEach(function (a) { counts[a] = (counts[a] || 0) + 1; });
-    return Object.keys(counts).map(Number).sort(function (a, b) { return b - a; })
+    faceAreas().forEach(function (a) {
+      var k = fmtArea(a);
+      counts[k] = (counts[k] || 0) + 1;
+    });
+    return Object.keys(counts).sort(function (a, b) { return b - a; })
       .map(function (a) { return counts[a] + "×" + a; }).join(" + ");
   }
   // suppress taps that were really drags
@@ -2883,12 +3167,35 @@ MIProgress.paintAll();
     if (actTitle) actTitle.textContent = shape.title;
     menu.style.display = "none";
     activity.style.display = "flex";
-    sizeFaces();
+    buildChoices();
+    buildNet();      // rebuilds the faces for this shape, then sizes them
     resetActivity();
+  }
+  // Face-count options: the right answer plus plausible neighbours.
+  function buildChoices() {
+    var F = shape.F;
+    var opts = {}; opts[F] = true;
+    [F - 2, F - 1, F + 2, F + 1, 4, 6, 8].forEach(function (n) {
+      if (n >= 3 && Object.keys(opts).length < 4) opts[n] = true;
+    });
+    choicesEl.innerHTML = Object.keys(opts).map(Number)
+      .sort(function (a, b) { return a - b; })
+      .map(function (n) { return '<button class="choice" data-n="' + n + '">' + n + '</button>'; })
+      .join("");
   }
   // Journey-map stops. The cube is always open; the prism only launches once
   // it's unlocked (the cube is complete) — a locked stop just nudges instead.
   $("startCube").addEventListener("click", function () { startActivity("cube"); });
+  // Challenge Zone: unlocked once the main path is done, then each tile
+  // launches the same seven-step arc for a non-box solid.
+  Array.prototype.forEach.call(document.querySelectorAll(".tile[data-shape]"), function (tile) {
+    tile.addEventListener("click", function () {
+      var key = tile.getAttribute("data-shape");
+      if (!SHAPES[key]) return;
+      if (MIProgress.isComplete("cube") && MIProgress.isComplete("rect")) startActivity(key);
+      else nudgeLocked(tile);
+    });
+  });
   $("startRect").addEventListener("click", function () {
     if (MIProgress.isComplete("cube")) startActivity("rect");
     else nudgeLocked($("startRect"));
@@ -2930,7 +3237,8 @@ MIProgress.paintAll();
 
   // initial
   buildTrack();
-  sizeFaces();
+  buildChoices();
+  buildNet();
 })();
 
 </script>
