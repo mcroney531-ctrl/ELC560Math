@@ -1224,6 +1224,50 @@
       inset 0 -3px 5px rgba(255,255,255,.15),
       0 4px 12px -6px rgba(91,91,214,.5);
   }
+  /* The "Learn more" pill is the one control that sat outside the clay
+     system — flat, with a hairline border. Puff it up like the ghost
+     buttons, but keep the pill radius and accent so it still reads as an
+     optional door rather than a step action. */
+  #activity .learn-more-btn {
+    border: none;
+    box-shadow:
+      inset 0 3px 5px rgba(255,255,255,.9),
+      inset 0 -4px 7px rgba(91,91,214,.18),
+      0 7px 14px -8px rgba(91,91,214,.45);
+    transition: transform .12s ease, background .15s ease, box-shadow .15s ease;
+  }
+  #activity .learn-more-btn:active {
+    transform: translateY(2px) scale(.96);
+    box-shadow:
+      inset 0 5px 8px rgba(91,91,214,.2),
+      inset 0 -2px 4px rgba(255,255,255,.5);
+  }
+  /* A step whose only move is one action gets a single wide button, centred,
+     with the clay drop-shadow breathing until it's clicked — so there's never
+     a question of what to press next. Pulsing stops on press. */
+  #activity .btn.solo {
+    flex: 0 1 auto; min-width: 62%; margin: 0 auto;
+    animation: soloPulse 1.9s ease-in-out infinite;
+  }
+  #activity .btn.solo:active:not(:disabled),
+  #activity .btn.solo:disabled { animation: none; }
+  @keyframes soloPulse {
+    0%, 100% {
+      box-shadow:
+        inset 0 4px 6px rgba(255,255,255,.4),
+        inset 0 -6px 10px rgba(0,0,0,.25),
+        0 10px 20px -8px rgba(91,91,214,.65);
+    }
+    50% {
+      box-shadow:
+        inset 0 4px 6px rgba(255,255,255,.4),
+        inset 0 -6px 10px rgba(0,0,0,.25),
+        0 16px 30px -6px rgba(91,91,214,.9);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #activity .btn.solo { animation: none; }
+  }
   #activity .choice {
     border: none; border-radius: 18px;
     background: #fbfaf7;
@@ -2510,10 +2554,14 @@ MIProgress.paintAll();
     // Overlays only make sense on the folded cube.
     if (p < 0.92 && (overlays.edges || overlays.corners)) setOverlay(null);
 
-    // Mode indicator: which side of the fold are we looking at.
+    // Mode indicator: which side of the fold are we looking at. The sub-line
+    // says what the mode *is* in a few words, so the label never assumes the
+    // learner already knows what a "net" is.
     var netMode = p < 0.5;
     modeTagTitle.textContent = netMode ? "▦ Net Mode" : "🧊 " + shape.solidLabel + " Mode";
-    modeTagSub.textContent = netMode ? "Study the unfolded structure" : "Explore the 3D shape";
+    modeTagSub.textContent = netMode
+      ? "Opened out flat — every face at once"
+      : "The " + shape.solidLabel.toLowerCase() + " folded up, in 3D";
     modeTag.classList.toggle("net", netMode);
     stage.classList.toggle("net-mode", netMode);
 
@@ -3194,12 +3242,10 @@ MIProgress.paintAll();
       text: "Fold it back up. Faces meet at edges; edges meet at corners. Light them up and count.",
       enter: function () {
         faces.forEach(function (f) { f.classList.remove("counted"); });
-        setActions([
-          { id: "refold", text: "◀ Fold it back up", primary: true },
-          { id: "edges", text: "Edges", overlay: "edges", ghost: true, hidden: true },
-          { id: "corners", text: "Corners", overlay: "corners", ghost: true, hidden: true },
-          { id: "next", text: "Next →", primary: true, disabled: true }
-        ]);
+        // One move, one button: a wide pulsing "Refold" and nothing else.
+        // Edges/Corners/Next only appear once the solid is back together —
+        // a disabled Next sitting alongside just competes for attention.
+        setActions([{ id: "refold", text: "Refold", primary: true, solo: true }]);
       }
     },
     { // why measure at all? — earns the jump from counting to units
@@ -3396,7 +3442,8 @@ MIProgress.paintAll();
     actionsEl.innerHTML = "";
     list.forEach(function (a) {
       var b = document.createElement("button");
-      b.className = "btn " + (a.primary ? "primary" : a.ghost ? "ghost" : "subtle");
+      b.className = "btn " + (a.primary ? "primary" : a.ghost ? "ghost" : "subtle") +
+                    (a.solo ? " solo" : "");
       b.id = "act-" + a.id;
       b.textContent = a.text;
       if (a.overlay) b.setAttribute("data-overlay", a.overlay);
@@ -3467,12 +3514,13 @@ MIProgress.paintAll();
       return;
     }
     if (id === "refold") {
-      btn.disabled = true;
+      btn.disabled = true;   // also stops the pulse, without a layout shift
       animateFold(1, 1600, function () {
-        btn.style.display = "none";
-        var e = $("act-edges"), c = $("act-corners");
-        if (e) e.style.display = "";
-        if (c) c.style.display = "";
+        setActions([
+          { id: "edges", text: "Edges", overlay: "edges", ghost: true },
+          { id: "corners", text: "Corners", overlay: "corners", ghost: true },
+          { id: "next", text: "Next →", primary: true, disabled: true }
+        ]);
         dotSay("Tap <strong>Edges</strong> and <strong>Corners</strong> to light them up. (Spin the cube to check the back, too.)", false);
       });
       return;
