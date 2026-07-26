@@ -949,8 +949,9 @@
     position: absolute; bottom: 1px; font-size: 9px; font-weight: 800;
     color: #7a5410; transform: translateX(-50%);
   }
+  /* Base (horizontal) sizing; vertical mode overrides width/height/position
+     inline via JS (buildRuler), since it needs the actual len/h values. */
   .ruler .r-face { position: absolute; inset: 0; }
-  .ruler.vert .r-face { transform: rotate(-90deg); transform-origin: center; }
   /* Drop zone hint on the face being measured */
   .drop-hint {
     position: absolute; z-index: 3; border-radius: 4px;
@@ -2711,10 +2712,21 @@ MIProgress.paintAll();
   }
 
   // Draw the ruler's own tick marks for a span of `units` over `len` px.
+  // The `.ruler` box itself must swap to a tall/narrow footprint in vertical
+  // mode (not just its tick marks) so the whole ruler — body, shadow, edges —
+  // stands upright alongside the edge it's measuring. `.r-face` keeps its
+  // natural landscape tick-strip layout (percentages assume a len-wide box)
+  // and is rotated + re-centered as a whole, rather than trying to reflow.
   function buildRuler(units, len) {
     var h = rulerH();
-    ruler.style.width = len + "px";
-    ruler.style.height = h + "px";
+    var vert = ruler.classList.contains("vert");
+    ruler.style.width = (vert ? h : len) + "px";
+    ruler.style.height = (vert ? len : h) + "px";
+    if (vert) {
+      rulerFace.style.cssText = "width:" + len + "px; height:" + h + "px; left:50%; top:50%; transform: translate(-50%,-50%) rotate(-90deg);";
+    } else {
+      rulerFace.style.cssText = "";
+    }
     rulerFace.innerHTML = "";
     for (var i = 0; i <= units; i++) {
       var t = document.createElement("span");
