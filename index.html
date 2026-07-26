@@ -519,7 +519,9 @@
   .dsc-box { background: var(--accent); border-radius: 2px; transition: none; }
 
   /* 2 · cube anatomy explorer */
-  .anat { width: 100%; max-width: 240px; height: 150px; display: block; margin: 0 auto 10px; }
+  .anat { width: 100%; max-width: 260px; height: 150px; display: block; margin: 0 auto 10px; }
+  .net-svg { width: 100%; max-width: 250px; height: 140px; display: block; margin: 0 auto 10px; }
+  .net-svg polygon { stroke: #fff; stroke-width: 1.5; opacity: .9; }
   .anat .a-wire { fill: none; stroke: #b9b6f0; stroke-width: 1.4; }
   .anat .a-wire.hid { stroke-dasharray: 3 2.5; opacity: .75; }
   .anat .a-face { opacity: 0; transition: opacity .3s; }
@@ -1791,11 +1793,169 @@ MIProgress.paintAll();
     return F;
   }
 
+  /* ---------- solid data, for the Learn-more wireframes ------------------
+     Vertices in 3D plus the faces that use them. Enough to draw any of the
+     solids from any angle and to work out which parts are round the back,
+     so the anatomy explorer is generated rather than hand-drawn per shape. */
+  var TH = Math.sqrt(3) / 2;
+  var SOLIDS = {
+    cube: {
+      v: [[0,0,0],[3,0,0],[3,3,0],[0,3,0],[0,0,3],[3,0,3],[3,3,3],[0,3,3]],
+      f: [[0,1,2,3],[7,6,5,4],[0,4,5,1],[1,5,6,2],[2,6,7,3],[3,7,4,0]]
+    },
+    rect: {
+      v: [[0,0,0],[4,0,0],[4,3,0],[0,3,0],[0,0,2],[4,0,2],[4,3,2],[0,3,2]],
+      f: [[0,1,2,3],[7,6,5,4],[0,4,5,1],[1,5,6,2],[2,6,7,3],[3,7,4,0]]
+    },
+    triprism: {
+      v: [[0,0,0],[4,0,0],[0,3,0],[0,0,6],[4,0,6],[0,3,6]],
+      f: [[0,2,1],[3,4,5],[0,1,4,3],[1,2,5,4],[2,0,3,5]]
+    },
+    pyramid: {
+      v: [[0,0,0],[4,0,0],[4,4,0],[0,4,0],[2,2,-Math.sqrt(12)]],
+      f: [[0,1,2,3],[0,4,1],[1,4,2],[2,4,3],[3,4,0]]
+    },
+    tetra: {
+      v: [[0,0,0],[4,0,0],[2,4*TH,0],[2,4*TH/3,-4*Math.sqrt(2/3)]],
+      f: [[0,1,2],[0,3,1],[1,3,2],[2,3,0]]
+    },
+    octa: (function () {
+      var r = 4 / Math.sqrt(2);
+      return {
+        v: [[r,0,0],[-r,0,0],[0,r,0],[0,-r,0],[0,0,r],[0,0,-r]],
+        f: [[0,2,4],[2,1,4],[1,3,4],[3,0,4],[2,0,5],[1,2,5],[3,1,5],[0,3,5]]
+      };
+    })()
+  };
+
+  // Project a solid to 2D for the sheet, and work out what's facing away.
+  function projectSolid(key, w, h) {
+    var S3 = SOLIDS[key], yaw = -34 * Math.PI / 180, pit = -24 * Math.PI / 180;
+    var cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pit), sp = Math.sin(pit);
+    var pts = S3.v.map(function (p) {
+      var x = p[0] * cy + p[2] * sy;              // yaw about Y
+      var z = -p[0] * sy + p[2] * cy;
+      var y = p[1] * cp - z * sp;                 // pitch about X
+      var zz = p[1] * sp + z * cp;
+      return [x, y, zz];
+    });
+    var xs = pts.map(function (p) { return p[0]; }), ys = pts.map(function (p) { return p[1]; });
+    var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+    var y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+    var k = Math.min((w - 14) / (x1 - x0), (h - 14) / (y1 - y0));
+    var sc = pts.map(function (p) {
+      return [(p[0] - x0) * k + (w - (x1 - x0) * k) / 2,
+              (p[1] - y0) * k + (h - (y1 - y0) * k) / 2, p[2]];
+    });
+    // A face points away from us if its projected winding is clockwise.
+    var back = S3.f.map(function (face) {
+      var a = 0;
+      for (var i = 0; i < face.length; i++) {
+        var p = sc[face[i]], q = sc[face[(i + 1) % face.length]];
+        a += p[0] * q[1] - q[0] * p[1];
+      }
+      return a > 0;
+    });
+    // Edges, deduped, tagged hidden when both their faces are back-facing.
+    var seen = {}, edges = [];
+    S3.f.forEach(function (face, fi) {
+      for (var i = 0; i < face.length; i++) {
+        var a = face[i], b = face[(i + 1) % face.length];
+        var id = Math.min(a, b) + "-" + Math.max(a, b);
+        if (!seen[id]) { seen[id] = { a: a, b: b, hid: true }; edges.push(seen[id]); }
+        if (!back[fi]) seen[id].hid = false;
+      }
+    });
+    // A vertex is hidden only if every face touching it faces away.
+    var vHid = sc.map(function (_, vi) {
+      return S3.f.every(function (face, fi) { return face.indexOf(vi) === -1 || back[fi]; });
+    });
+    return { pts: sc, faces: S3.f, back: back, edges: edges, vHid: vHid };
+  }
+
+  var FACE_COLS = ["#ef476f", "#ffd166", "#06d6a0", "#118ab2", "#9b5de5", "#f77f00", "#5b5bd6", "#e05780"];
+
+  // The anatomy explorer's wireframe, built from the solid data above.
+  function solidSvg(key) {
+    var W = 200, H = 150, pr = projectSolid(key, W, H);
+    var pt = function (i) { return pr.pts[i][0].toFixed(1) + "," + pr.pts[i][1].toFixed(1); };
+    var s = '<svg class="anat" id="anatSvg" data-show="faces" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
+    // back faces first so the visible ones paint over them
+    [true, false].forEach(function (wantBack) {
+      pr.faces.forEach(function (face, fi) {
+        if (pr.back[fi] !== wantBack) return;
+        s += '<polygon class="a-face' + (pr.back[fi] ? " hid" : "") + '" points="' +
+             face.map(pt).join(" ") + '" fill="' + FACE_COLS[fi % FACE_COLS.length] + '"/>';
+      });
+    });
+    pr.edges.forEach(function (e) {
+      s += '<line class="a-wire' + (e.hid ? " hid" : "") + '" x1="' + pr.pts[e.a][0].toFixed(1) +
+           '" y1="' + pr.pts[e.a][1].toFixed(1) + '" x2="' + pr.pts[e.b][0].toFixed(1) +
+           '" y2="' + pr.pts[e.b][1].toFixed(1) + '"/>';
+    });
+    pr.edges.forEach(function (e) {
+      s += '<line class="a-edge' + (e.hid ? " hid" : "") + '" x1="' + pr.pts[e.a][0].toFixed(1) +
+           '" y1="' + pr.pts[e.a][1].toFixed(1) + '" x2="' + pr.pts[e.b][0].toFixed(1) +
+           '" y2="' + pr.pts[e.b][1].toFixed(1) + '"/>';
+    });
+    pr.pts.forEach(function (p, i) {
+      s += '<circle class="a-vert' + (pr.vHid[i] ? " hid" : "") + '" cx="' + p[0].toFixed(1) +
+           '" cy="' + p[1].toFixed(1) + '" r="3.6"/>';
+    });
+    return s + "</svg>";
+  }
+
+  // The shape's own net, drawn small — used in the net sheet.
+  function netSvg(sh) {
+    var b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+    sh.net.forEach(function (fs) {
+      fs.poly.forEach(function (p) {
+        b.x0 = Math.min(b.x0, p[0]); b.x1 = Math.max(b.x1, p[0]);
+        b.y0 = Math.min(b.y0, p[1]); b.y1 = Math.max(b.y1, p[1]);
+      });
+    });
+    var W = 210, H = 140;
+    var k = Math.min((W - 12) / (b.x1 - b.x0), (H - 12) / (b.y1 - b.y0));
+    var ox = (W - (b.x1 - b.x0) * k) / 2, oy = (H - (b.y1 - b.y0) * k) / 2;
+    var s = '<svg class="net-svg" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">';
+    sh.net.forEach(function (fs, i) {
+      s += '<polygon points="' + fs.poly.map(function (p) {
+        return ((p[0] - b.x0) * k + ox).toFixed(1) + "," + ((p[1] - b.y0) * k + oy).toFixed(1);
+      }).join(" ") + '" fill="' + FACE_COLS[i % FACE_COLS.length] + '"/>';
+    });
+    return s + "</svg>";
+  }
+
+  // Faces grouped by area — the shared basis for every surface-area breakdown.
+  function areaGroups(sh) {
+    var g = {};
+    sh.net.forEach(function (fs, i) {
+      var k = fmtArea(polyArea(fs.poly));
+      if (!g[k]) {
+        var xs = fs.poly.map(function (q) { return q[0]; });
+        var ys = fs.poly.map(function (q) { return q[1]; });
+        var w = Math.max.apply(null, xs) - Math.min.apply(null, xs);
+        var h = Math.max.apply(null, ys) - Math.min.apply(null, ys);
+        g[k] = {
+          n: 0, area: polyArea(fs.poly), label: faceDimLabel(i),
+          tri: fs.poly.length === 3,
+          word: fs.poly.length === 3 ? "triangle" : (Math.abs(w - h) < 0.01 ? "square" : "rectangle")
+        };
+      }
+      g[k].n++;
+    });
+    return Object.keys(g).map(function (k) { return g[k]; })
+      .sort(function (a, b) { return b.area - a.area; });
+  }
+
   // ---------- shape config ----------
   // Each entry is a net spec plus its copy. Adding a solid = a new entry.
   var SHAPES = {
     cube: {
       key: "cube",
+      flat2D: "square",
+      faceBlurb: "A cube’s faces are all identical squares.",
+      netBlurb: "Six identical squares: a row of four wraps into a band, and the other two cap the ends.",
       net: boxNet(3, 3, 3), F: 6, E: 12, V: 8, faceWord: "squares",
       dim: { a: 3, b: 3, c: 3 }, unit: "cm",
       title: "Unfold the Cube",
@@ -1813,6 +1973,9 @@ MIProgress.paintAll();
     },
     rect: {
       key: "rect",
+      flat2D: "rectangle",
+      faceBlurb: "A rectangular prism’s faces are all rectangles, in three matching pairs.",
+      netBlurb: "Six rectangles in three matching pairs — front with back, top with bottom, end with end.",
       net: boxNet(4, 3, 2), F: 6, E: 12, V: 8, faceWord: "rectangles",
       dim: { a: 4, b: 3, c: 2 }, unit: "cm",  // 4×3×2 → three distinct face areas: 12, 8, 6
       title: "Unfold the Rectangular Prism",
@@ -1830,7 +1993,10 @@ MIProgress.paintAll();
 
     /* ---- Challenge Zone: the first solids that aren't boxes ---- */
     triprism: {
-      key: "triprism", challenge: true,
+      key: "triprism",
+      flat2D: "triangle",
+      faceBlurb: "This prism has two kinds of face: three rectangles and two triangles.",
+      netBlurb: "The three rectangles wrap around the outside like a belt, and the two triangles cap the ends. Each rectangle is as wide as the triangle side it joins — 3, 4 and 5.", challenge: true,
       net: triPrismNet(4, 3, 6), F: 5, E: 9, V: 6, faceWord: "faces",
       unit: "cm",
       title: "Unfold the Triangular Prism",
@@ -1846,7 +2012,10 @@ MIProgress.paintAll();
       next: null
     },
     pyramid: {
-      key: "pyramid", challenge: true,
+      key: "pyramid",
+      flat2D: "square",
+      faceBlurb: "A square pyramid has one square face — the base — and four triangles.",
+      netBlurb: "One square base with four triangles fanned off its edges. Fold all four up and their tips meet at a single point: the apex.", challenge: true,
       net: pyramidNet(4, 4), F: 5, E: 8, V: 5, faceWord: "faces",
       unit: "cm",
       title: "Unfold the Square Pyramid",
@@ -1862,7 +2031,10 @@ MIProgress.paintAll();
       next: null
     },
     tetra: {
-      key: "tetra", challenge: true,
+      key: "tetra",
+      flat2D: "triangle",
+      faceBlurb: "Every face of a tetrahedron is a triangle — four of them, all identical.",
+      netBlurb: "One triangle in the middle with three more mirrored off its edges, which happens to make one big triangle. Fold the outer three up and they close to a point.", challenge: true,
       net: tetraNet(4), F: 4, E: 6, V: 4, faceWord: "triangles",
       unit: "cm",
       title: "Unfold the Tetrahedron",
@@ -1878,7 +2050,10 @@ MIProgress.paintAll();
       next: null
     },
     octa: {
-      key: "octa", challenge: true,
+      key: "octa",
+      flat2D: "diamond",
+      faceBlurb: "All eight faces of an octahedron are identical triangles.",
+      netBlurb: "Eight triangles in two zigzag rows of four. Each row rolls into a cone-like cap, and the two caps meet at the middle — like two square pyramids glued base to base.", challenge: true,
       net: octaNet(4), F: 8, E: 12, V: 6, faceWord: "triangles",
       unit: "cm",
       title: "Unfold the Octahedron",
@@ -2567,23 +2742,24 @@ MIProgress.paintAll();
       name: "Build it up",
       textKey: "buildup",
       text: "Straight on, a solid can look flat. Drag it — as it turns, its depth appears.",
-      learnMore: {
+      learnMore: function (sh) { return {
         title: "From a dot to a solid",
         html: '<p>Every solid is built by adding one <strong>dimension</strong> at a time — climb the ladder:</p>' +
               '<div class="dim-ladder">' +
                 '<div class="dim-rung"><span class="dim-fig"><span class="dim-dot"></span></span><b>Point</b><em>0D · no size</em></div>' +
                 '<div class="dim-rung"><span class="dim-fig"><span class="dim-line"></span></span><b>Line</b><em>1D · length</em></div>' +
                 '<div class="dim-rung"><span class="dim-fig"><span class="dim-square"></span></span><b>Square</b><em>2D · + width</em></div>' +
-                '<div class="dim-rung"><span class="dim-fig"><span class="dim-cube"><i></i><i></i></span></span><b>Cube</b><em>3D · + depth</em></div>' +
+                '<div class="dim-rung"><span class="dim-fig"><span class="dim-cube"><i></i><i></i></span></span><b>Solid</b><em>3D · + depth</em></div>' +
               '</div>' +
               '<p>Slide a point and you draw a line. Slide a line sideways and you sweep out a square. Slide a square through the air and it carves out a cube. <strong>Depth</strong> is the one new thing that turns a flat shape into a solid.</p>' +
+              '<p>Your <strong>' + sh.solidLabel.toLowerCase() + '</strong> is 3D for the same reason: head-on it can pass for a flat ' + sh.flat2D + ', but it has depth — which is why it can’t be shown truthfully without unfolding it.</p>' +
               '<div class="lmi">' +
                 '<div class="lmi-head">✦ Slide to climb the ladder</div>' +
                 '<div class="dsc-stage"><div class="dsc-box" id="dscBox"></div></div>' +
                 '<input type="range" class="lmi-range" id="dscRange" min="0" max="300" value="0" aria-label="Dimension">' +
                 '<div class="lmi-out" id="dscOut"></div>' +
               '</div>'
-      },
+      }; },
       onOpen: function (body) {
         var box = body.querySelector("#dscBox"),
             rng = body.querySelector("#dscRange"),
@@ -2631,74 +2807,40 @@ MIProgress.paintAll();
       name: "Look closely",
       textKey: "intro",
       text: "This is a cube. Drag to spin it. A “face” is one flat side — how many can you count?",
-      learnMore: {
+      learnMore: function (sh) { return {
         title: "What’s a face?",
-        html: '<p>A <strong>face</strong> is one flat side of a solid shape. A cube’s faces are all squares.</p>' +
-              '<p>Counting them while the cube spins is tricky because some always hide around the back — that’s exactly the puzzle we’re about to solve by unfolding it.</p>' +
+        html: '<p>A <strong>face</strong> is one flat side of a solid shape. ' + sh.faceBlurb + '</p>' +
+              '<p>Counting them while the solid spins is tricky because some always hide around the back — that’s exactly the puzzle we’re about to solve by unfolding it.</p>' +
               '<div class="lmi">' +
-                '<div class="lmi-head">✦ Cube anatomy — tap to light each part up</div>' +
+                '<div class="lmi-head">✦ ' + sh.solidLabel + ' anatomy — tap to light each part up</div>' +
                 '<div class="lmi-ctrls">' +
                   '<button type="button" class="lmi-btn on" data-anat="faces">Faces</button>' +
                   '<button type="button" class="lmi-btn" data-anat="edges">Edges</button>' +
                   '<button type="button" class="lmi-btn" data-anat="corners">Corners</button>' +
                 '</div>' +
-                '<svg class="anat" id="anatSvg" data-show="faces" viewBox="0 0 95 90" aria-hidden="true">' +
-                  // hidden faces first, then visible, then wireframe on top
-                  '<polygon class="a-face hid" points="35,10 85,10 85,60 35,60" fill="#9b5de5"/>' +
-                  '<polygon class="a-face hid" points="10,80 60,80 85,60 35,60" fill="#118ab2"/>' +
-                  '<polygon class="a-face hid" points="10,30 10,80 35,60 35,10" fill="#f77f00"/>' +
-                  '<polygon class="a-face" points="10,30 60,30 60,80 10,80" fill="#ef476f"/>' +
-                  '<polygon class="a-face" points="10,30 35,10 85,10 60,30" fill="#ffd166"/>' +
-                  '<polygon class="a-face" points="60,30 85,10 85,60 60,80" fill="#06d6a0"/>' +
-                  '<g class="a-wire">' +
-                    '<path d="M10,30 L60,30 L60,80 L10,80 Z"/>' +
-                    '<path d="M10,30 L35,10 L85,10 L60,30"/>' +
-                    '<path d="M60,30 L85,10 L85,60 L60,80"/>' +
-                  '</g>' +
-                  '<g class="a-wire hid"><path d="M35,10 L35,60 L85,60 M35,60 L10,80"/></g>' +
-                  '<g>' +
-                    '<line class="a-edge" x1="10" y1="30" x2="60" y2="30"/>' +
-                    '<line class="a-edge" x1="60" y1="30" x2="60" y2="80"/>' +
-                    '<line class="a-edge" x1="60" y1="80" x2="10" y2="80"/>' +
-                    '<line class="a-edge" x1="10" y1="80" x2="10" y2="30"/>' +
-                    '<line class="a-edge" x1="35" y1="10" x2="85" y2="10"/>' +
-                    '<line class="a-edge" x1="85" y1="10" x2="85" y2="60"/>' +
-                    '<line class="a-edge hid" x1="85" y1="60" x2="35" y2="60"/>' +
-                    '<line class="a-edge hid" x1="35" y1="60" x2="35" y2="10"/>' +
-                    '<line class="a-edge" x1="10" y1="30" x2="35" y2="10"/>' +
-                    '<line class="a-edge" x1="60" y1="30" x2="85" y2="10"/>' +
-                    '<line class="a-edge" x1="60" y1="80" x2="85" y2="60"/>' +
-                    '<line class="a-edge hid" x1="10" y1="80" x2="35" y2="60"/>' +
-                  '</g>' +
-                  '<g>' +
-                    '<circle class="a-vert" cx="10" cy="30" r="3.6"/><circle class="a-vert" cx="60" cy="30" r="3.6"/>' +
-                    '<circle class="a-vert" cx="60" cy="80" r="3.6"/><circle class="a-vert" cx="10" cy="80" r="3.6"/>' +
-                    '<circle class="a-vert" cx="35" cy="10" r="3.6"/><circle class="a-vert" cx="85" cy="10" r="3.6"/>' +
-                    '<circle class="a-vert" cx="85" cy="60" r="3.6"/><circle class="a-vert hid" cx="35" cy="60" r="3.6"/>' +
-                  '</g>' +
-                '</svg>' +
+                solidSvg(sh.key) +
                 '<div class="lmi-out" id="anatOut"></div>' +
-              '</div>'
-      },
-      onOpen: function (body) {
-        var svg = body.querySelector("#anatSvg"),
-            outEl = body.querySelector("#anatOut"),
-            btns = body.querySelectorAll("[data-anat]");
-        var COPY = {
-          faces: '<span class="big">6</span> <b>faces</b> — the flat sides. Three you can see, three hiding round the back (shown faded).',
-          edges: '<span class="big">12</span> <b>edges</b> — the lines where two faces meet.',
-          corners: '<span class="big">8</span> <b>corners</b> (vertices) — the points where three edges meet.'
-        };
-        function pick(kind) {
-          svg.setAttribute("data-show", kind);
-          outEl.innerHTML = COPY[kind];
-          btns.forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-anat") === kind); });
+              '</div>',
+        onOpen: function (body) {
+          var svg = body.querySelector("#anatSvg"),
+              outEl = body.querySelector("#anatOut"),
+              btns = body.querySelectorAll("[data-anat]");
+          var COPY = {
+            faces: '<span class="big">' + sh.F + '</span> <b>faces</b> — the flat sides. The ones round the back are shown faded.',
+            edges: '<span class="big">' + sh.E + '</span> <b>edges</b> — the lines where two faces meet.',
+            corners: '<span class="big">' + sh.V + '</span> <b>corners</b> (vertices) — the points where edges meet.'
+          };
+          function pick(kind) {
+            svg.setAttribute("data-show", kind);
+            outEl.innerHTML = COPY[kind];
+            btns.forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-anat") === kind); });
+          }
+          btns.forEach(function (b) {
+            b.addEventListener("click", function () { pick(b.getAttribute("data-anat")); });
+          });
+          pick("faces");
         }
-        btns.forEach(function (b) {
-          b.addEventListener("click", function () { pick(b.getAttribute("data-anat")); });
-        });
-        pick("faces");
-      },
+      }; },
       enter: function () {
         orientation = Q_START; render();   // back to the friendly angled view after the warm-up
         choicesEl.style.display = "flex";
@@ -2724,18 +2866,29 @@ MIProgress.paintAll();
       name: "Meet the net",
       textKey: "netDesc",
       text: "This flat pattern is the cube’s net. All 6 faces are identical squares — tap each one to check it off.",
-      learnMore: {
-        title: "The net is the cube, unfolded",
-        html: '<p>A <strong>net</strong> is what you get when you cut a solid along its edges and lay it out flat. These six squares aren’t new shapes — they <em>are</em> the cube, opened up.</p>' +
-              '<p>Fold them back the right way and they wrap into the cube with no gaps and no overlaps.</p>' +
-              '<div class="lmi">' +
-                '<div class="lmi-head">✦ Which of these fold into a cube?</div>' +
-                '<div class="nets-grid" id="netsGrid"></div>' +
-                '<div class="lmi-out" id="netsOut">Tap each pattern to test it. Six squares isn’t enough on its own — the arrangement has to work too.</div>' +
-              '</div>'
+      learnMore: function (sh) {
+        var isBox = sh.net.length === 6 && sh.net.every(function (f) { return f.poly.length === 4; });
+        return {
+        title: "The net is the " + sh.solidLabel.toLowerCase() + ", unfolded",
+        html: '<p>A <strong>net</strong> is what you get when you cut a solid along its edges and lay it out flat. These ' +
+                sh.F + ' shapes aren’t new — they <em>are</em> the ' + sh.solidLabel.toLowerCase() + ', opened up.</p>' +
+              '<p>Fold them back the right way and they wrap into the solid with no gaps and no overlaps.</p>' +
+              (isBox
+                ? '<div class="lmi">' +
+                    '<div class="lmi-head">✦ Which of these fold into a cube?</div>' +
+                    '<div class="nets-grid" id="netsGrid"></div>' +
+                    '<div class="lmi-out" id="netsOut">Tap each pattern to test it. Six squares isn’t enough on its own — the arrangement has to work too.</div>' +
+                  '</div>'
+                : '<div class="lmi">' +
+                    '<div class="lmi-head">✦ How this net is put together</div>' +
+                    netSvg(sh) +
+                    '<div class="lmi-out">' + sh.netBlurb + '</div>' +
+                  '</div>')
+        };
       },
       onOpen: function (body) {
         var grid = body.querySelector("#netsGrid"), outEl = body.querySelector("#netsOut");
+        if (!grid) return;   // non-box shapes show a diagram instead of the quiz
         // cells are [row, col] on a 3×4 grid
         var NETS = [
           { name: "Cross", cells: [[0,1],[1,0],[1,1],[1,2],[1,3],[2,1]], ok: true,
@@ -2754,7 +2907,7 @@ MIProgress.paintAll();
           var mini = '<div class="net-mini">';
           for (var r = 0; r < 3; r++) {
             for (var c = 0; c < 4; c++) {
-              var on = net.cells.some(function (p) { return p[0] === r && p[1] === c; });
+              var on = net.cells.some(function (pp) { return pp[0] === r && pp[1] === c; });
               mini += '<i class="' + (on ? "on" : "") + '"></i>';
             }
           }
@@ -2794,11 +2947,12 @@ MIProgress.paintAll();
       name: "Why measure?",
       textKey: "whyIntro",
       text: "So far we’ve counted things. Now a different question: how much material would it take to cover this shape?",
-      learnMore: {
+      learnMore: function (sh) { return {
         title: "Counting vs. measuring",
         html: '<p>Faces, edges and corners are things you <strong>count</strong> — you get a plain number: 6, 12, 8.</p>' +
               '<p>“How much paper covers it?” is different. You can’t count paper, you have to <strong>measure</strong> it — and every measurement needs a <strong>unit</strong> to be meaningful.</p>' +
               '<p>“This face is 3 big” means nothing. <strong>3 centimetres</strong> means something: it’s 3 of a length everyone agrees on. Areas use squared units — a <strong>square centimetre</strong> (cm²) is a square 1 cm on each side.</p>' +
+              '<p>That’s what you’re about to do to all <strong>' + sh.F + ' faces</strong> of this ' + sh.solidLabel.toLowerCase() + '.</p>' +
               '<div class="lmi">' +
                 '<div class="lmi-head">✦ Same face, different unit</div>' +
                 '<div class="lmi-ctrls">' +
@@ -2809,7 +2963,7 @@ MIProgress.paintAll();
                 '<div class="unit-demo" id="unitDemo"></div>' +
                 '<div class="lmi-out" id="unitOut"></div>' +
               '</div>'
-      },
+      }; },
       onOpen: function (body) {
         var demo = body.querySelector("#unitDemo"),
             outEl = body.querySelector("#unitOut"),
@@ -2842,47 +2996,83 @@ MIProgress.paintAll();
       name: "Surface area",
       textKey: "saIntro",
       text: "The net’s payoff: flat, every face is easy to measure. Tap each face to add up its area — that total is the surface area.",
-      learnMore: {
+      learnMore: function (sh) {
+        var isBox = sh.net.length === 6 && sh.net.every(function (f) { return f.poly.length === 4; });
+        var groups = areaGroups(sh);
+        var total = 0;
+        groups.forEach(function (g) { total += g.n * g.area; });
+        return {
         title: "What is surface area?",
         html: '<p><strong>Surface area</strong> is the total area of all the faces — literally how much wrapping paper (or paint, or cardboard) it takes to cover the outside.</p>' +
-              '<p>The little label on each face is that face’s <strong>width × height</strong>, taken from the solid’s edge lengths. Multiply the two numbers for the face’s area — a 3 × 3 face is 9 cm² — then add up all the faces.</p>' +
-              '<p>Folded up it looks hard, but the net turns it into simple addition: work out each flat rectangle’s area and add them together.</p>' +
-              '<div class="lmi">' +
-                '<div class="lmi-head">✦ Build the formula — change any box, watch it hold</div>' +
-                '<div class="fb-row"><label>Width</label><input type="range" class="lmi-range" id="fbW" min="1" max="9" value="3"><output id="fbWv">3</output></div>' +
-                '<div class="fb-row"><label>Height</label><input type="range" class="lmi-range" id="fbH" min="1" max="9" value="3"><output id="fbHv">3</output></div>' +
-                '<div class="fb-row"><label>Depth</label><input type="range" class="lmi-range" id="fbD" min="1" max="9" value="3"><output id="fbDv">3</output></div>' +
-                '<div class="fb-terms" id="fbTerms"></div>' +
-                '<div class="fb-total" id="fbTotal"></div>' +
-                '<div class="fb-formula">SA = 2 × (w×h + w×d + h×d)</div>' +
-              '</div>'
-      },
-      onOpen: function (body) {
-        var w = body.querySelector("#fbW"), h = body.querySelector("#fbH"), d = body.querySelector("#fbD");
-        var wv = body.querySelector("#fbWv"), hv = body.querySelector("#fbHv"), dv = body.querySelector("#fbDv");
-        var terms = body.querySelector("#fbTerms"), total = body.querySelector("#fbTotal");
-        function draw() {
-          var W = +w.value, H = +h.value, D = +d.value;
-          wv.textContent = W; hv.textContent = H; dv.textContent = D;
-          var pairs = [
-            { lbl: "front &amp; back", a: W, b: H },
-            { lbl: "top &amp; bottom", a: W, b: D },
-            { lbl: "the two ends", a: H, b: D }
-          ];
-          var sum = 0, html = "";
-          pairs.forEach(function (p) {
-            var one = p.a * p.b;
-            sum += one * 2;
-            html += '<div class="fb-term"><span>2 × (' + p.a + ' × ' + p.b + ') &nbsp;· ' + p.lbl +
-                    '</span><b>' + (one * 2) + ' cm²</b></div>';
-          });
-          terms.innerHTML = html;
-          var cube = (W === H && H === D);
-          total.innerHTML = 'Surface area <span class="big">' + sum + ' cm²</span>' +
-            (cube ? '<br><span style="font-size:11.5px;color:#6b6a75">All sides equal — it’s a cube, so that’s just 6 × ' + (W * W) + '</span>' : '');
+              '<p>The little label on each face is how its area is worked out: a rectangle is <strong>width × height</strong>, and a triangle is <strong>half</strong> of that — ½ × base × height. Add every face together and you have the surface area.</p>' +
+              (isBox
+                ? '<div class="lmi">' +
+                    '<div class="lmi-head">✦ Build the formula — change any box, watch it hold</div>' +
+                    '<div class="fb-row"><label>Width</label><input type="range" class="lmi-range" id="fbW" min="1" max="9" value="' + sh.dim.a + '"><output id="fbWv"></output></div>' +
+                    '<div class="fb-row"><label>Height</label><input type="range" class="lmi-range" id="fbH" min="1" max="9" value="' + sh.dim.b + '"><output id="fbHv"></output></div>' +
+                    '<div class="fb-row"><label>Depth</label><input type="range" class="lmi-range" id="fbD" min="1" max="9" value="' + sh.dim.c + '"><output id="fbDv"></output></div>' +
+                    '<div class="fb-terms" id="fbTerms"></div>' +
+                    '<div class="fb-total" id="fbTotal"></div>' +
+                    '<div class="fb-formula">SA = 2 × (w×h + w×d + h×d)</div>' +
+                  '</div>'
+                : '<div class="lmi">' +
+                    '<div class="lmi-head">✦ Scale it up — what happens to the area?</div>' +
+                    '<div class="fb-row"><label>Scale</label><input type="range" class="lmi-range" id="scK" min="1" max="4" step="0.5" value="1"><output id="scKv">×1</output></div>' +
+                    '<div class="fb-terms" id="scTerms"></div>' +
+                    '<div class="fb-total" id="scTotal"></div>' +
+                    '<div class="fb-formula">' + groups.map(function (g) { return g.n + " × " + fmtArea(g.area); }).join(" + ") + " = " + fmtArea(total) + ' cm²</div>' +
+                  '</div>'),
+        onOpen: function (body) {
+          if (isBox) {
+            var w = body.querySelector("#fbW"), h = body.querySelector("#fbH"), d = body.querySelector("#fbD");
+            var wv = body.querySelector("#fbWv"), hv = body.querySelector("#fbHv"), dv = body.querySelector("#fbDv");
+            var terms = body.querySelector("#fbTerms"), tot = body.querySelector("#fbTotal");
+            var draw = function () {
+              var W = +w.value, H = +h.value, D = +d.value;
+              wv.textContent = W; hv.textContent = H; dv.textContent = D;
+              var pairs = [
+                { lbl: "front &amp; back", a: W, b: H },
+                { lbl: "top &amp; bottom", a: W, b: D },
+                { lbl: "the two ends", a: H, b: D }
+              ];
+              var sum = 0, html = "";
+              pairs.forEach(function (pp) {
+                var one = pp.a * pp.b;
+                sum += one * 2;
+                html += '<div class="fb-term"><span>2 × (' + pp.a + ' × ' + pp.b + ') &nbsp;· ' + pp.lbl +
+                        '</span><b>' + (one * 2) + ' cm²</b></div>';
+              });
+              terms.innerHTML = html;
+              var cube = (W === H && H === D);
+              tot.innerHTML = 'Surface area <span class="big">' + sum + ' cm²</span>' +
+                (cube ? '<br><span style="font-size:11.5px;color:#6b6a75">All sides equal — it’s a cube, so that’s just 6 × ' + (W * W) + '</span>' : '');
+            };
+            [w, h, d].forEach(function (el) { el.addEventListener("input", draw); });
+            draw();
+            return;
+          }
+          // Non-box solids: scaling shows the square law without needing a
+          // separate formula for every shape.
+          var k = body.querySelector("#scK"), kv = body.querySelector("#scKv");
+          var terms2 = body.querySelector("#scTerms"), tot2 = body.querySelector("#scTotal");
+          var draw2 = function () {
+            var K = +k.value, f = K * K, sum = 0, html = "";
+            kv.textContent = "×" + K;
+            groups.forEach(function (g) {
+              var sub = g.n * g.area * f;
+              sum += sub;
+              html += '<div class="fb-term"><span>' + g.n + ' × ' + g.word +
+                      ' (' + fmtArea(g.area * f) + ' cm² each)</span><b>' + fmtArea(sub) + ' cm²</b></div>';
+            });
+            terms2.innerHTML = html;
+            tot2.innerHTML = 'Surface area <span class="big">' + fmtArea(sum) + ' cm²</span>' +
+              (K === 1 ? '' : '<br><span style="font-size:11.5px;color:#6b6a75">Every length ×' + K +
+                              ', but the area ×' + fmtArea(f) + ' — areas grow by the <b>square</b> of the scale.</span>');
+          };
+          k.addEventListener("input", draw2);
+          draw2();
         }
-        [w, h, d].forEach(function (el) { el.addEventListener("input", draw); });
-        draw();
+        };
       },
       enter: function () {
         if (p > 0.05) animateFold(0, 900);
@@ -2978,8 +3168,11 @@ MIProgress.paintAll();
 
   // ---------- reusable "Learn more" sheet ----------
   function openLearnMore() {
-    var lm = steps[step] && steps[step].learnMore;
-    if (!lm) return;
+    var raw = steps[step] && steps[step].learnMore;
+    if (!raw) return;
+    // A step's learnMore may be a function of the active shape, so the sheet
+    // can talk about the solid in front of the learner rather than the cube.
+    var lm = typeof raw === "function" ? raw(shape) : raw;
     lmTitle.textContent = lm.title;
     lmBody.innerHTML = lm.html || "";
     // Wire up the sheet's interactive, if this step ships one. The hook may
