@@ -475,6 +475,119 @@
     border: 1px dashed rgba(91,91,214,.4); border-radius: 12px; padding: 16px;
     color: var(--ink-soft); text-align: center; background: #faf9ff;
   }
+
+  /* ===== Learn-more interactives ======================================= */
+  .lmi {
+    border: 1px solid rgba(91,91,214,.2); border-radius: 14px;
+    padding: 12px; background: #faf9ff; margin-top: 4px;
+  }
+  .lmi-head {
+    font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .lmi-ctrls { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .lmi-btn {
+    flex: 1 1 auto; border: 1px solid rgba(91,91,214,.25); background: #fff;
+    color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 800;
+    padding: 7px 10px; border-radius: 10px; cursor: pointer;
+    transition: background .15s, color .15s, transform .1s;
+  }
+  .lmi-btn:active { transform: scale(.96); }
+  .lmi-btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .lmi-out {
+    font-size: 13px; line-height: 1.45; color: var(--ink-soft);
+    background: #fff; border-radius: 10px; padding: 9px 11px;
+    border: 1px solid rgba(0,0,0,.05);
+  }
+  .lmi-out b { color: var(--ink); }
+  .lmi-out .big { color: var(--accent); font-size: 16px; font-weight: 800; }
+  .lmi-range {
+    width: 100%; appearance: none; -webkit-appearance: none; height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), #b9b6f0); outline: none; margin: 4px 0 10px;
+  }
+  .lmi-range::-webkit-slider-thumb {
+    appearance: none; -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+    background: #fff; border: 3px solid var(--accent); box-shadow: 0 2px 6px rgba(0,0,0,.2); cursor: pointer;
+  }
+  .lmi-range::-moz-range-thumb {
+    width: 24px; height: 24px; border-radius: 50%; background: #fff;
+    border: 3px solid var(--accent); box-shadow: 0 2px 6px rgba(0,0,0,.2); cursor: pointer;
+  }
+
+  /* 1 · dimension scrubber: point → line → square → cube */
+  .dsc-stage { height: 132px; display: grid; place-items: center; margin-bottom: 4px; }
+  .dsc-box { background: var(--accent); border-radius: 2px; transition: none; }
+
+  /* 2 · cube anatomy explorer */
+  .anat { width: 100%; max-width: 240px; height: 150px; display: block; margin: 0 auto 10px; }
+  .anat .a-wire { fill: none; stroke: #b9b6f0; stroke-width: 1.4; }
+  .anat .a-wire.hid { stroke-dasharray: 3 2.5; opacity: .75; }
+  .anat .a-face { opacity: 0; transition: opacity .3s; }
+  .anat .a-face.hid { }
+  .anat .a-edge { stroke: #ef476f; stroke-width: 3.2; stroke-linecap: round; opacity: 0; transition: opacity .3s; }
+  .anat .a-edge.hid { stroke-dasharray: 4 3; }
+  .anat .a-vert { fill: #118ab2; stroke: #fff; stroke-width: 1.6; opacity: 0; transition: opacity .3s; }
+  .anat[data-show="faces"] .a-face { opacity: .82; }
+  .anat[data-show="faces"] .a-face.hid { opacity: .3; }
+  .anat[data-show="edges"] .a-edge { opacity: 1; }
+  .anat[data-show="edges"] .a-edge.hid { opacity: .45; }
+  .anat[data-show="corners"] .a-vert { opacity: 1; }
+  .anat[data-show="corners"] .a-vert.hid { opacity: .45; }
+
+  /* 3 · which nets fold into a cube? */
+  .nets-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+  .net-opt {
+    background: #fff; border: 2px solid rgba(91,91,214,.18); border-radius: 12px;
+    padding: 9px 6px 7px; cursor: pointer; text-align: center;
+    font: inherit; transition: border-color .2s, background .2s, transform .1s;
+  }
+  .net-opt:active { transform: scale(.97); }
+  .net-opt.good { border-color: var(--ok); background: #e8fbf5; }
+  .net-opt.bad { border-color: var(--warn); background: #fdecf1; }
+  .net-mini {
+    display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr);
+    gap: 2px; width: 76px; height: 57px; margin: 0 auto 6px;
+  }
+  .net-mini i { border-radius: 2px; }
+  .net-mini i.on { background: var(--accent); }
+  .net-verdict { font-size: 11px; font-weight: 800; color: var(--ink-soft); }
+  .net-opt.good .net-verdict { color: #04795c; }
+  .net-opt.bad .net-verdict { color: var(--warn); }
+
+  /* 4 · same face, different unit */
+  .unit-demo {
+    width: 168px; height: 168px; margin: 0 auto 10px; border-radius: 6px;
+    background-color: rgba(91,91,214,.16);
+    box-shadow: inset 0 0 0 2px var(--accent);
+    background-image:
+      linear-gradient(to right, rgba(91,91,214,.55) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(91,91,214,.55) 1px, transparent 1px);
+    transition: background-size .35s ease;
+  }
+
+  /* 5 · surface-area formula builder */
+  .fb-row { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; }
+  .fb-row label { flex: 0 0 74px; font-size: 12px; font-weight: 800; color: var(--ink); }
+  .fb-row .lmi-range { margin: 0; flex: 1; }
+  .fb-row output { flex: 0 0 34px; text-align: right; font-size: 13px; font-weight: 800; color: var(--accent); }
+  .fb-terms { display: grid; gap: 4px; margin: 10px 0 8px; }
+  .fb-term {
+    display: flex; justify-content: space-between; gap: 8px;
+    background: #fff; border: 1px solid rgba(0,0,0,.05); border-radius: 9px;
+    padding: 6px 10px; font-size: 12.5px;
+  }
+  .fb-term span { color: var(--ink-soft); }
+  .fb-term b { color: var(--ink); }
+  .fb-total {
+    background: linear-gradient(135deg, #e8e4ff, #d4f5ea);
+    border-radius: 10px; padding: 9px 11px; text-align: center;
+    font-size: 13px; font-weight: 700; color: var(--ink);
+  }
+  .fb-total .big { font-size: 19px; font-weight: 800; color: var(--accent); }
+  .fb-formula {
+    text-align: center; font-size: 12px; color: var(--ink-soft);
+    margin-top: 7px; font-family: ui-monospace, Menlo, Consolas, monospace;
+  }
   /* dimensional ladder: point → line → square → cube */
   .dim-ladder { display: flex; gap: 8px; margin: 4px 0 12px; }
   .dim-rung {
@@ -2187,7 +2300,42 @@ MIProgress.paintAll();
                 '<div class="dim-rung"><span class="dim-fig"><span class="dim-cube"><i></i><i></i></span></span><b>Cube</b><em>3D · + depth</em></div>' +
               '</div>' +
               '<p>Slide a point and you draw a line. Slide a line sideways and you sweep out a square. Slide a square through the air and it carves out a cube. <strong>Depth</strong> is the one new thing that turns a flat shape into a solid.</p>' +
-              '<div class="lm-placeholder">Interactive coming here: a scrubber that sweeps each shape into the next, so you can watch a square grow into a cube in real time.</div>'
+              '<div class="lmi">' +
+                '<div class="lmi-head">✦ Slide to climb the ladder</div>' +
+                '<div class="dsc-stage"><div class="dsc-box" id="dscBox"></div></div>' +
+                '<input type="range" class="lmi-range" id="dscRange" min="0" max="300" value="0" aria-label="Dimension">' +
+                '<div class="lmi-out" id="dscOut"></div>' +
+              '</div>'
+      },
+      onOpen: function (body) {
+        var box = body.querySelector("#dscBox"),
+            rng = body.querySelector("#dscRange"),
+            outEl = body.querySelector("#dscOut");
+        var STAGES = [
+          { n: "Point", d: "0D", t: "No size at all — just a position." },
+          { n: "Line", d: "1D", t: "Slide the point and you sweep out <b>length</b>." },
+          { n: "Square", d: "2D", t: "Slide the line sideways and you add <b>width</b>. Now it has area." },
+          { n: "Cube", d: "3D", t: "Slide the square through the air and you add <b>depth</b>. Now it's a solid." }
+        ];
+        function draw() {
+          var v = +rng.value;
+          var lw = Math.min(1, v / 100);                       // 0→1 length
+          var lh = Math.min(1, Math.max(0, (v - 100) / 100));  // 0→1 height
+          var ld = Math.min(1, Math.max(0, (v - 200) / 100));  // 0→1 depth
+          var w = 7 + lw * 79, h = 7 + lh * 79, dpx = Math.round(ld * 24);
+          box.style.width = w + "px";
+          box.style.height = h + "px";
+          var sh = [];
+          for (var i = 1; i <= dpx; i++) sh.push(i + "px " + (-i) + "px 0 #a5a1e8");
+          box.style.boxShadow = sh.join(",");
+          // Strictly-greater, so a stage is only named once it actually
+          // has the new dimension (at v=100 the line is done, not a square).
+          var si = v > 200 ? 3 : v > 100 ? 2 : v > 0 ? 1 : 0;
+          var s = STAGES[si];
+          outEl.innerHTML = '<b>' + s.n + '</b> · ' + s.d + ' — ' + s.t;
+        }
+        rng.addEventListener("input", draw);
+        draw();
       },
       enter: function () {
         warmupBuilt = false;
@@ -2210,7 +2358,69 @@ MIProgress.paintAll();
         title: "What’s a face?",
         html: '<p>A <strong>face</strong> is one flat side of a solid shape. A cube’s faces are all squares.</p>' +
               '<p>Counting them while the cube spins is tricky because some always hide around the back — that’s exactly the puzzle we’re about to solve by unfolding it.</p>' +
-              '<div class="lm-placeholder">Interactive coming here: tap-a-face identify practice &amp; a “count with me” tally that lights up each face so none get lost.</div>'
+              '<div class="lmi">' +
+                '<div class="lmi-head">✦ Cube anatomy — tap to light each part up</div>' +
+                '<div class="lmi-ctrls">' +
+                  '<button type="button" class="lmi-btn on" data-anat="faces">Faces</button>' +
+                  '<button type="button" class="lmi-btn" data-anat="edges">Edges</button>' +
+                  '<button type="button" class="lmi-btn" data-anat="corners">Corners</button>' +
+                '</div>' +
+                '<svg class="anat" id="anatSvg" data-show="faces" viewBox="0 0 95 90" aria-hidden="true">' +
+                  // hidden faces first, then visible, then wireframe on top
+                  '<polygon class="a-face hid" points="35,10 85,10 85,60 35,60" fill="#9b5de5"/>' +
+                  '<polygon class="a-face hid" points="10,80 60,80 85,60 35,60" fill="#118ab2"/>' +
+                  '<polygon class="a-face hid" points="10,30 10,80 35,60 35,10" fill="#f77f00"/>' +
+                  '<polygon class="a-face" points="10,30 60,30 60,80 10,80" fill="#ef476f"/>' +
+                  '<polygon class="a-face" points="10,30 35,10 85,10 60,30" fill="#ffd166"/>' +
+                  '<polygon class="a-face" points="60,30 85,10 85,60 60,80" fill="#06d6a0"/>' +
+                  '<g class="a-wire">' +
+                    '<path d="M10,30 L60,30 L60,80 L10,80 Z"/>' +
+                    '<path d="M10,30 L35,10 L85,10 L60,30"/>' +
+                    '<path d="M60,30 L85,10 L85,60 L60,80"/>' +
+                  '</g>' +
+                  '<g class="a-wire hid"><path d="M35,10 L35,60 L85,60 M35,60 L10,80"/></g>' +
+                  '<g>' +
+                    '<line class="a-edge" x1="10" y1="30" x2="60" y2="30"/>' +
+                    '<line class="a-edge" x1="60" y1="30" x2="60" y2="80"/>' +
+                    '<line class="a-edge" x1="60" y1="80" x2="10" y2="80"/>' +
+                    '<line class="a-edge" x1="10" y1="80" x2="10" y2="30"/>' +
+                    '<line class="a-edge" x1="35" y1="10" x2="85" y2="10"/>' +
+                    '<line class="a-edge" x1="85" y1="10" x2="85" y2="60"/>' +
+                    '<line class="a-edge hid" x1="85" y1="60" x2="35" y2="60"/>' +
+                    '<line class="a-edge hid" x1="35" y1="60" x2="35" y2="10"/>' +
+                    '<line class="a-edge" x1="10" y1="30" x2="35" y2="10"/>' +
+                    '<line class="a-edge" x1="60" y1="30" x2="85" y2="10"/>' +
+                    '<line class="a-edge" x1="60" y1="80" x2="85" y2="60"/>' +
+                    '<line class="a-edge hid" x1="10" y1="80" x2="35" y2="60"/>' +
+                  '</g>' +
+                  '<g>' +
+                    '<circle class="a-vert" cx="10" cy="30" r="3.6"/><circle class="a-vert" cx="60" cy="30" r="3.6"/>' +
+                    '<circle class="a-vert" cx="60" cy="80" r="3.6"/><circle class="a-vert" cx="10" cy="80" r="3.6"/>' +
+                    '<circle class="a-vert" cx="35" cy="10" r="3.6"/><circle class="a-vert" cx="85" cy="10" r="3.6"/>' +
+                    '<circle class="a-vert" cx="85" cy="60" r="3.6"/><circle class="a-vert hid" cx="35" cy="60" r="3.6"/>' +
+                  '</g>' +
+                '</svg>' +
+                '<div class="lmi-out" id="anatOut"></div>' +
+              '</div>'
+      },
+      onOpen: function (body) {
+        var svg = body.querySelector("#anatSvg"),
+            outEl = body.querySelector("#anatOut"),
+            btns = body.querySelectorAll("[data-anat]");
+        var COPY = {
+          faces: '<span class="big">6</span> <b>faces</b> — the flat sides. Three you can see, three hiding round the back (shown faded).',
+          edges: '<span class="big">12</span> <b>edges</b> — the lines where two faces meet.',
+          corners: '<span class="big">8</span> <b>corners</b> (vertices) — the points where three edges meet.'
+        };
+        function pick(kind) {
+          svg.setAttribute("data-show", kind);
+          outEl.innerHTML = COPY[kind];
+          btns.forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-anat") === kind); });
+        }
+        btns.forEach(function (b) {
+          b.addEventListener("click", function () { pick(b.getAttribute("data-anat")); });
+        });
+        pick("faces");
       },
       enter: function () {
         orientation = Q_START; render();   // back to the friendly angled view after the warm-up
@@ -2241,7 +2451,45 @@ MIProgress.paintAll();
         title: "The net is the cube, unfolded",
         html: '<p>A <strong>net</strong> is what you get when you cut a solid along its edges and lay it out flat. These six squares aren’t new shapes — they <em>are</em> the cube, opened up.</p>' +
               '<p>Fold them back the right way and they wrap into the cube with no gaps and no overlaps.</p>' +
-              '<div class="lm-placeholder">Interactive coming here: fold one flap partway to prove it’s the same piece, plus a peek at how the same six squares can be arranged into other valid nets.</div>'
+              '<div class="lmi">' +
+                '<div class="lmi-head">✦ Which of these fold into a cube?</div>' +
+                '<div class="nets-grid" id="netsGrid"></div>' +
+                '<div class="lmi-out" id="netsOut">Tap each pattern to test it. Six squares isn’t enough on its own — the arrangement has to work too.</div>' +
+              '</div>'
+      },
+      onOpen: function (body) {
+        var grid = body.querySelector("#netsGrid"), outEl = body.querySelector("#netsOut");
+        // cells are [row, col] on a 3×4 grid
+        var NETS = [
+          { name: "Cross", cells: [[0,1],[1,0],[1,1],[1,2],[1,3],[2,1]], ok: true,
+            why: "<b>✓ Works</b> — this is the one you unfolded. The middle row wraps into a band; the top and bottom squares cap the ends." },
+          { name: "Zigzag", cells: [[0,0],[1,0],[1,1],[1,2],[1,3],[2,3]], ok: true,
+            why: "<b>✓ Works</b> — the caps don’t have to sit in the same column. Same band, ends still covered." },
+          { name: "Block", cells: [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2]], ok: false,
+            why: "<b>✗ Fails</b> — a 2×3 block. Fold it and two squares land on top of each other while an opposite face is left bare." },
+          { name: "Staircase", cells: [[0,0],[0,1],[1,1],[1,2],[2,2],[2,3]], ok: true,
+            why: "<b>✓ Works</b> — a staircase of three pairs. Looks nothing like a cross, folds up perfectly." }
+        ];
+        NETS.forEach(function (net) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "net-opt";
+          var mini = '<div class="net-mini">';
+          for (var r = 0; r < 3; r++) {
+            for (var c = 0; c < 4; c++) {
+              var on = net.cells.some(function (p) { return p[0] === r && p[1] === c; });
+              mini += '<i class="' + (on ? "on" : "") + '"></i>';
+            }
+          }
+          mini += '</div><div class="net-verdict">' + net.name + '</div>';
+          btn.innerHTML = mini;
+          btn.addEventListener("click", function () {
+            btn.classList.add(net.ok ? "good" : "bad");
+            btn.querySelector(".net-verdict").textContent = net.ok ? "✓ Folds" : "✗ Doesn’t";
+            outEl.innerHTML = net.why;
+          });
+          grid.appendChild(btn);
+        });
       },
       enter: function () {
         if (p > 0.05) animateFold(0, 900);
@@ -2274,7 +2522,36 @@ MIProgress.paintAll();
         html: '<p>Faces, edges and corners are things you <strong>count</strong> — you get a plain number: 6, 12, 8.</p>' +
               '<p>“How much paper covers it?” is different. You can’t count paper, you have to <strong>measure</strong> it — and every measurement needs a <strong>unit</strong> to be meaningful.</p>' +
               '<p>“This face is 3 big” means nothing. <strong>3 centimetres</strong> means something: it’s 3 of a length everyone agrees on. Areas use squared units — a <strong>square centimetre</strong> (cm²) is a square 1 cm on each side.</p>' +
-              '<div class="lm-placeholder">Interactive coming here: swap between cm, inches and squares to see the same face measured in different units.</div>'
+              '<div class="lmi">' +
+                '<div class="lmi-head">✦ Same face, different unit</div>' +
+                '<div class="lmi-ctrls">' +
+                  '<button type="button" class="lmi-btn" data-u="2">2 cm squares</button>' +
+                  '<button type="button" class="lmi-btn on" data-u="1">1 cm squares</button>' +
+                  '<button type="button" class="lmi-btn" data-u="0.5">½ cm squares</button>' +
+                '</div>' +
+                '<div class="unit-demo" id="unitDemo"></div>' +
+                '<div class="lmi-out" id="unitOut"></div>' +
+              '</div>'
+      },
+      onOpen: function (body) {
+        var demo = body.querySelector("#unitDemo"),
+            outEl = body.querySelector("#unitOut"),
+            btns = body.querySelectorAll("[data-u]");
+        var SIDE = 6;  // the face is always 6 cm × 6 cm
+        function pick(u) {
+          var n = SIDE / u;                    // squares across
+          demo.style.backgroundSize = (100 / n) + "% " + (100 / n) + "%";
+          var count = n * n, each = u * u;
+          var lbl = u === 2 ? "2 cm" : u === 1 ? "1 cm" : "½ cm";
+          outEl.innerHTML = '<b>' + count + '</b> squares of ' + lbl + ' × ' + lbl +
+            ' (' + (each % 1 ? each.toFixed(2) : each) + ' cm² each) = <span class="big">36 cm²</span>' +
+            '<br>The face never changed size — only the unit did. That’s why a number without its unit means nothing.';
+          btns.forEach(function (b) { b.classList.toggle("on", +b.getAttribute("data-u") === u); });
+        }
+        btns.forEach(function (b) {
+          b.addEventListener("click", function () { pick(+b.getAttribute("data-u")); });
+        });
+        pick(1);
       },
       enter: function () {
         if (p > 0.05) animateFold(0, 900);
@@ -2293,7 +2570,42 @@ MIProgress.paintAll();
         html: '<p><strong>Surface area</strong> is the total area of all the faces — literally how much wrapping paper (or paint, or cardboard) it takes to cover the outside.</p>' +
               '<p>The little label on each face is that face’s <strong>width × height</strong>, taken from the solid’s edge lengths. Multiply the two numbers for the face’s area — a 3 × 3 face is 9 cm² — then add up all the faces.</p>' +
               '<p>Folded up it looks hard, but the net turns it into simple addition: work out each flat rectangle’s area and add them together.</p>' +
-              '<div class="lm-placeholder">Interactive coming here: drag a ruler across each face to measure it, and a wrapping-paper animation that lays the net over the solid.</div>'
+              '<div class="lmi">' +
+                '<div class="lmi-head">✦ Build the formula — change any box, watch it hold</div>' +
+                '<div class="fb-row"><label>Width</label><input type="range" class="lmi-range" id="fbW" min="1" max="9" value="3"><output id="fbWv">3</output></div>' +
+                '<div class="fb-row"><label>Height</label><input type="range" class="lmi-range" id="fbH" min="1" max="9" value="3"><output id="fbHv">3</output></div>' +
+                '<div class="fb-row"><label>Depth</label><input type="range" class="lmi-range" id="fbD" min="1" max="9" value="3"><output id="fbDv">3</output></div>' +
+                '<div class="fb-terms" id="fbTerms"></div>' +
+                '<div class="fb-total" id="fbTotal"></div>' +
+                '<div class="fb-formula">SA = 2 × (w×h + w×d + h×d)</div>' +
+              '</div>'
+      },
+      onOpen: function (body) {
+        var w = body.querySelector("#fbW"), h = body.querySelector("#fbH"), d = body.querySelector("#fbD");
+        var wv = body.querySelector("#fbWv"), hv = body.querySelector("#fbHv"), dv = body.querySelector("#fbDv");
+        var terms = body.querySelector("#fbTerms"), total = body.querySelector("#fbTotal");
+        function draw() {
+          var W = +w.value, H = +h.value, D = +d.value;
+          wv.textContent = W; hv.textContent = H; dv.textContent = D;
+          var pairs = [
+            { lbl: "front &amp; back", a: W, b: H },
+            { lbl: "top &amp; bottom", a: W, b: D },
+            { lbl: "the two ends", a: H, b: D }
+          ];
+          var sum = 0, html = "";
+          pairs.forEach(function (p) {
+            var one = p.a * p.b;
+            sum += one * 2;
+            html += '<div class="fb-term"><span>2 × (' + p.a + ' × ' + p.b + ') &nbsp;· ' + p.lbl +
+                    '</span><b>' + (one * 2) + ' cm²</b></div>';
+          });
+          terms.innerHTML = html;
+          var cube = (W === H && H === D);
+          total.innerHTML = 'Surface area <span class="big">' + sum + ' cm²</span>' +
+            (cube ? '<br><span style="font-size:11.5px;color:#6b6a75">All sides equal — it’s a cube, so that’s just 6 × ' + (W * W) + '</span>' : '');
+        }
+        [w, h, d].forEach(function (el) { el.addEventListener("input", draw); });
+        draw();
       },
       enter: function () {
         if (p > 0.05) animateFold(0, 900);
@@ -2393,7 +2705,10 @@ MIProgress.paintAll();
     if (!lm) return;
     lmTitle.textContent = lm.title;
     lmBody.innerHTML = lm.html || "";
-    if (typeof lm.onOpen === "function") lm.onOpen(lmBody);
+    // Wire up the sheet's interactive, if this step ships one. The hook may
+    // sit on the learnMore block or alongside it on the step itself.
+    var init = lm.onOpen || steps[step].onOpen;
+    if (typeof init === "function") init(lmBody);
     lmSheet.hidden = false;
   }
   function closeLearnMore() { lmSheet.hidden = true; }
