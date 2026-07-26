@@ -42,13 +42,13 @@ Each shape runs the same arc, with copy tailored to that solid.
 
 ## Interactive "Learn more" sheets
 
-Optional depth on five steps — framed as enrichment, never as remediation:
+Optional depth on five steps — framed as enrichment, never as remediation. Each one adapts to the solid you're working on:
 
-- **From a dot to a solid** — a scrubber that sweeps point → line → square → cube, naming the dimension each stage adds
-- **Cube anatomy** — toggle Faces / Edges / Corners on a wireframe cube to see 6 / 12 / 8, hidden parts included
-- **Which of these fold into a cube?** — tap four arrangements of six squares to test them; three work, the 2×3 block doesn't
+- **From a dot to a solid** — a scrubber that sweeps point → line → square → solid, naming the dimension each stage adds, then ties it to the shape in hand
+- **Anatomy explorer** — toggle Faces / Edges / Corners on a wireframe of *this* solid, with the parts round the back shown faded. The wireframe is generated from 3D vertex data, so it's a real octahedron for the octahedron, not a stand-in
+- **The net** — for box shapes, a **which of these fold into a cube?** quiz (three work; the 2×3 block doesn't). For the others, their own net drawn out with how it's put together
 - **Same face, different unit** — measure one 6 × 6 cm face in 2 cm, 1 cm and ½ cm squares: 9, 36 or 144 of them, always 36 cm²
-- **Build the formula** — three sliders drive a live breakdown of `SA = 2(wh + wd + hd)`
+- **Surface area** — box shapes get three sliders driving `SA = 2(wh + wd + hd)`. The others get a **scale slider**, because that formula doesn't apply to a pyramid: it shows every face's contribution and the fact that doubling the lengths *quadruples* the area
 
 ## How it's built
 
