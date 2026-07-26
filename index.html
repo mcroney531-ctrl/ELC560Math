@@ -10,6 +10,15 @@
 <style>
   :root {
     --bg: #f6f4ef;
+    /* Cosmic ground: the journey map is a night sky, so anything sitting
+       directly on it (headings, notes, the footer) uses sky ink rather than
+       page ink. Cards keep their own light surface and dark type. */
+    --sky-deep: #170f36;
+    --sky-mid: #2a1a63;
+    --sky-glow: #6d3ec4;
+    --sky-ink: #f2eeff;
+    --sky-ink-soft: #b6a8dd;
+    --sky-accent: #b79bff;
     --ink: #2b2a33;
     --ink-soft: #6b6a75;
     --card: #ffffff;
@@ -36,14 +45,54 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
+  /* The night sky is built from gradients only — no image assets, so the
+     whole lesson stays a single portable file. Two star layers at different
+     tile sizes give the field some depth; the nebula washes and the horizon
+     haze at the bottom carry the colour. */
   body {
     font-family: "National Park", "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
     background:
-      radial-gradient(1200px 600px at 85% -10%, #e8e4ff 0%, transparent 55%),
-      radial-gradient(900px 500px at -10% 110%, #dff5ec 0%, transparent 55%),
-      var(--bg);
+      /* stars, fine */
+      radial-gradient(1.4px 1.4px at 18% 12%, rgba(255,255,255,.9) 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 72% 26%, rgba(255,255,255,.75) 50%, transparent 51%),
+      radial-gradient(1.6px 1.6px at 41% 63%, rgba(255,255,255,.85) 50%, transparent 51%),
+      radial-gradient(1.1px 1.1px at 88% 74%, rgba(226,214,255,.8) 50%, transparent 51%),
+      radial-gradient(1.3px 1.3px at 8% 84%, rgba(255,255,255,.7) 50%, transparent 51%),
+      radial-gradient(1.1px 1.1px at 57% 91%, rgba(214,198,255,.75) 50%, transparent 51%),
+      /* stars, sparse + brighter */
+      radial-gradient(2.1px 2.1px at 31% 35%, rgba(255,255,255,.95) 50%, transparent 51%),
+      radial-gradient(1.9px 1.9px at 79% 52%, rgba(233,222,255,.9) 50%, transparent 51%),
+      /* nebula washes */
+      radial-gradient(1000px 560px at 84% -6%, rgba(163,108,255,.6) 0%, transparent 60%),
+      radial-gradient(760px 470px at 8% 20%, rgba(96,60,200,.5) 0%, transparent 58%),
+      radial-gradient(1100px 540px at 50% 106%, rgba(134,80,226,.55) 0%, transparent 64%),
+      linear-gradient(180deg, #120b2c 0%, var(--sky-mid) 55%, #1a1040 100%);
+    background-size:
+      260px 260px, 260px 260px, 260px 260px, 260px 260px, 260px 260px, 260px 260px,
+      520px 520px, 520px 520px,
+      auto, auto, auto, auto;
+    background-attachment: fixed;
+    /* Page ink stays dark: every card keeps a light surface, so inheritance
+       should carry dark type inward. Only elements sitting directly on the
+       sky opt into --sky-ink, one by one. */
     color: var(--ink);
     min-height: 100%;
+  }
+  /* Inside the activity the same sky is dialled back: the staging area is
+     already a deep cosmic box, so a full-strength field around it would
+     swallow the stage and leave the clay panels floating. Milder means
+     lighter and flatter here, not darker — the stage stays the deepest
+     thing on screen. */
+  body.in-activity {
+    background:
+      radial-gradient(1.4px 1.4px at 22% 18%, rgba(255,255,255,.62) 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 68% 71%, rgba(232,222,255,.55) 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 84% 33%, rgba(255,255,255,.45) 50%, transparent 51%),
+      radial-gradient(1100px 640px at 80% -14%, rgba(168,124,248,.45) 0%, transparent 58%),
+      radial-gradient(820px 560px at 2% 98%, rgba(96,62,190,.4) 0%, transparent 60%),
+      linear-gradient(180deg, #35226a 0%, #3e2a7c 50%, #281a52 100%);
+    background-size: 300px 300px, 300px 300px, 300px 300px, auto, auto, auto;
+    background-attachment: fixed;
   }
   .wrap {
     max-width: 560px;
@@ -74,20 +123,23 @@
     display: grid; place-items: center; font-size: 16px;
     box-shadow: 0 4px 10px -3px rgba(91,91,214,.5);
   }
-  .brand-name { font-weight: 800; font-size: 15px; letter-spacing: -.01em; }
+  .brand-name { font-weight: 800; font-size: 15px; letter-spacing: -.01em; color: var(--sky-ink); }
   .hub-header { text-align: left; padding: 22px 8px 6px; }
+  /* A glass pill on the sky rather than a solid chip. */
   .hub-kicker {
     display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--accent);
-    background: var(--chip); padding: 6px 12px; border-radius: 999px; margin-bottom: 14px;
+    text-transform: uppercase; color: var(--sky-ink);
+    background: rgba(255,255,255,.12); padding: 6px 12px; border-radius: 999px; margin-bottom: 14px;
+    border: 1px solid rgba(196,175,255,.3);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   }
-  .hub-header h1 { font-size: 36px; line-height: 1.05; letter-spacing: -.02em; }
+  .hub-header h1 { font-size: 36px; line-height: 1.05; letter-spacing: -.02em; color: var(--sky-ink); }
   .hub-header h1 { letter-spacing: -.03em; }
   .hub-header h1 .grad {
-    background: linear-gradient(90deg, var(--accent), #06d6a0);
+    background: linear-gradient(90deg, #cbb4ff, #8f6ce8);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .hub-header p { color: var(--ink-soft); margin-top: 10px; font-size: 15.5px; line-height: 1.5; max-width: 420px; }
+  .hub-header p { color: var(--sky-ink-soft); margin-top: 10px; font-size: 15.5px; line-height: 1.5; max-width: 420px; }
 
   /* Dot hero */
   .dot-hero-wrap { position: relative; height: 126px; margin: 14px 0 6px; pointer-events: none; }
@@ -126,17 +178,19 @@
     border-left: 1px solid rgba(0,0,0,.05); border-bottom: 1px solid rgba(0,0,0,.05);
     transform: rotate(45deg);
   }
+  /* Floating marks around Cal — brightened to read against the night sky. */
   .deco { position: absolute; font-weight: 800; pointer-events: none; }
-  .deco.plus { top: 2px; left: 8%; font-size: 26px; color: var(--accent); }
-  .deco.divide { top: 42%; right: 4%; font-size: 22px; color: var(--ok); }
-  .deco.cross { bottom: 10%; right: 20%; font-size: 18px; color: #f77f00; }
+  .deco.plus { top: 2px; left: 8%; font-size: 26px; color: var(--sky-accent); }
+  .deco.divide { top: 42%; right: 4%; font-size: 22px; color: #6ef0c6; }
+  .deco.cross { bottom: 10%; right: 20%; font-size: 18px; color: #ffb166; }
   .deco.spot { border-radius: 50%; }
-  .deco.d1 { top: 18%; left: 22%; width: 8px; height: 8px; background: var(--accent); opacity: .35; }
-  .deco.d2 { bottom: 20%; left: 12%; width: 6px; height: 6px; background: var(--ok); opacity: .45; }
+  .deco.d1 { top: 18%; left: 22%; width: 8px; height: 8px; background: var(--sky-accent); opacity: .6; }
+  .deco.d2 { bottom: 20%; left: 12%; width: 6px; height: 6px; background: #6ef0c6; opacity: .6; }
 
   .section-label {
     font-weight: 800; font-size: 14.5px; letter-spacing: -.005em;
     margin: 18px 2px 10px; display: flex; align-items: center; gap: 6px;
+    color: var(--sky-ink);
   }
   .cards { display: flex; flex-direction: column; gap: 14px; }
   .card {
@@ -197,7 +251,7 @@
   }
   .card.locked { opacity: .62; cursor: default; }
   .card.locked .go { color: var(--ink-soft); background: #eeedea; }
-  .hub-foot { text-align: center; color: var(--ink-soft); font-size: 12.5px; margin-top: auto; padding-top: 34px; line-height: 1.5; }
+  .hub-foot { text-align: center; color: rgba(182,168,221,.75); font-size: 12.5px; margin-top: auto; padding-top: 34px; line-height: 1.5; }
 
   /* ============ JOURNEY MAP ============ */
   /* The landing is a "map you unfold": a dashed trail of shape stops on the
@@ -219,6 +273,15 @@
   }
   .stop[data-shape="rect"] { --card-accent: var(--ok); }
   .stop.unlocked:active { transform: scale(.985); }
+  /* On the night sky a card needs a light rim and a coloured glow to sit in
+     the scene rather than look pasted onto it. */
+  .stop, .tile {
+    border-color: rgba(214,198,255,.22);
+    box-shadow:
+      0 14px 34px -16px rgba(10,6,30,.75),
+      0 0 0 1px rgba(255,255,255,.05),
+      0 0 26px -12px rgba(150,108,236,.5);
+  }
 
   .stop-pin {
     position: relative; flex: 0 0 56px; height: 56px; border-radius: 16px;
@@ -251,7 +314,18 @@
   }
 
   /* Locked stop: dim, no button, show the lock + note. */
-  .stop.locked { cursor: default; opacity: .7; }
+  /* Locked reads as frosted glass rather than a faded card: dropping the
+     opacity of a white card over the night sky just turns it muddy grey. */
+  .stop.locked {
+    cursor: default; opacity: 1;
+    background: rgba(233,226,255,.16);
+    border-color: rgba(214,198,255,.22);
+    -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
+    box-shadow: 0 12px 30px -18px rgba(10,6,30,.7);
+  }
+  .stop.locked .stop-title { color: var(--sky-ink); }
+  .stop.locked .stop-sub, .stop.locked .stop-locknote { color: var(--sky-ink-soft); }
+  .stop.locked .stop-cat { color: #7ee9c6; }
   .stop.locked .stop-pin { filter: grayscale(.55); }
   .stop.locked .stop-lock { display: flex; }
   .stop.locked .stop-go { display: none; }
@@ -262,19 +336,19 @@
 
   /* Dashed connector between the two main stops. */
   .trail-link { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 7px 0; margin-left: 42px; }
-  .trail-link i { width: 4px; height: 4px; border-radius: 50%; background: rgba(91,91,214,.4); }
+  .trail-link i { width: 4px; height: 4px; border-radius: 50%; background: rgba(203,180,255,.6); }
 
   /* Challenge zone */
   .zone-divider {
     display: flex; align-items: center; gap: 12px;
-    margin: 22px 2px 4px; color: var(--accent);
+    margin: 22px 2px 4px; color: var(--sky-accent);
     font-size: 13px; font-weight: 800; letter-spacing: .02em;
   }
   .zone-divider::before, .zone-divider::after {
     content: ""; height: 2px; flex: 1;
-    background: repeating-linear-gradient(90deg, rgba(91,91,214,.35) 0 6px, transparent 6px 12px);
+    background: repeating-linear-gradient(90deg, rgba(183,155,255,.45) 0 6px, transparent 6px 12px);
   }
-  .zone-note { color: var(--ink-soft); font-size: 12.5px; line-height: 1.45; margin: 0 4px 12px; }
+  .zone-note { color: var(--sky-ink-soft); font-size: 12.5px; line-height: 1.45; margin: 0 4px 12px; }
 
   .shelf { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .tile {
@@ -292,8 +366,15 @@
     position: absolute; top: 8px; right: 9px; font-size: 13px;
     opacity: .8;
   }
-  .tile.locked { opacity: .78; }
-  .tile.locked .tile-fig { color: #b7b3c4; }
+  .tile.locked {
+    opacity: 1;
+    background: rgba(233,226,255,.14);
+    border-color: rgba(214,198,255,.2);
+    -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
+    box-shadow: 0 10px 26px -18px rgba(10,6,30,.7);
+  }
+  .tile.locked .tile-fig { color: rgba(203,180,255,.75); }
+  .tile.locked .tile-name { color: var(--sky-ink-soft); }
   /* Unlocked-but-not-yet-built: brightens, swaps the padlock for a "soon" pill. */
   .tile.ready { opacity: 1; }
   .tile.ready .tile-fig { color: var(--accent); }
@@ -308,8 +389,8 @@
     border: 1px solid rgba(0,0,0,.07); flex: 0 0 auto;
   }
   .act-title { flex: 1; min-width: 0; }
-  .act-title .small { font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
-  .act-title h2 { font-size: 19px; letter-spacing: -.01em; }
+  .act-title .small { font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--sky-accent); }
+  .act-title h2 { font-size: 19px; letter-spacing: -.01em; color: var(--sky-ink); }
   .step-dots {
     display: flex; overflow: hidden;
     background: linear-gradient(180deg, #fff, #efeee7);
@@ -3779,6 +3860,7 @@ MIProgress.paintAll();
     if (actTitle) actTitle.textContent = shape.title;
     menu.style.display = "none";
     activity.style.display = "flex";
+    document.body.classList.add("in-activity");   // dial the sky back
     buildChoices();
     buildNet();      // rebuilds the faces for this shape, then sizes them
     resetActivity();
@@ -3819,6 +3901,7 @@ MIProgress.paintAll();
   function showMenu() {
     activity.style.display = "none";
     menu.style.display = "flex";
+    document.body.classList.remove("in-activity");
     MIProgress.paintAll();   // refresh progress + unlocks on return
   }
   function resetActivity() {
