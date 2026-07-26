@@ -14,11 +14,16 @@ Most math activities show you a formula and quiz you on it. This one withholds t
 
 A hub laid out as a **journey map** — a main path of shapes to work through, plus a locked Challenge Zone that opens once the path is clear. Progress is saved to `localStorage`, so stops unlock and step counts persist between visits.
 
-| | Stop | State |
-|---|---|---|
-| 1 | **Unfold the Cube** | Available |
-| 2 | **Unfold the Rectangular Prism** | Unlocks when the cube is finished |
-| — | Triangular prism, pyramid, tetrahedron, octahedron | Challenge Zone (locked) |
+| | Stop | Faces / Edges / Corners | Surface area |
+|---|---|---|---|
+| 1 | **Unfold the Cube** | 6 / 12 / 8 | 54 cm² |
+| 2 | **Unfold the Rectangular Prism** — unlocks when the cube is done | 6 / 12 / 8 | 52 cm² |
+| ✦ | **Triangular Prism** — Challenge Zone | 5 / 9 / 6 | 84 cm² |
+| ✦ | **Square Pyramid** | 5 / 8 / 5 | 48 cm² |
+| ✦ | **Tetrahedron** | 4 / 6 / 4 | 27.7 cm² |
+| ✦ | **Octahedron** | 8 / 12 / 6 | 55.4 cm² |
+
+The Challenge Zone opens once both main-path shapes are complete. Its four solids run the same seven-step arc, but they're where the ideas stop being about boxes: faces that aren't all the same shape, triangles measured with ½ × base × height, a solid with a single apex instead of a matching opposite face, and areas that aren't whole numbers.
 
 ## The seven-step arc
 
@@ -49,7 +54,8 @@ Optional depth on five steps — framed as enrichment, never as remediation:
 
 Vanilla HTML/CSS/JS in a single file — no framework, no build, no network calls.
 
-- **The solid** is pure CSS 3D: six faces on a hinged DOM hierarchy driven by one fold-progress value, so the fold animation, the scrub slider and the net layout all share the same geometry. Rotation is stored as a quaternion to avoid gimbal lock.
+- **The solid** is pure CSS 3D, generated from a net spec. Each face is a polygon in centimetre coordinates plus the edge it hinges on and the solid's dihedral angle there; folding rotates it by `180° − dihedral` about that edge using `rotate(θ) rotateX(φ) rotate(−θ)`, which works for any edge rather than just the axis-aligned ones a box needs. Fold *direction* is derived from which side of the directed hinge the face sits on, so specs never carry hand-tuned signs. Non-rectangles are cut out with `clip-path`, and badges/labels are anchored to the polygon **centroid** — on a right triangle the bounding-box centre can land outside the shape. Rotation is stored as a quaternion to avoid gimbal lock.
+- **Correctness is testable**: because every polygon corner gets a vertex dot, folding a net correctly means all dots for a shared vertex land on the same point. Clustering them and comparing the count to the solid's true vertex count verifies a net folds properly — that's how all six shapes are checked.
 - **Two worlds**: folded shapes live in a dark "cube mode" space; the flat net switches the stage to a warm blueprint-paper "net mode".
 - **Guided attention**: a per-face dim overlay lets any moment light exactly one thing. It's an overlay rather than a CSS `filter` because filters cascade into the nested faces.
 - **Shapes are data** — dimensions, copy and per-step behaviour come from a `SHAPES` config, so adding a solid is mostly a new entry.
