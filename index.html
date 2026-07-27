@@ -1029,8 +1029,9 @@
 
   /* Per-face area label, shown during the surface-area step */
   .area-label {
-    /* hung just under the centroid, so it stays inside triangles too */
-    position: absolute; top: calc(var(--cy, 50%) + 21%); left: var(--cx, 50%);
+    /* Hung off the centroid toward the face's wide end (see --ay), so it
+       stays inside triangles whichever way the apex points. */
+    position: absolute; top: var(--ay, calc(var(--cy, 50%) + 21%)); left: var(--cx, 50%);
     transform: translate(-50%, -50%);
     display: none; white-space: nowrap;
     background: rgba(255,255,255,.95); color: #2b2a33;
@@ -1069,6 +1070,14 @@
   .hashes.show { opacity: 1; }
   .hashes.h { left: 0; right: 0; bottom: 0; height: 34%; }
   .hashes.v { top: 0; bottom: 0; left: 0; width: 34%; }
+  /* A triangle's base can run along the top of its box (an apex pointing
+     down), so the marks have to hang from the top edge instead. */
+  .hashes.h.at-top { top: 0; bottom: auto; }
+  .hashes.h.at-top .hash { top: 0; bottom: auto; }
+  /* A triangle's height is measured on the perpendicular under its apex —
+     mid-face on an isoceles one — so the strip is centred on that line
+     rather than pinned to the left edge. `left` is set inline. */
+  .hashes.v.at-apex { width: 30%; margin-left: -15%; }
   .hash {
     position: absolute; background: #fffdf5;
     box-shadow: 0 0 4px rgba(0,0,0,.35);
@@ -1268,6 +1277,18 @@
     color: #2b2a33;
     box-shadow: 0 2px 6px rgba(0,0,0,.12);
     z-index: 1;
+    transition: left .35s ease, top .35s ease, width .35s ease,
+                font-size .35s ease, background .35s ease;
+  }
+  /* Once a face shows its size, the number stops competing for the centre:
+     it shrinks and slides to a corner, staying available without being the
+     thing you read first. */
+  .face.sa-shown .badge {
+    left: var(--bx, var(--cx, 50%)); top: var(--by, var(--cy, 50%));
+    width: calc(var(--fs, 60px) * .26);
+    font-size: calc(var(--fs, 60px) * .155);
+    background: rgba(255,255,255,.72);
+    box-shadow: 0 1px 3px rgba(0,0,0,.14);
   }
   .face.f1 { background: var(--face1); color: var(--glow1); }
   .face.f2 { background: var(--face2); color: var(--glow2); }
@@ -2506,6 +2527,7 @@ MIProgress.paintAll();
       faceBlurb: "A rectangular prism’s faces are all rectangles, in three matching pairs.",
       netBlurb: "Six rectangles in three matching pairs — front with back, top with bottom, end with end.",
       net: boxNet(4, 3, 2), F: 6, E: 12, V: 8, faceWord: "rectangles",
+      saRuler: true,
       dim: { a: 4, b: 3, c: 2 }, unit: "cm",  // 4×3×2 → three distinct face areas: 12, 8, 6
       title: "Unfold the Rectangular Prism",
       solidLabel: "Prism",
@@ -2530,6 +2552,9 @@ MIProgress.paintAll();
       faceBlurb: "This prism has two kinds of face: three rectangles and two triangles.",
       netBlurb: "The three rectangles wrap around the outside like a belt, and the two triangles cap the ends. Each rectangle is as wide as the triangle side it joins — 3, 4 and 5.", challenge: true,
       net: triPrismNet(4, 3, 6), F: 5, E: 9, V: 6, faceWord: "faces",
+      // Measure a triangular end, not a rectangle: this is the shape whose
+      // copy introduces ½ × base × height, so that is what to earn by hand.
+      saRuler: true, measureFace: 3,
       unit: "cm",
       title: "Unfold the Triangular Prism",
       solidLabel: "Triangular prism",
@@ -2552,6 +2577,9 @@ MIProgress.paintAll();
       faceBlurb: "A square pyramid has one square face — the base — and four triangles.",
       netBlurb: "One square base with four triangles fanned off its edges. Fold all four up and their tips meet at a single point: the apex.", challenge: true,
       net: pyramidNet(4, 4), F: 5, E: 8, V: 5, faceWord: "faces",
+      // The square base: a pyramid's triangles use *slant* height, a subtler
+      // idea than the perpendicular height a ruler reads off the net.
+      saRuler: true, measureFace: 0,
       unit: "cm",
       title: "Unfold the Square Pyramid",
       solidLabel: "Square pyramid",
@@ -2574,6 +2602,7 @@ MIProgress.paintAll();
       faceBlurb: "Every face of a tetrahedron is a triangle — four of them, all identical.",
       netBlurb: "One triangle in the middle with three more mirrored off its edges, which happens to make one big triangle. Fold the outer three up and they close to a point.", challenge: true,
       net: tetraNet(4), F: 4, E: 6, V: 4, faceWord: "triangles",
+      saRuler: true, measureFace: 0,
       unit: "cm",
       title: "Unfold the Tetrahedron",
       solidLabel: "Tetrahedron",
@@ -2596,6 +2625,7 @@ MIProgress.paintAll();
       faceBlurb: "All eight faces of an octahedron are identical triangles.",
       netBlurb: "Eight triangles in two zigzag rows of four. Each row rolls into a cone-like cap, and the two caps meet at the middle — like two square pyramids glued base to base.", challenge: true,
       net: octaNet(4), F: 8, E: 12, V: 6, faceWord: "triangles",
+      saRuler: true, measureFace: 0,
       unit: "cm",
       title: "Unfold the Octahedron",
       solidLabel: "Octahedron",
@@ -2697,6 +2727,40 @@ MIProgress.paintAll();
       var ctr = polyCentroid(fs.poly);
       face.style.setProperty("--cx", ((ctr[0] - minX) / (maxX - minX) * 100).toFixed(2) + "%");
       face.style.setProperty("--cy", ((ctr[1] - minY) / (maxY - minY) * 100).toFixed(2) + "%");
+      // Where the face number parks once an area label needs the centre. It
+      // leans from the centroid toward a real *vertex* rather than a
+      // bounding-box corner: on a triangle that corner can sit outside the
+      // clipped shape, but a point partway to a vertex never does.
+      // Leftmost vertex, ties broken upward — picking "most top-left" instead
+      // would choose the apex of an upward-pointing triangle, which sits at
+      // mid-width and so isn't a corner at all.
+      var tl = fs.poly.reduce(function (best, p) {
+        if (Math.abs(p[0] - best[0]) < 1e-6) return p[1] < best[1] ? p : best;
+        return p[0] < best[0] ? p : best;
+      }, fs.poly[0]);
+      // The size label hangs off the centroid, and it has to hang toward the
+      // *wide* end or it overflows the shape. On a triangle that means away
+      // from the apex: below the centroid when the apex points up, above it
+      // when the apex points down.
+      var apexDown = false;
+      if (fs.poly.length === 3) {
+        for (var e = 0; e < 3; e++) {
+          var p1 = fs.poly[e], p2 = fs.poly[(e + 1) % 3];
+          if (Math.abs(p1[1] - p2[1]) < 1e-6) {
+            var apexY = fs.poly[[0, 1, 2].filter(function (j) {
+              return j !== e && j !== (e + 1) % 3;
+            })[0]][1];
+            apexDown = apexY > p1[1];
+            break;
+          }
+        }
+      }
+      face.style.setProperty("--ay", apexDown ? "calc(var(--cy) - 20%)" : "calc(var(--cy) + 21%)");
+      var LEAN = 0.62;
+      face.style.setProperty("--bx",
+        (((ctr[0] + (tl[0] - ctr[0]) * LEAN) - minX) / (maxX - minX) * 100).toFixed(2) + "%");
+      face.style.setProperty("--by",
+        (((ctr[1] + (tl[1] - ctr[1]) * LEAN) - minY) / (maxY - minY) * 100).toFixed(2) + "%");
       face.setAttribute("data-fi", i);
       face.id = "face" + (i + 1);   // stable hook for tests and deep links
       // Non-rectangles are cut out of their bounding box with a clip path.
@@ -3018,11 +3082,53 @@ MIProgress.paintAll();
   }
 
   /* ---------- guided measuring: drag the ruler onto a face --------------
-     Runs on the first shape only (scaffold, then release). The net is flat
-     and face-on during this step, so every face is an axis-aligned rect on
-     screen and we can work in simple scene-local pixel coordinates. */
-  var MEASURE_IDX = 0;            // face 1 — the anchor at the centre of the net
-  var measure = { active: false, phase: null, dragging: false, grabDX: 0, grabDY: 0 };
+     Runs on every shape. The net is flat and face-on during this step, so a
+     face's bounding box is axis-aligned on screen and we can work in simple
+     scene-local pixel coordinates.
+
+     Two modes. A rectangular face is measured across and down, and the
+     payoff is a grid of unit squares. A triangular face is measured along
+     its base and then down its perpendicular height, and the payoff is
+     ½ × base × height — the reason for the half, rather than an assertion
+     of it. Every triangle in these nets has one axis-aligned side, which is
+     the base; the height runs from the opposite vertex to it, so both passes
+     stay axis-aligned and the same ruler works for both. */
+  var measure = { active: false, phase: null, dragging: false, grabDX: 0, grabDY: 0, idx: 0 };
+
+  // What to measure on the current shape, derived from the polygon itself
+  // rather than hand-written per shape, so it can't drift from the geometry.
+  function measureSpec() {
+    var idx = shape.measureFace || 0;
+    var poly = shape.net[idx].poly;
+    var xs = poly.map(function (p) { return p[0]; });
+    var ys = poly.map(function (p) { return p[1]; });
+    var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+    var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+    var w = maxX - minX, h = maxY - minY;
+    if (poly.length === 4) return { idx: idx, tri: false, across: w, down: h, area: w * h };
+    // The base is the horizontal side; the apex is the vertex off it.
+    var base = w, baseY = maxY, apexX = minX;
+    for (var i = 0; i < poly.length; i++) {
+      var a = poly[i], b = poly[(i + 1) % poly.length];
+      if (Math.abs(a[1] - b[1]) < 1e-6) {
+        base = Math.abs(a[0] - b[0]);
+        baseY = a[1];
+        for (var j = 0; j < poly.length; j++) {
+          if (j !== i && j !== (i + 1) % poly.length) apexX = poly[j][0];
+        }
+        break;
+      }
+    }
+    var area = polyArea(poly);
+    return {
+      idx: idx, tri: true, across: base, down: 2 * area / base, area: area,
+      // Fractions of the bounding box: where the base sits, and where the
+      // height's perpendicular falls (mid-face on an isoceles triangle,
+      // hard left or right on a right triangle).
+      baseAtTop: Math.abs(baseY - minY) < 1e-6,
+      apexFrac: w ? (apexX - minX) / w : 0
+    };
+  }
 
   function sceneRect() { return sceneRegion.getBoundingClientRect(); }
   function faceLocalRect(idx) {
@@ -3087,35 +3193,56 @@ MIProgress.paintAll();
     var w = parseFloat(ruler.style.width), h = parseFloat(ruler.style.height);
     return { x: parseFloat(ruler.style.left) + w / 2, y: parseFloat(ruler.style.top) + h / 2 };
   }
-  // Where the ruler must land for the current phase.
+  // Where the ruler must land for the current phase. On a triangle the base
+  // may run along the top of the box rather than the bottom, and the height's
+  // perpendicular falls under the apex rather than down the left edge.
+  function measureLanding() {
+    var sp = measure.spec || measureSpec();
+    var f = faceLocalRect(measure.idx), h = rulerH(), pad = Math.max(4, S * 0.06);
+    if (measure.phase === "h") {
+      var atTop = sp.tri && sp.baseAtTop;
+      return { horiz: true, x: f.cx, y: atTop ? f.top + pad + h / 2 : f.bottom - pad - h / 2,
+               boxLeft: f.left, boxTop: atTop ? f.top - pad : f.bottom - h - pad * 2,
+               boxW: f.width, boxH: h + pad * 2 };
+    }
+    var vx = sp.tri
+      ? f.left + Math.min(Math.max(sp.apexFrac, 0), 1) * f.width
+      : f.left + pad + h / 2;
+    // Keep the upright ruler inside the face box even when the apex is hard
+    // against one side (a right triangle).
+    vx = Math.max(f.left + pad + h / 2, Math.min(f.right - pad - h / 2, vx));
+    return { horiz: false, x: vx, y: f.cy,
+             boxLeft: vx - h / 2 - pad, boxTop: f.top, boxW: h + pad * 2, boxH: f.height };
+  }
   function snapTarget() {
-    var f = faceLocalRect(MEASURE_IDX), h = rulerH(), pad = Math.max(4, S * 0.06);
-    return measure.phase === "h"
-      ? { x: f.cx, y: f.bottom - pad - h / 2 }
-      : { x: f.left + pad + h / 2, y: f.cy };
+    var L = measureLanding();
+    return { x: L.x, y: L.y };
   }
   function showDropHint() {
-    var f = faceLocalRect(MEASURE_IDX), h = rulerH(), pad = Math.max(4, S * 0.06);
-    if (measure.phase === "h") {
-      dropHint.style.left = f.left + "px";
-      dropHint.style.top = (f.bottom - h - pad * 2) + "px";
-      dropHint.style.width = f.width + "px";
-      dropHint.style.height = (h + pad * 2) + "px";
-    } else {
-      dropHint.style.left = f.left + "px";
-      dropHint.style.top = f.top + "px";
-      dropHint.style.width = (h + pad * 2) + "px";
-      dropHint.style.height = f.height + "px";
-    }
+    var L = measureLanding();
+    dropHint.style.left = L.boxLeft + "px";
+    dropHint.style.top = L.boxTop + "px";
+    dropHint.style.width = L.boxW + "px";
+    dropHint.style.height = L.boxH + "px";
     dropHint.classList.add("show");
   }
 
   // Paint the hashmarks + span callout onto the measured edge of the face.
+  // `units` can be fractional — an equilateral triangle's height is a·√3/2,
+  // so marks are drawn at each whole centimetre and the edge simply ends
+  // between two of them, exactly as a real ruler would read it.
   function revealHashes(axis, units) {
-    var face = faces[MEASURE_IDX];
+    var sp = measure.spec || measureSpec();
+    var face = faces[measure.idx];
     var box = document.createElement("span");
-    box.className = "hashes " + axis;
-    for (var i = 0; i <= units; i++) {
+    box.className = "hashes " + axis
+      + (axis === "h" && sp.tri && sp.baseAtTop ? " at-top" : "")
+      + (axis === "v" && sp.tri ? " at-apex" : "");
+    if (axis === "v" && sp.tri) {
+      box.style.left = (Math.min(Math.max(sp.apexFrac, 0), 1) * 100) + "%";
+    }
+    var whole = Math.floor(units + 1e-6);
+    for (var i = 0; i <= whole; i++) {
       var pct = i / units * 100;
       var t = document.createElement("span");
       t.className = "hash major";
@@ -3136,14 +3263,14 @@ MIProgress.paintAll();
 
     var tag = document.createElement("span");
     tag.className = "span-tag " + axis;
-    tag.textContent = units + " " + shape.unit;
+    tag.textContent = fmtArea(units) + " " + shape.unit;
     face.appendChild(tag);
-    setTimeout(function () { tag.classList.add("show"); }, units * 70 + 220);
+    setTimeout(function () { tag.classList.add("show"); }, whole * 70 + 220);
   }
 
   // The face carved into its unit squares — the bridge from "3 × 3" to "9 cm²".
   function revealUnitGrid(cols, rows) {
-    var face = faces[MEASURE_IDX];
+    var face = faces[measure.idx];
     var g = document.createElement("span");
     g.className = "unit-grid";
     for (var r = 0; r < rows; r++) {
@@ -3169,7 +3296,7 @@ MIProgress.paintAll();
   // Retire the ruler's readings once the unit grid takes over, so the face
   // ends up clean: grid + area label, nothing competing.
   function fadeMeasureArt() {
-    faces[MEASURE_IDX].querySelectorAll(".hashes, .span-tag").forEach(function (el) {
+    faces[measure.idx].querySelectorAll(".hashes, .span-tag").forEach(function (el) {
       el.style.transition = "opacity .5s ease";
       el.style.opacity = "0";
       setTimeout(function () { el.remove(); }, 560);
@@ -3177,16 +3304,22 @@ MIProgress.paintAll();
   }
 
   function startMeasure() {
+    measure.spec = measureSpec();
+    measure.idx = measure.spec.idx;
     measure.active = true;
     measure.phase = "h";
     clearMeasureArt();
-    setFocus([MEASURE_IDX], true);
+    setFocus([measure.idx], true);
     beginPhase();
   }
   function beginPhase() {
-    var f = faceLocalRect(MEASURE_IDX);
+    var sp = measure.spec;
+    var f = faceLocalRect(measure.idx);
     var horiz = measure.phase === "h";
-    var units = horiz ? shape.dim.a : shape.dim.b;
+    var units = horiz ? sp.across : sp.down;
+    // In every one of these nets the triangle's base runs the full width of
+    // its bounding box and its apex spans the full height, so both passes
+    // measure across the box exactly as a rectangle's do.
     var len = horiz ? f.width : f.height;
     ruler.classList.remove("vert", "locked", "snapping");
     if (!horiz) ruler.classList.add("vert");
@@ -3208,18 +3341,30 @@ MIProgress.paintAll();
     placeRuler(parkX, parkY);
     ruler.classList.add("on", "parked");
     showDropHint();
+    var whereH = sp.tri
+      ? (sp.baseAtTop ? "along the <strong>top edge</strong>" : "along the <strong>bottom edge</strong>")
+      : "across the <strong>bottom</strong>";
+    var whereV = sp.tri
+      ? "onto the glowing strip to measure its <strong>height</strong> — straight up from the base to the tip"
+      : "onto the <strong>left side</strong> to measure the height";
     dotSay(horiz
-      ? "Grab the ruler and lay it across the <strong>bottom</strong> of the glowing face."
-      : "Now stand it up — drag it onto the <strong>left side</strong> to measure the height.", false);
+      ? "Grab the ruler and lay it " + whereH + " of the glowing face — that's its <strong>" +
+        (sp.tri ? "base" : "width") + "</strong>."
+      : "Now stand it up — drag it " + whereV + ".", false);
   }
   function finishPhase() {
+    var sp = measure.spec;
     var horiz = measure.phase === "h";
-    var units = horiz ? shape.dim.a : shape.dim.b;
+    var units = horiz ? sp.across : sp.down;
     ruler.classList.remove("parked");
     ruler.classList.add("locked");
     dropHint.classList.remove("show");
     revealHashes(horiz ? "h" : "v", units);
-    dotSay("<strong>" + units + " " + shape.unit + "</strong> " + (horiz ? "across" : "tall") + " — the marks show each centimetre.", true);
+    var word = horiz ? (sp.tri ? "along the base" : "across") : "tall";
+    var extra = (!Number.isInteger(units))
+      ? " — it lands between the marks, so we read it as " + fmtArea(units) + "."
+      : " — the marks show each centimetre.";
+    dotSay("<strong>" + fmtArea(units) + " " + shape.unit + "</strong> " + word + extra, true);
     setTimeout(function () {
       ruler.classList.remove("on");
       if (horiz) { measure.phase = "v"; beginPhase(); }
@@ -3228,20 +3373,35 @@ MIProgress.paintAll();
   }
   function completeMeasure() {
     measure.active = false;
-    var d = shape.dim, area = d.a * d.b;
+    var sp = measure.spec;
+    var b = sp.across, hgt = sp.down, area = sp.area;
     // The ruler's readings have done their job; the grid now carries the idea.
     fadeMeasureArt();
-    revealUnitGrid(d.a, d.b);
+    // Grid the face's whole bounding box. On a rectangle that's the classic
+    // "count the squares". On a triangle the clip-path cuts the row along the
+    // slope in half, which is the point: the triangle is half its rectangle.
+    var cols = Math.max(1, Math.round(b)), rows = Math.max(1, Math.ceil(hgt - 1e-6));
+    revealUnitGrid(cols, rows);
+    var cells = cols * rows;
     setTimeout(function () {
-      dotSay("<strong>" + d.a + " × " + d.b + " = " + area + "</strong> — " + area + " little squares, each 1 " +
-             shape.unit + "². That's why the label reads " + d.a + "×" + d.b + ".", true);
-      applyFaceArea(MEASURE_IDX);
+      if (sp.tri) {
+        dotSay("Those squares cover the <strong>rectangle</strong> around it — " + fmtArea(b) + " × " +
+               fmtArea(hgt) + ". The triangle is exactly <strong>half</strong> of it: " +
+               "½ × " + fmtArea(b) + " × " + fmtArea(hgt) + " = <strong>" + fmtArea(area) + " " +
+               shape.unit + "²</strong>. The part-squares along the slope pair up into whole ones.", true);
+      } else {
+        dotSay("<strong>" + fmtArea(b) + " × " + fmtArea(hgt) + " = " + fmtArea(area) +
+               "</strong> — " + fmtArea(area) + " little squares, each 1 " + shape.unit +
+               "². That's why the label reads " + fmtArea(b) + "×" + fmtArea(hgt) + ".", true);
+      }
+      applyFaceArea(measure.idx);
       // Stay lit through the payoff — this face is the point right now.
       setTimeout(function () {
-        dotSay("Your turn — <strong>tap the other 5 faces</strong> to add them up. No ruler needed; the labels do the measuring now.", false);
+        dotSay("Your turn — <strong>tap the other " + (shape.F - 1) + " faces</strong> to add them up. " +
+               "No ruler needed; the labels do the measuring now.", false);
         refreshSAFocus();   // now the finished face dims and the to-do list lights
       }, 2600);
-    }, d.a * d.b * 55 + 320);
+    }, cells * 55 + 320);
   }
 
   // Light whatever is still to be tapped. Derived from live state (rather
