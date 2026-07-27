@@ -2218,32 +2218,70 @@ MIProgress.paintAll();
     placeCal(t, s, guideParts());
   }
 
+  // The stage's fixed furniture. Cal has to keep off this as well as off the
+  // subject: the readout and step track sit along the floor and the mode tag
+  // in the top-left, exactly where a mark wants to be. Measured live rather
+  // than assumed, since which pieces are showing changes step to step.
+  function chromeRects() {
+    var s = sceneRect(), out = [];
+    [modeTag, hint, bigCount, overlayTag, areaReadout, stepTrack].forEach(function (el) {
+      if (!el) return;
+      var cs = getComputedStyle(el);
+      if (cs.display === "none" || cs.visibility === "hidden" || +cs.opacity < 0.05) return;
+      var r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      out.push({ left: r.left - s.left, top: r.top - s.top,
+                 right: r.right - s.left, bottom: r.bottom - s.top });
+    });
+    return out;
+  }
+
   // Cal takes the mark closest to the action that does not sit on top of it —
   // near enough to be pointing at the right thing, never in front of it.
   function placeCal(t, s, parts) {
     var r = dotStage.getBoundingClientRect();
     var cw = r.width || Math.min(230, s.width * 0.46), ch = r.height || 62;
     var pad = 10;
-    var MODE_TAG_CLEAR = 58;   // the mode tag owns the top-left corner
-    var CHROME_CLEAR = 54;     // step track + hint + area readout own the floor
+    var chrome = chromeRects();
     var marks = [
-      { x: pad, y: MODE_TAG_CLEAR, flip: true },
-      { x: s.width - cw - pad, y: 8, flip: false },
-      { x: pad, y: Math.max(MODE_TAG_CLEAR, s.height - ch - CHROME_CLEAR), flip: true },
-      { x: s.width - cw - pad, y: Math.max(8, s.height - ch - CHROME_CLEAR), flip: false }
+      { x: pad, y: 8, flip: true, upper: true },
+      { x: s.width - cw - pad, y: 8, flip: false, upper: true },
+      { x: pad, y: s.height - ch - 8, flip: true, upper: false },
+      { x: s.width - cw - pad, y: s.height - ch - 8, flip: false, upper: false }
     ];
-    var best = marks[1], bestScore = -Infinity;
+    // Slide each mark clear of any furniture it lands on — upper marks down,
+    // lower marks up. Derived from the measured chrome, so a taller mode tag
+    // or a second readout can't quietly start overlapping again. Two passes,
+    // since clearing one piece can push a mark onto another.
     marks.forEach(function (m) {
+      for (var pass = 0; pass < 2; pass++) {
+        chrome.forEach(function (q) {
+          if (Math.min(m.x + cw, q.right) <= Math.max(m.x, q.left)) return;   // no x overlap
+          if (Math.min(m.y + ch, q.bottom) <= Math.max(m.y, q.top)) return;   // no y overlap
+          if (m.upper) m.y = q.bottom + 6;
+          else m.y = q.top - ch - 6;
+        });
+      }
+      m.y = Math.max(6, Math.min(s.height - ch - 6, m.y));
+    });
+    var overlapWith = function (m, list) {
       var area = 0;
-      (parts && parts.length ? parts : [t]).forEach(function (q) {
+      list.forEach(function (q) {
         var ow = Math.max(0, Math.min(m.x + cw, q.right) - Math.max(m.x, q.left));
         var oh = Math.max(0, Math.min(m.y + ch, q.bottom) - Math.max(m.y, q.top));
         area += ow * oh;
       });
-      var covered = Math.min(1, area / (cw * ch));              // 0..1 of Cal
+      return Math.min(1, area / (cw * ch));   // 0..1 of Cal
+    };
+    var best = marks[1], bestScore = -Infinity;
+    marks.forEach(function (m) {
+      var covered = overlapWith(m, parts && parts.length ? parts : [t]);
+      var onChrome = overlapWith(m, chrome);
       var dist = Math.hypot((m.x + cw / 2) - t.cx, (m.y + ch / 2) - t.cy);
-      // Closest wins, but covering the region is heavily disqualifying.
-      var score = -dist - covered * 4 * Math.max(s.width, s.height);
+      // Closest wins, but covering the subject is heavily disqualifying and
+      // sitting on the furniture nearly as much.
+      var M = Math.max(s.width, s.height);
+      var score = -dist - covered * 4 * M - onChrome * 3 * M;
       if (score > bestScore) { bestScore = score; best = m; }
     });
     dotStage.style.setProperty("--cal-x", Math.round(best.x) + "px");
@@ -2878,25 +2916,32 @@ MIProgress.paintAll();
       // *wide* end or it overflows the shape. On a triangle that means away
       // from the apex: below the centroid when the apex points up, above it
       // when the apex points down.
-      var apexDown = false;
+      var apexDown = false, apex = null;
       if (fs.poly.length === 3) {
         for (var e = 0; e < 3; e++) {
           var p1 = fs.poly[e], p2 = fs.poly[(e + 1) % 3];
           if (Math.abs(p1[1] - p2[1]) < 1e-6) {
-            var apexY = fs.poly[[0, 1, 2].filter(function (j) {
+            apex = fs.poly[[0, 1, 2].filter(function (j) {
               return j !== e && j !== (e + 1) % 3;
-            })[0]][1];
-            apexDown = apexY > p1[1];
+            })[0]];
+            apexDown = apex[1] > p1[1];
             break;
           }
         }
       }
       face.style.setProperty("--ay", apexDown ? "calc(var(--cy) - 20%)" : "calc(var(--cy) + 21%)");
-      var LEAN = 0.62;
+      // Where the number parks once the label owns the middle. On a triangle
+      // the label hangs toward the wide end, so the number goes the other
+      // way — along the centroid→apex line, which is always interior and
+      // always on the opposite side of the centroid from the label. Leaning
+      // toward the leftmost vertex instead puts both on the wide end, where
+      // they collide. Quadrilaterals have no narrow end, so they keep it.
+      var toward = apex || tl;
+      var LEAN = apex ? 0.5 : 0.62;
       face.style.setProperty("--bx",
-        (((ctr[0] + (tl[0] - ctr[0]) * LEAN) - minX) / (maxX - minX) * 100).toFixed(2) + "%");
+        (((ctr[0] + (toward[0] - ctr[0]) * LEAN) - minX) / (maxX - minX) * 100).toFixed(2) + "%");
       face.style.setProperty("--by",
-        (((ctr[1] + (tl[1] - ctr[1]) * LEAN) - minY) / (maxY - minY) * 100).toFixed(2) + "%");
+        (((ctr[1] + (toward[1] - ctr[1]) * LEAN) - minY) / (maxY - minY) * 100).toFixed(2) + "%");
       face.setAttribute("data-fi", i);
       face.id = "face" + (i + 1);   // stable hook for tests and deep links
       // Non-rectangles are cut out of their bounding box with a clip path.
@@ -3184,6 +3229,10 @@ MIProgress.paintAll();
     dotBubble.innerHTML = html;
     if (celebrate) { dotAnimate("celebrate"); dotBurst(); }
     else dotAnimate("bounce");
+    // A longer line makes Cal taller, and his mark is picked from his
+    // measured box — so re-aim once the new text has actually laid out,
+    // or he keeps the previous message's footing and grows onto the floor.
+    requestAnimationFrame(aimGuide);
   }
 
   // ---------- guided steps ----------
