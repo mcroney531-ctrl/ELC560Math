@@ -19,6 +19,16 @@
     --sky-ink: #f2eeff;
     --sky-ink-soft: #b6a8dd;
     --sky-accent: #b79bff;
+    /* Hub sunset sky. Separate ink tokens from --sky-*: the hub gradient runs
+       mid-lavender at the top to pale gold at the bottom, so the one "light
+       ink on a uniformly dark ground" rule that works for the activity would
+       go illegible over the pale lower half. Measured against every sampled
+       stop of the gradient, a deep indigo clears 4.5:1 the whole way down
+       (4.6:1 on the darkest top stop, 11.6:1 on the palest) — white manages
+       only 2.9:1 at best, so the hub inks dark rather than light. */
+    --hub-ink: #2e2063;
+    --hub-ink-soft: #4a2f75;
+    --hub-accent: #7c3597;
     --ink: #2b2a33;
     --ink-soft: #6b6a75;
     --card: #ffffff;
@@ -116,6 +126,90 @@
   }
 
   /* ============ MENU HUB ============ */
+  /* The hub is "in the sky" — a pastel sunset, deliberately not the cosmic
+     purple the activity screens use. It gets its own fully opaque background
+     scoped to #menu rather than touching body's: the two screens are mutually
+     exclusive and .wrap is min-height:100vh, so this covers the shared
+     gradient completely and the activity's purple is left alone.
+     Gradient stops are sampled from the moodboard rather than eyeballed;
+     everything here is gradients plus hand-authored inline SVG, so the lesson
+     stays one dependency-free file with no raster backgrounds. */
+  /* No colour set here on purpose: #menu's children inherit into the cards
+     too, and a hub-wide ink would quietly restyle card typography. Each
+     element sitting on the open sky opts into --hub-ink itself, exactly as
+     the activity does with --sky-ink. */
+  #menu { position: relative; }
+  /* Content sits above the decoration layer. */
+  #menu > *:not(.hub-sky) { position: relative; z-index: 1; }
+  /* The sky carries the gradient and is fixed to the viewport, not sized to
+     #menu — .wrap is only 560px wide, so painting the sunset on #menu itself
+     would leave body's purple showing down both margins. Fixed also means it
+     doesn't scroll away on a long hub, matching the activity's fixed sky. It
+     lives inside #menu so it disappears with it, leaving body's rules alone. */
+  .hub-sky {
+    position: fixed; inset: 0; z-index: 0;
+    overflow: hidden; pointer-events: none;
+    background:
+      /* sun glow low and centred */
+      radial-gradient(720px 340px at 50% 104%, rgba(255,247,209,.95) 0%, rgba(255,233,180,.42) 44%, transparent 72%),
+      /* the sky reddens back toward violet at the bottom corners */
+      radial-gradient(440px 280px at -8% 103%, rgba(208,150,214,.6) 0%, transparent 70%),
+      radial-gradient(440px 280px at 108% 103%, rgba(208,150,214,.6) 0%, transparent 70%),
+      linear-gradient(180deg,
+        #9e8be7 0%, #bd9de7 12%, #e2b0e0 24%, #f9bdd4 36%, #fdc6c5 48%,
+        #fecec0 60%, #fed7b8 72%, #fee4b8 84%, #fef2c2 95%, #fdeab6 100%);
+  }
+  /* Stars belong to the lavender top only — masked off before the sky pales
+     out, where white dots would simply vanish. */
+  .hub-sky::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(1.5px 1.5px at 12% 6%, rgba(255,255,255,.95) 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 34% 13%, rgba(255,255,255,.8) 50%, transparent 51%),
+      radial-gradient(1.7px 1.7px at 58% 4%, rgba(255,255,255,.9) 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 77% 10%, rgba(255,255,255,.75) 50%, transparent 51%),
+      radial-gradient(1.4px 1.4px at 89% 17%, rgba(255,255,255,.85) 50%, transparent 51%),
+      radial-gradient(1.1px 1.1px at 22% 21%, rgba(255,255,255,.7) 50%, transparent 51%),
+      radial-gradient(1.3px 1.3px at 66% 24%, rgba(255,255,255,.7) 50%, transparent 51%),
+      radial-gradient(1.1px 1.1px at 45% 30%, rgba(255,255,255,.55) 50%, transparent 51%);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 20%, transparent 40%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 20%, transparent 40%);
+  }
+  .hub-cloud, .hub-crystal { position: absolute; }
+  .hub-cloud svg, .hub-crystal svg { width: 100%; height: 100%; display: block; }
+  .hub-cloud { color: #fff7ef; }
+  /* Clouds bank along the left and right edges, leaving the middle clear for
+     the journey cards — same framing as the moodboard. */
+  .hub-cloud.c1 { left: -8%;  top: 20%; width: 46%;  opacity: .72; }
+  .hub-cloud.c2 { right: -10%; top: 9%;  width: 42%; opacity: .6; }
+  .hub-cloud.c3 { right: -6%; top: 30%; width: 50%;  opacity: .78; }
+  .hub-cloud.c4 { left: -12%; top: 46%; width: 44%;  opacity: .62; }
+  .hub-cloud.c5 { right: -8%; top: 58%; width: 46%;  opacity: .7; }
+  .hub-cloud.c6 { left: -6%;  bottom: 2%; width: 52%; opacity: .82; }
+  .hub-cloud.c7 { right: -4%; bottom: 0%; width: 48%; opacity: .8; }
+  /* Faceted crystals drifting among the clouds — the same wireframe-geometry
+     language the cosmic stage uses, so the new mood still points at the maths. */
+  .hub-crystal { color: #fff; }
+  /* Kept clear of the centre column (the content is a 560px band), so a
+     crystal never drifts behind the headline or a journey card. */
+  .hub-crystal.k1 { left: 7%;  top: 11%; width: 44px; opacity: .5;  animation: hubDrift 17s ease-in-out infinite; }
+  .hub-crystal.k2 { right: 6%; top: 24%; width: 34px; opacity: .42; animation: hubDrift 21s ease-in-out infinite -6s; }
+  .hub-crystal.k3 { right: 9%; top: 52%; width: 52px; opacity: .34; animation: hubDrift 24s ease-in-out infinite -11s; }
+  .hub-crystal.k4 { left: 5%;  top: 44%; width: 46px; opacity: .32; animation: hubDrift 19s ease-in-out infinite -3s; }
+  .hub-crystal.k5 { left: 10%; top: 74%; width: 30px; opacity: .3;  animation: hubDrift 23s ease-in-out infinite -14s; }
+  @keyframes hubDrift {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-16px) rotate(7deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hub-crystal { animation: none; }
+  }
+  /* Narrow viewports: the content column fills the width, so there are no
+     clear margins to drift in. Drop the crystals to texture rather than
+     hiding them, so nothing reads as sitting on top of the headline. */
+  @media (max-width: 700px) {
+    .hub-sky .hub-crystal { opacity: .15; }
+  }
   .hub-nav { display: flex; align-items: center; gap: 10px; padding: 6px 2px 0; }
   .brand-mark {
     width: 34px; height: 34px; border-radius: 10px; flex: 0 0 auto;
@@ -123,23 +217,23 @@
     display: grid; place-items: center; font-size: 16px;
     box-shadow: 0 4px 10px -3px rgba(91,91,214,.5);
   }
-  .brand-name { font-weight: 800; font-size: 15px; letter-spacing: -.01em; color: var(--sky-ink); }
+  .brand-name { font-weight: 800; font-size: 15px; letter-spacing: -.01em; color: var(--hub-ink); }
   .hub-header { text-align: left; padding: 22px 8px 6px; }
   /* A glass pill on the sky rather than a solid chip. */
   .hub-kicker {
     display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--sky-ink);
-    background: rgba(255,255,255,.12); padding: 6px 12px; border-radius: 999px; margin-bottom: 14px;
-    border: 1px solid rgba(196,175,255,.3);
+    text-transform: uppercase; color: var(--hub-ink);
+    background: rgba(255,255,255,.5); padding: 6px 12px; border-radius: 999px; margin-bottom: 14px;
+    border: 1px solid rgba(255,255,255,.7);
     -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   }
-  .hub-header h1 { font-size: 36px; line-height: 1.05; letter-spacing: -.02em; color: var(--sky-ink); }
+  .hub-header h1 { font-size: 36px; line-height: 1.05; letter-spacing: -.02em; color: var(--hub-ink); }
   .hub-header h1 { letter-spacing: -.03em; }
   .hub-header h1 .grad {
-    background: linear-gradient(90deg, #cbb4ff, #8f6ce8);
+    background: linear-gradient(90deg, #7c3597, #c2426d);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .hub-header p { color: var(--sky-ink-soft); margin-top: 10px; font-size: 15.5px; line-height: 1.5; max-width: 420px; }
+  .hub-header p { color: var(--hub-ink-soft); margin-top: 10px; font-size: 15.5px; line-height: 1.5; max-width: 420px; }
 
   /* Dot hero */
   .dot-hero-wrap { position: relative; height: 126px; margin: 14px 0 6px; pointer-events: none; }
@@ -180,17 +274,17 @@
   }
   /* Floating marks around Cal — brightened to read against the night sky. */
   .deco { position: absolute; font-weight: 800; pointer-events: none; }
-  .deco.plus { top: 2px; left: 8%; font-size: 26px; color: var(--sky-accent); }
-  .deco.divide { top: 42%; right: 4%; font-size: 22px; color: #6ef0c6; }
-  .deco.cross { bottom: 10%; right: 20%; font-size: 18px; color: #ffb166; }
+  .deco.plus { top: 2px; left: 8%; font-size: 26px; color: var(--hub-accent); }
+  .deco.divide { top: 42%; right: 4%; font-size: 22px; color: #12a37b; }
+  .deco.cross { bottom: 10%; right: 20%; font-size: 18px; color: #d1701c; }
   .deco.spot { border-radius: 50%; }
-  .deco.d1 { top: 18%; left: 22%; width: 8px; height: 8px; background: var(--sky-accent); opacity: .6; }
-  .deco.d2 { bottom: 20%; left: 12%; width: 6px; height: 6px; background: #6ef0c6; opacity: .6; }
+  .deco.d1 { top: 18%; left: 22%; width: 8px; height: 8px; background: var(--hub-accent); opacity: .6; }
+  .deco.d2 { bottom: 20%; left: 12%; width: 6px; height: 6px; background: #12a37b; opacity: .6; }
 
   .section-label {
     font-weight: 800; font-size: 14.5px; letter-spacing: -.005em;
     margin: 18px 2px 10px; display: flex; align-items: center; gap: 6px;
-    color: var(--sky-ink);
+    color: var(--hub-ink);
   }
   .cards { display: flex; flex-direction: column; gap: 14px; }
   .card {
@@ -251,7 +345,7 @@
   }
   .card.locked { opacity: .62; cursor: default; }
   .card.locked .go { color: var(--ink-soft); background: #eeedea; }
-  .hub-foot { text-align: center; color: rgba(182,168,221,.75); font-size: 12.5px; margin-top: auto; padding-top: 34px; line-height: 1.5; }
+  .hub-foot { text-align: center; color: rgba(46,32,99,.7); font-size: 12.5px; margin-top: auto; padding-top: 34px; line-height: 1.5; }
 
   /* ============ JOURNEY MAP ============ */
   /* The landing is a "map you unfold": a dashed trail of shape stops on the
@@ -273,14 +367,15 @@
   }
   .stop[data-shape="rect"] { --card-accent: var(--ok); }
   .stop.unlocked:active { transform: scale(.985); }
-  /* On the night sky a card needs a light rim and a coloured glow to sit in
-     the scene rather than look pasted onto it. */
+  /* Cards on the sunset: a warm plum shadow rather than the near-black one a
+     dark ground wanted, plus a soft white bloom so they read as lit from the
+     sky behind them. (.stop and .tile only ever appear on the hub.) */
   .stop, .tile {
-    border-color: rgba(214,198,255,.22);
+    border-color: rgba(255,255,255,.75);
     box-shadow:
-      0 14px 34px -16px rgba(10,6,30,.75),
-      0 0 0 1px rgba(255,255,255,.05),
-      0 0 26px -12px rgba(150,108,236,.5);
+      0 14px 32px -18px rgba(92,48,110,.55),
+      0 2px 8px -4px rgba(92,48,110,.18),
+      0 0 22px -10px rgba(255,255,255,.7);
   }
 
   .stop-pin {
@@ -314,18 +409,19 @@
   }
 
   /* Locked stop: dim, no button, show the lock + note. */
-  /* Locked reads as frosted glass rather than a faded card: dropping the
-     opacity of a white card over the night sky just turns it muddy grey. */
+  /* Locked still reads as frosted glass, but tuned for a pale sky: a
+     translucent white wash with a visible rim, and dark ink — the dark-theme
+     version (16% white + light ink) would all but disappear on pastel. */
   .stop.locked {
     cursor: default; opacity: 1;
-    background: rgba(233,226,255,.16);
-    border-color: rgba(214,198,255,.22);
+    background: rgba(255,255,255,.42);
+    border-color: rgba(255,255,255,.8);
     -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
-    box-shadow: 0 12px 30px -18px rgba(10,6,30,.7);
+    box-shadow: 0 12px 28px -20px rgba(92,48,110,.5);
   }
-  .stop.locked .stop-title { color: var(--sky-ink); }
-  .stop.locked .stop-sub, .stop.locked .stop-locknote { color: var(--sky-ink-soft); }
-  .stop.locked .stop-cat { color: #7ee9c6; }
+  .stop.locked .stop-title { color: var(--hub-ink); }
+  .stop.locked .stop-sub, .stop.locked .stop-locknote { color: var(--hub-ink-soft); }
+  .stop.locked .stop-cat { color: #0f8f6c; }
   .stop.locked .stop-pin { filter: grayscale(.55); }
   .stop.locked .stop-lock { display: flex; }
   .stop.locked .stop-go { display: none; }
@@ -336,19 +432,19 @@
 
   /* Dashed connector between the two main stops. */
   .trail-link { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 7px 0; margin-left: 42px; }
-  .trail-link i { width: 4px; height: 4px; border-radius: 50%; background: rgba(203,180,255,.6); }
+  .trail-link i { width: 4px; height: 4px; border-radius: 50%; background: rgba(46,32,99,.4); }
 
   /* Challenge zone */
   .zone-divider {
     display: flex; align-items: center; gap: 12px;
-    margin: 22px 2px 4px; color: var(--sky-accent);
+    margin: 22px 2px 4px; color: var(--hub-accent);
     font-size: 13px; font-weight: 800; letter-spacing: .02em;
   }
   .zone-divider::before, .zone-divider::after {
     content: ""; height: 2px; flex: 1;
-    background: repeating-linear-gradient(90deg, rgba(183,155,255,.45) 0 6px, transparent 6px 12px);
+    background: repeating-linear-gradient(90deg, rgba(124,53,151,.4) 0 6px, transparent 6px 12px);
   }
-  .zone-note { color: var(--sky-ink-soft); font-size: 12.5px; line-height: 1.45; margin: 0 4px 12px; }
+  .zone-note { color: var(--hub-ink-soft); font-size: 12.5px; line-height: 1.45; margin: 0 4px 12px; }
 
   .shelf { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .tile {
@@ -368,13 +464,13 @@
   }
   .tile.locked {
     opacity: 1;
-    background: rgba(233,226,255,.14);
-    border-color: rgba(214,198,255,.2);
+    background: rgba(255,255,255,.38);
+    border-color: rgba(255,255,255,.78);
     -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
-    box-shadow: 0 10px 26px -18px rgba(10,6,30,.7);
+    box-shadow: 0 10px 24px -20px rgba(92,48,110,.5);
   }
-  .tile.locked .tile-fig { color: rgba(203,180,255,.75); }
-  .tile.locked .tile-name { color: var(--sky-ink-soft); }
+  .tile.locked .tile-fig { color: rgba(74,47,117,.62); }
+  .tile.locked .tile-name { color: var(--hub-ink-soft); }
   /* Unlocked-but-not-yet-built: brightens, swaps the padlock for a "soon" pill. */
   .tile.ready { opacity: 1; }
   .tile.ready .tile-fig { color: var(--accent); }
@@ -1559,6 +1655,42 @@
 
 <!-- ================= MENU HUB ================= -->
 <div class="wrap" id="menu">
+  <!-- Sunset sky decoration: stars (CSS, masked to the top), soft clouds and
+       drifting faceted crystals. Hand-authored SVG, no raster assets. -->
+  <div class="hub-sky" aria-hidden="true">
+    <svg width="0" height="0" style="position:absolute" focusable="false">
+      <defs>
+        <filter id="cloudSoft" x="-30%" y="-60%" width="160%" height="260%">
+          <feGaussianBlur stdDeviation="7" />
+        </filter>
+        <g id="cloudShape" fill="currentColor">
+          <ellipse cx="62" cy="60" rx="54" ry="25" />
+          <ellipse cx="108" cy="45" rx="43" ry="30" />
+          <ellipse cx="147" cy="61" rx="45" ry="22" />
+          <ellipse cx="95" cy="70" rx="66" ry="18" />
+        </g>
+        <!-- Hexagon with facet lines to the alternate corners: reads as a cut
+             crystal, and echoes the wireframe solids in the cosmic stage. -->
+        <g id="crystalShape" fill="none" stroke="currentColor" stroke-width="1.6"
+           stroke-linejoin="round">
+          <path d="M24 3 L42 13.5 L42 34.5 L24 45 L6 34.5 L6 13.5 Z" />
+          <path d="M24 3 L24 45 M6 13.5 L42 34.5 M42 13.5 L6 34.5" opacity=".5" />
+        </g>
+      </defs>
+    </svg>
+    <div class="hub-cloud c1"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
+    <div class="hub-cloud c2"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
+    <div class="hub-cloud c3"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
+    <div class="hub-cloud c4"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
+    <div class="hub-cloud c5"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
+    <div class="hub-cloud c6"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
+    <div class="hub-cloud c7"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
+    <div class="hub-crystal k1"><svg viewBox="0 0 48 48" focusable="false"><use href="#crystalShape"/></svg></div>
+    <div class="hub-crystal k2"><svg viewBox="0 0 48 48" focusable="false"><use href="#crystalShape"/></svg></div>
+    <div class="hub-crystal k3"><svg viewBox="0 0 48 48" focusable="false"><use href="#crystalShape"/></svg></div>
+    <div class="hub-crystal k4"><svg viewBox="0 0 48 48" focusable="false"><use href="#crystalShape"/></svg></div>
+    <div class="hub-crystal k5"><svg viewBox="0 0 48 48" focusable="false"><use href="#crystalShape"/></svg></div>
+  </div>
   <div class="hub-nav">
     <span class="brand-mark">🧊</span>
     <span class="brand-name">Unfold</span>
