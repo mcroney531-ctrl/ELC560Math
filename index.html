@@ -120,7 +120,7 @@
   @media (min-width: 1100px) {
     #activity { max-width: 1060px; }
     .stage { max-height: 660px; }
-    .dot-stage { max-width: 260px; top: 14px; right: 18px; }
+    .dot-stage { width: 260px; }
     .dot-stage .dot-avatar { width: 54px; }
     .dot-stage .dot-bubble { font-size: 12.5px; padding: 8px 11px; }
   }
@@ -550,7 +550,15 @@
     border: 1px solid rgba(150,180,255,.22);
     border-radius: var(--radius);
     overflow: hidden;
-    transition: border-color .6s ease;
+    /* The spot-* transitions must live here, on the element JS sets them on;
+       declared on .spotlight they would never fire, since the properties only
+       inherit down to it. Kept in one declaration so border-color survives. */
+    transition: border-color .6s ease,
+                --spot-x .55s ease, --spot-y .55s ease,
+                --spot-in .55s ease, --spot-out .55s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stage { transition: border-color .6s ease; }
   }
   /* Cube mode is a deep-space world: dark gradient with a purple glow
      behind the cube, a perspective grid floor, a starfield, and faint
@@ -565,31 +573,68 @@
   .scene-region:active { cursor: grabbing; }
   /* Spotlight: a strong pool of light on the focused component, deep shadow
      everywhere else — theatrical, so the shape reads as the star. */
+  /* The pool of light is aimed, not fixed. --spot-x/y track whatever the step
+     is actually about (the solid, the flat net, one glowing face, the ruler's
+     drop zone) and --spot-in/out size it to that region, so everything else
+     falls into shadow instead of a standing circle sitting at mid-stage
+     regardless of where the learner should be looking. JS sets the vars in
+     px; these rules only carry the colour of each world. */
   .spotlight {
     position: absolute; inset: 0; z-index: 3; pointer-events: none;
-    background: radial-gradient(circle at 50% 46%, transparent 0, transparent 17%, rgba(3,4,12,.88) 58%, rgba(1,2,6,.97) 100%);
+    background: radial-gradient(circle at var(--spot-x, 50%) var(--spot-y, 46%),
+      transparent 0, transparent var(--spot-in, 17%),
+      rgba(3,4,12,.88) var(--spot-out, 58%), rgba(1,2,6,.97) 100%);
     transition: background .55s ease;
   }
   .stage.net-mode .spotlight {
-    background: radial-gradient(circle at 50% 46%, transparent 0, transparent 21%, rgba(46,33,10,.66) 62%, rgba(30,22,6,.82) 100%);
+    background: radial-gradient(circle at var(--spot-x, 50%) var(--spot-y, 46%),
+      transparent 0, transparent var(--spot-in, 21%),
+      rgba(46,33,10,.66) var(--spot-out, 62%), rgba(30,22,6,.82) 100%);
   }
   /* Guided moments (measuring, focused tapping) pull the house lights down
      further so the one thing Cal is talking about is unmistakable. */
   .stage.guided .spotlight {
-    background: radial-gradient(circle at 50% 46%, transparent 0, transparent 14%, rgba(2,3,9,.93) 52%, rgba(0,1,4,.99) 100%);
+    background: radial-gradient(circle at var(--spot-x, 50%) var(--spot-y, 46%),
+      transparent 0, transparent var(--spot-in, 14%),
+      rgba(2,3,9,.93) var(--spot-out, 52%), rgba(0,1,4,.99) 100%);
   }
   .stage.net-mode.guided .spotlight {
-    background: radial-gradient(circle at 50% 46%, transparent 0, transparent 17%, rgba(38,27,8,.78) 56%, rgba(24,17,4,.9) 100%);
+    background: radial-gradient(circle at var(--spot-x, 50%) var(--spot-y, 46%),
+      transparent 0, transparent var(--spot-in, 17%),
+      rgba(38,27,8,.78) var(--spot-out, 56%), rgba(24,17,4,.9) 100%);
   }
+  /* Registering the spotlight vars as lengths lets the browser interpolate
+     them, so the light sweeps to its new mark instead of cutting. The
+     transition has to sit on .stage, which is where JS sets the values —
+     a transition on .spotlight would never fire, since the property only
+     inherits down to it. */
+  @property --spot-x { syntax: "<length-percentage>"; inherits: true; initial-value: 50%; }
+  @property --spot-y { syntax: "<length-percentage>"; inherits: true; initial-value: 46%; }
+  @property --spot-in { syntax: "<length-percentage>"; inherits: true; initial-value: 17%; }
+  @property --spot-out { syntax: "<length-percentage>"; inherits: true; initial-value: 58%; }
+
 
   /* Dot lives inside the staging area (top-right), guiding from within the
      scene with a speech bubble carrying the step instruction. Kept compact
      and click-transparent so it never blocks the net underneath. */
+  /* Cal walks the stage. He is anchored top-left and moved with a transform
+     (rather than swapping top/right, which cannot animate between `auto`
+     values), so he glides to the area each step is about instead of sitting
+     in one corner being easy to forget. JS picks the mark. */
   .dot-stage {
-    position: absolute; top: 8px; right: 12px; z-index: 6;
+    position: absolute; top: 0; left: 0; z-index: 6;
     display: flex; align-items: flex-start; gap: 4px;
-    max-width: min(46%, 230px);
+    width: min(46%, 230px);
     pointer-events: none;
+    transform: translate(var(--cal-x, 0px), var(--cal-y, 8px));
+    transition: transform .6s cubic-bezier(.4,.9,.3,1);
+  }
+  /* On a left-hand mark the bubble reads better with Cal on its left, so the
+     avatar and the bubble's tail swap sides. */
+  .dot-stage.flip { flex-direction: row-reverse; }
+  .dot-stage.flip .dot-bubble::before { left: -4px; right: auto; }
+  @media (prefers-reduced-motion: reduce) {
+    .dot-stage { transition: none; }
   }
   .dot-stage .dot-avatar { flex: 0 0 auto; order: 2; margin-top: 3px; width: 46px; }
   .dot-stage .dot-bubble {
@@ -1918,7 +1963,7 @@
       <span class="mode-tag-title">🧊 Cube Mode</span>
       <span class="mode-tag-sub">Explore the 3D shape</span>
     </div>
-    <div class="dot-stage">
+    <div class="dot-stage" id="dotStage">
       <div class="dot-bubble" id="dotBubble" role="status" aria-live="polite"></div>
       <div class="dot-avatar" id="dotAvatar" aria-hidden="true">
         <img class="cal-img" src="assets/cal.png" alt="Cal, your math guide">
@@ -2080,7 +2125,7 @@ MIProgress.paintAll();
   var modeTagTitle = modeTag.querySelector(".mode-tag-title");
   var modeTagSub = modeTag.querySelector(".mode-tag-sub");
   var stepLabel = $("stepLabel"), actionsEl = $("actions"), choicesEl = $("choices");
-  var dotAvatar = $("dotAvatar"), dotBubble = $("dotBubble");
+  var dotAvatar = $("dotAvatar"), dotBubble = $("dotBubble"), dotStage = $("dotStage");
   var pupils = Array.prototype.slice.call(dotAvatar.querySelectorAll(".dot-pupil"));
   var stepTrack = $("stepTrack");
   var trackNodes = [];   // built to match steps.length in buildTrack()
@@ -2112,8 +2157,99 @@ MIProgress.paintAll();
       f.classList.toggle("dimmed", !!keep && !lit);
       f.classList.toggle("focused", !!(keep && guided && lit && keep.length === 1));
     });
+    guideFocus = keep && keep.length ? keep.slice() : null;
+    aimGuide();
   }
   function clearFocus() { setFocus(null, false); }
+
+  /* ---------- aiming the light, and walking Cal to it -------------------
+     One region of interest drives both: the spotlight tightens onto it, and
+     Cal takes the nearest mark that does not cover it. Everything is derived
+     from live geometry rather than a per-step, per-shape table of positions,
+     so each of the six nets — and every fold state in between — is handled
+     without a lookup that could fall out of step with the shapes. */
+  var guideFocus = null;        // face indices the step is about, or null
+  var guideOverride = null;     // an explicit scene-local rect (the ruler zone)
+
+  function unionFaceRect(list) {
+    var l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
+    list.forEach(function (i) {
+      if (!faces[i]) return;
+      var f = faceLocalRect(i);
+      l = Math.min(l, f.left); t = Math.min(t, f.top);
+      r = Math.max(r, f.right); b = Math.max(b, f.bottom);
+    });
+    if (!isFinite(l)) return null;
+    return { left: l, top: t, right: r, bottom: b, cx: (l + r) / 2, cy: (t + b) / 2 };
+  }
+  // What the learner should be looking at right now.
+  function guideRegion() {
+    if (guideOverride) return guideOverride;
+    if (guideFocus) { var u = unionFaceRect(guideFocus); if (u) return u; }
+    if (!faces.length) return null;
+    return netLocalRect();     // the whole solid, or the whole flat net
+  }
+
+  // The individual lit shapes, for judging what Cal would actually cover.
+  // Only worth doing when the net is flat: a cross-shaped net leaves its
+  // bounding box's corners empty, and Cal standing in one covers nothing.
+  // Folded up, the faces' projected boxes overlap each other heavily and the
+  // silhouette is compact, so the box is the honest measure there.
+  function guideParts() {
+    if (guideOverride) return [guideOverride];
+    if (p > 0.5) return [guideRegion()].filter(Boolean);
+    var list = guideFocus || faces.map(function (_, i) { return i; });
+    return list.map(function (i) { return faces[i] && faceLocalRect(i); }).filter(Boolean);
+  }
+
+  function aimGuide() {
+    if (activity.style.display === "none") return;
+    var t = guideRegion();
+    if (!t) return;
+    var s = sceneRect();
+    if (!s.width || !s.height) return;
+    // Light: centred on the region, opening just wide enough to clear it.
+    var reach = Math.max(40, Math.hypot(t.right - t.left, t.bottom - t.top) / 2);
+    var tight = stage.classList.contains("guided");
+    stage.style.setProperty("--spot-x", t.cx.toFixed(1) + "px");
+    stage.style.setProperty("--spot-y", t.cy.toFixed(1) + "px");
+    stage.style.setProperty("--spot-in", (reach * (tight ? 1.02 : 1.18)).toFixed(1) + "px");
+    stage.style.setProperty("--spot-out", (reach * (tight ? 2.0 : 2.6)).toFixed(1) + "px");
+    placeCal(t, s, guideParts());
+  }
+
+  // Cal takes the mark closest to the action that does not sit on top of it —
+  // near enough to be pointing at the right thing, never in front of it.
+  function placeCal(t, s, parts) {
+    var r = dotStage.getBoundingClientRect();
+    var cw = r.width || Math.min(230, s.width * 0.46), ch = r.height || 62;
+    var pad = 10;
+    var MODE_TAG_CLEAR = 58;   // the mode tag owns the top-left corner
+    var CHROME_CLEAR = 54;     // step track + hint + area readout own the floor
+    var marks = [
+      { x: pad, y: MODE_TAG_CLEAR, flip: true },
+      { x: s.width - cw - pad, y: 8, flip: false },
+      { x: pad, y: Math.max(MODE_TAG_CLEAR, s.height - ch - CHROME_CLEAR), flip: true },
+      { x: s.width - cw - pad, y: Math.max(8, s.height - ch - CHROME_CLEAR), flip: false }
+    ];
+    var best = marks[1], bestScore = -Infinity;
+    marks.forEach(function (m) {
+      var area = 0;
+      (parts && parts.length ? parts : [t]).forEach(function (q) {
+        var ow = Math.max(0, Math.min(m.x + cw, q.right) - Math.max(m.x, q.left));
+        var oh = Math.max(0, Math.min(m.y + ch, q.bottom) - Math.max(m.y, q.top));
+        area += ow * oh;
+      });
+      var covered = Math.min(1, area / (cw * ch));              // 0..1 of Cal
+      var dist = Math.hypot((m.x + cw / 2) - t.cx, (m.y + ch / 2) - t.cy);
+      // Closest wins, but covering the region is heavily disqualifying.
+      var score = -dist - covered * 4 * Math.max(s.width, s.height);
+      if (score > bestScore) { bestScore = score; best = m; }
+    });
+    dotStage.style.setProperty("--cal-x", Math.round(best.x) + "px");
+    dotStage.style.setProperty("--cal-y", Math.round(best.y) + "px");
+    dotStage.classList.toggle("flip", best.flip);
+  }
 
   // ---------- geometry state ----------
   var S = 96;                 // base unit in px (pixels per shape-unit; responsive)
@@ -2931,7 +3067,7 @@ MIProgress.paintAll();
       p = from + (target - from) * easeInOut(t);
       render();
       if (t < 1) requestAnimationFrame(frame);
-      else { p = target; render(); if (done) done(); }
+      else { p = target; render(); aimGuide(); if (done) done(); }
     }
     requestAnimationFrame(frame);
   }
@@ -3341,6 +3477,17 @@ MIProgress.paintAll();
     placeRuler(parkX, parkY);
     ruler.classList.add("on", "parked");
     showDropHint();
+    // During a pass the drop zone — not just the face — is where the learner
+    // has to act, so the light covers both and Cal stands off that pair.
+    var L = measureLanding();
+    guideOverride = {
+      left: Math.min(L.boxLeft, f.left), top: Math.min(L.boxTop, f.top),
+      right: Math.max(L.boxLeft + L.boxW, f.right),
+      bottom: Math.max(L.boxTop + L.boxH, f.bottom)
+    };
+    guideOverride.cx = (guideOverride.left + guideOverride.right) / 2;
+    guideOverride.cy = (guideOverride.top + guideOverride.bottom) / 2;
+    aimGuide();
     var whereH = sp.tri
       ? (sp.baseAtTop ? "along the <strong>top edge</strong>" : "along the <strong>bottom edge</strong>")
       : "across the <strong>bottom</strong>";
@@ -3373,6 +3520,7 @@ MIProgress.paintAll();
   }
   function completeMeasure() {
     measure.active = false;
+    guideOverride = null;   // the light goes back to following the faces
     var sp = measure.spec;
     var b = sp.across, hgt = sp.down, area = sp.area;
     // The ruler's readings have done their job; the grid now carries the idea.
@@ -3916,6 +4064,7 @@ MIProgress.paintAll();
     ruler.classList.remove("on", "parked", "locked", "vert", "snapping");
     dropHint.classList.remove("show");
     closeWhyModal();
+    guideOverride = null;   // per-step aiming must never leak forward
     clearFocus();
     setHunt(null);
     dotSay(s.textKey && shape[s.textKey] ? shape[s.textKey] : s.text, false);
@@ -4221,7 +4370,7 @@ MIProgress.paintAll();
   }
 
   window.addEventListener("resize", function () {
-    if (activity.style.display !== "none") sizeFaces();
+    if (activity.style.display !== "none") { sizeFaces(); aimGuide(); }
   });
 
   // initial
