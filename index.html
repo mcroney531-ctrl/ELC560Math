@@ -26,9 +26,16 @@
        stop of the gradient, a deep indigo clears 4.5:1 the whole way down
        (4.6:1 on the darkest top stop, 11.6:1 on the palest) — white manages
        only 2.9:1 at best, so the hub inks dark rather than light. */
-    --hub-ink: #2e2063;
-    --hub-ink-soft: #4a2f75;
-    --hub-accent: #7c3597;
+    /* Sampled from the classroom concept: deep navy type on a periwinkle
+       room. Fill and text accents are separate tokens on purpose — the
+       button blue is 5.3:1 behind white type but only 2.8:1 as text on the
+       wall, so using one token for both would quietly fail contrast. */
+    --hub-ink: #001858;
+    --hub-ink-soft: #25406f;
+    --hub-accent: #4068c0;        /* fills: buttons, arrows */
+    --hub-accent-ink: #1b3a8c;    /* accent used as TEXT on the wall */
+    --hub-panel: #f6f7fb;
+    --hub-navy: #203050;
     --ink: #2b2a33;
     --ink-soft: #6b6a75;
     --card: #ffffff;
@@ -146,93 +153,75 @@
      would leave body's purple showing down both margins. Fixed also means it
      doesn't scroll away on a long hub, matching the activity's fixed sky. It
      lives inside #menu so it disappears with it, leaving body's rules alone. */
+  /* The room. A periwinkle wall wash with daylight from the upper left is
+     the base and works on its own; --room-img layers a rendered classroom
+     over it when one is supplied, and the scrim keeps panel text legible
+     whichever is showing. Fixed to the viewport rather than sized to #menu,
+     since .wrap is only 560px wide. Lives inside #menu so it disappears with
+     the screen, leaving body's rules — and the activity — untouched. */
   .hub-sky {
     position: fixed; inset: 0; z-index: 0;
     overflow: hidden; pointer-events: none;
     background:
-      /* sun glow low and centred */
-      radial-gradient(720px 340px at 50% 104%, rgba(255,247,209,.95) 0%, rgba(255,233,180,.42) 44%, transparent 72%),
-      /* the sky reddens back toward violet at the bottom corners */
-      radial-gradient(440px 280px at -8% 103%, rgba(208,150,214,.6) 0%, transparent 70%),
-      radial-gradient(440px 280px at 108% 103%, rgba(208,150,214,.6) 0%, transparent 70%),
-      linear-gradient(180deg,
-        #9e8be7 0%, #bd9de7 12%, #e2b0e0 24%, #f9bdd4 36%, #fdc6c5 48%,
-        #fecec0 60%, #fed7b8 72%, #fee4b8 84%, #fef2c2 95%, #fdeab6 100%);
+      /* daylight falling in from the window, upper left */
+      radial-gradient(760px 620px at 6% 2%, rgba(255,255,255,.72) 0%, rgba(255,255,255,.22) 38%, transparent 68%),
+      /* the wall, cooling and lightening toward the floor */
+      linear-gradient(178deg, #b8b8d8 0%, #bcc0e2 26%, #c2c8ec 58%, #c8d0f0 84%, #ccd4f4 100%);
   }
-  /* Stars belong to the lavender top only — masked off before the sky pales
-     out, where white dots would simply vanish. */
-  .hub-sky::before {
+  /* The rendered room, when there is one. object-fit: cover crops it rather
+     than stretching, and the scrim above holds contrast steady over whatever
+     the crop happens to land on. */
+  .hub-room {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: 50% 42%;
+    opacity: 0; transition: opacity .6s ease;
+  }
+  .hub-room.ready { opacity: 1; }
+  .hub-sky::after {
     content: ""; position: absolute; inset: 0;
     background:
-      radial-gradient(1.5px 1.5px at 12% 6%, rgba(255,255,255,.95) 50%, transparent 51%),
-      radial-gradient(1.2px 1.2px at 34% 13%, rgba(255,255,255,.8) 50%, transparent 51%),
-      radial-gradient(1.7px 1.7px at 58% 4%, rgba(255,255,255,.9) 50%, transparent 51%),
-      radial-gradient(1.2px 1.2px at 77% 10%, rgba(255,255,255,.75) 50%, transparent 51%),
-      radial-gradient(1.4px 1.4px at 89% 17%, rgba(255,255,255,.85) 50%, transparent 51%),
-      radial-gradient(1.1px 1.1px at 22% 21%, rgba(255,255,255,.7) 50%, transparent 51%),
-      radial-gradient(1.3px 1.3px at 66% 24%, rgba(255,255,255,.7) 50%, transparent 51%),
-      radial-gradient(1.1px 1.1px at 45% 30%, rgba(255,255,255,.55) 50%, transparent 51%);
-    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 20%, transparent 40%);
-    mask-image: linear-gradient(180deg, #000 0%, #000 20%, transparent 40%);
+      linear-gradient(180deg, rgba(196,202,236,.28) 0%, rgba(198,206,240,.42) 55%, rgba(202,210,244,.5) 100%);
   }
-  .hub-cloud, .hub-crystal { position: absolute; }
-  .hub-cloud svg, .hub-crystal svg { width: 100%; height: 100%; display: block; }
-  .hub-cloud { color: #fff7ef; }
-  /* Clouds bank along the left and right edges, leaving the middle clear for
-     the journey cards — same framing as the moodboard. */
-  .hub-cloud.c1 { left: -8%;  top: 20%; width: 46%;  opacity: .72; }
-  .hub-cloud.c2 { right: -10%; top: 9%;  width: 42%; opacity: .6; }
-  .hub-cloud.c3 { right: -6%; top: 30%; width: 50%;  opacity: .78; }
-  .hub-cloud.c4 { left: -12%; top: 46%; width: 44%;  opacity: .62; }
-  .hub-cloud.c5 { right: -8%; top: 58%; width: 46%;  opacity: .7; }
-  .hub-cloud.c6 { left: -6%;  bottom: 2%; width: 52%; opacity: .82; }
-  .hub-cloud.c7 { right: -4%; bottom: 0%; width: 48%; opacity: .8; }
-  /* Faceted crystals drifting among the clouds — the same wireframe-geometry
-     language the cosmic stage uses, so the new mood still points at the maths. */
-  .hub-crystal { color: #fff; }
-  /* Kept clear of the centre column (the content is a 560px band), so a
-     crystal never drifts behind the headline or a journey card. */
-  .hub-crystal.k1 { left: 7%;  top: 11%; width: 44px; opacity: .5;  animation: hubDrift 17s ease-in-out infinite; }
-  .hub-crystal.k2 { right: 6%; top: 24%; width: 34px; opacity: .42; animation: hubDrift 21s ease-in-out infinite -6s; }
-  .hub-crystal.k3 { right: 9%; top: 52%; width: 52px; opacity: .34; animation: hubDrift 24s ease-in-out infinite -11s; }
-  .hub-crystal.k4 { left: 5%;  top: 44%; width: 46px; opacity: .32; animation: hubDrift 19s ease-in-out infinite -3s; }
-  .hub-crystal.k5 { left: 10%; top: 74%; width: 30px; opacity: .3;  animation: hubDrift 23s ease-in-out infinite -14s; }
+  /* Blue wireframe solids drifting at the margins — the same line language as
+     the whiteboard diagrams and the shape tiles, so the decoration is the
+     maths rather than ornament. They also carry the look on their own if no
+     room render is present. */
+  .hub-crystal { position: absolute; color: #3f63bd; }
+  .hub-crystal svg { width: 100%; height: 100%; display: block; }
+  .hub-crystal.k1 { left: 6%;  top: 12%; width: 52px; opacity: .34; animation: hubDrift 17s ease-in-out infinite; }
+  .hub-crystal.k2 { right: 5%; top: 26%; width: 40px; opacity: .3;  animation: hubDrift 21s ease-in-out infinite -6s; }
+  .hub-crystal.k3 { right: 8%; top: 54%; width: 60px; opacity: .26; animation: hubDrift 24s ease-in-out infinite -11s; }
+  .hub-crystal.k4 { left: 4%;  top: 46%; width: 52px; opacity: .24; animation: hubDrift 19s ease-in-out infinite -3s; }
+  .hub-crystal.k5 { left: 9%;  top: 76%; width: 36px; opacity: .22; animation: hubDrift 23s ease-in-out infinite -14s; }
   @keyframes hubDrift {
     0%, 100% { transform: translateY(0) rotate(0deg); }
     50% { transform: translateY(-16px) rotate(7deg); }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .hub-crystal { animation: none; }
-  }
-  /* Narrow viewports: the content column fills the width, so there are no
-     clear margins to drift in. Drop the crystals to texture rather than
-     hiding them, so nothing reads as sitting on top of the headline. */
-  @media (max-width: 700px) {
-    .hub-sky .hub-crystal { opacity: .15; }
-  }
+  @media (prefers-reduced-motion: reduce) { .hub-crystal { animation: none; } }
+  /* Narrow viewports: the content column fills the width, so there is no
+     margin to drift in. Drop them to texture rather than hiding them. */
+  @media (max-width: 700px) { .hub-sky .hub-crystal { opacity: .12; } }
   .hub-nav { display: flex; align-items: center; gap: 10px; padding: 6px 2px 0; }
   .brand-mark {
     width: 34px; height: 34px; border-radius: 10px; flex: 0 0 auto;
-    background: linear-gradient(135deg, var(--accent), #06d6a0);
+    background: linear-gradient(150deg, #5a83dd, var(--hub-accent) 60%, #2c4ea6);
     display: grid; place-items: center; font-size: 16px;
-    box-shadow: 0 4px 10px -3px rgba(91,91,214,.5);
+    box-shadow: 0 5px 12px -4px rgba(10,24,66,.55);
   }
   .brand-name { font-weight: 800; font-size: 15px; letter-spacing: -.01em; color: var(--hub-ink); }
   .hub-header { text-align: left; padding: 22px 8px 6px; }
   /* A glass pill on the sky rather than a solid chip. */
   .hub-kicker {
     display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--hub-ink);
-    background: rgba(255,255,255,.5); padding: 6px 12px; border-radius: 999px; margin-bottom: 14px;
-    border: 1px solid rgba(255,255,255,.7);
+    text-transform: uppercase; color: var(--hub-accent-ink);
+    background: rgba(255,255,255,.82); padding: 7px 14px; border-radius: 999px; margin-bottom: 14px;
+    border: 1px solid rgba(255,255,255,.9);
+    box-shadow: 0 4px 10px -6px rgba(12,26,66,.35);
     -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   }
   .hub-header h1 { font-size: 36px; line-height: 1.05; letter-spacing: -.02em; color: var(--hub-ink); }
   .hub-header h1 { letter-spacing: -.03em; }
-  .hub-header h1 .grad {
-    background: linear-gradient(90deg, #7c3597, #c2426d);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
+  .hub-header h1 .grad { color: var(--hub-accent); }
   .hub-header p { color: var(--hub-ink-soft); margin-top: 10px; font-size: 15.5px; line-height: 1.5; max-width: 420px; }
 
   /* Dot hero */
@@ -274,12 +263,12 @@
   }
   /* Floating marks around Cal — brightened to read against the night sky. */
   .deco { position: absolute; font-weight: 800; pointer-events: none; }
-  .deco.plus { top: 2px; left: 8%; font-size: 26px; color: var(--hub-accent); }
-  .deco.divide { top: 42%; right: 4%; font-size: 22px; color: #12a37b; }
-  .deco.cross { bottom: 10%; right: 20%; font-size: 18px; color: #d1701c; }
+  .deco.plus { top: 2px; left: 8%; font-size: 26px; color: var(--hub-accent-ink); }
+  .deco.divide { top: 42%; right: 4%; font-size: 22px; color: #2f6fb5; }
+  .deco.cross { bottom: 10%; right: 20%; font-size: 18px; color: #4a7fd0; }
   .deco.spot { border-radius: 50%; }
-  .deco.d1 { top: 18%; left: 22%; width: 8px; height: 8px; background: var(--hub-accent); opacity: .6; }
-  .deco.d2 { bottom: 20%; left: 12%; width: 6px; height: 6px; background: #12a37b; opacity: .6; }
+  .deco.d1 { top: 18%; left: 22%; width: 8px; height: 8px; background: var(--hub-accent); opacity: .55; }
+  .deco.d2 { bottom: 20%; left: 12%; width: 6px; height: 6px; background: #2f6fb5; opacity: .55; }
 
   .section-label {
     font-weight: 800; font-size: 14.5px; letter-spacing: -.005em;
@@ -345,7 +334,7 @@
   }
   .card.locked { opacity: .62; cursor: default; }
   .card.locked .go { color: var(--ink-soft); background: #eeedea; }
-  .hub-foot { text-align: center; color: rgba(46,32,99,.7); font-size: 12.5px; margin-top: auto; padding-top: 34px; line-height: 1.5; }
+  .hub-foot { text-align: center; color: rgba(0,24,88,.68); font-size: 12.5px; margin-top: auto; padding-top: 34px; line-height: 1.5; }
 
   /* ============ JOURNEY MAP ============ */
   /* The landing is a "map you unfold": a dashed trail of shape stops on the
@@ -365,17 +354,23 @@
     transition: transform .15s ease, box-shadow .15s ease, opacity .3s ease;
     font: inherit; color: inherit;
   }
-  .stop[data-shape="rect"] { --card-accent: var(--ok); }
+  /* Hub-scoped accents only: the activity keeps --accent as it is. The two
+     stops stay distinguishable, but both sit in the classroom's blue family
+     rather than indigo and mint. */
+  #menu .stop { --card-accent: var(--hub-accent); }
+  #menu .stop[data-shape="rect"] { --card-accent: #2f7fb0; }
   .stop.unlocked:active { transform: scale(.985); }
   /* Cards on the sunset: a warm plum shadow rather than the near-black one a
      dark ground wanted, plus a soft white bloom so they read as lit from the
      sky behind them. (.stop and .tile only ever appear on the hub.) */
   .stop, .tile {
-    border-color: rgba(255,255,255,.75);
+    background: var(--hub-panel);
+    border-color: rgba(255,255,255,.9);
+    border-radius: 20px;
     box-shadow:
-      0 14px 32px -18px rgba(92,48,110,.55),
-      0 2px 8px -4px rgba(92,48,110,.18),
-      0 0 22px -10px rgba(255,255,255,.7);
+      0 16px 34px -20px rgba(10,24,66,.5),
+      0 3px 10px -5px rgba(10,24,66,.16),
+      inset 0 1px 0 rgba(255,255,255,.9);
   }
 
   .stop-pin {
@@ -414,14 +409,14 @@
      version (16% white + light ink) would all but disappear on pastel. */
   .stop.locked {
     cursor: default; opacity: 1;
-    background: rgba(255,255,255,.42);
-    border-color: rgba(255,255,255,.8);
-    -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
-    box-shadow: 0 12px 28px -20px rgba(92,48,110,.5);
+    background: rgba(255,255,255,.5);
+    border-color: rgba(255,255,255,.85);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    box-shadow: 0 12px 28px -20px rgba(10,24,66,.45);
   }
   .stop.locked .stop-title { color: var(--hub-ink); }
   .stop.locked .stop-sub, .stop.locked .stop-locknote { color: var(--hub-ink-soft); }
-  .stop.locked .stop-cat { color: #0f8f6c; }
+  .stop.locked .stop-cat { color: #12706a; }
   .stop.locked .stop-pin { filter: grayscale(.55); }
   .stop.locked .stop-lock { display: flex; }
   .stop.locked .stop-go { display: none; }
@@ -432,20 +427,48 @@
 
   /* Dashed connector between the two main stops. */
   .trail-link { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 7px 0; margin-left: 42px; }
-  .trail-link i { width: 4px; height: 4px; border-radius: 50%; background: rgba(46,32,99,.4); }
+  .trail-link i { width: 4px; height: 4px; border-radius: 50%; background: rgba(0,24,88,.32); }
 
   /* Challenge zone */
   .zone-divider {
     display: flex; align-items: center; gap: 12px;
-    margin: 22px 2px 4px; color: var(--hub-accent);
+    margin: 22px 2px 4px; color: var(--hub-accent-ink);
     font-size: 13px; font-weight: 800; letter-spacing: .02em;
   }
   .zone-divider::before, .zone-divider::after {
     content: ""; height: 2px; flex: 1;
-    background: repeating-linear-gradient(90deg, rgba(124,53,151,.4) 0 6px, transparent 6px 12px);
+    background: repeating-linear-gradient(90deg, rgba(27,58,140,.38) 0 6px, transparent 6px 12px);
   }
   .zone-note { color: var(--hub-ink-soft); font-size: 12.5px; line-height: 1.45; margin: 0 4px 12px; }
 
+  /* The challenge shelf gets its own dark panel, so it reads as a separate
+     place rather than more of the main path. Its contents invert: light type
+     on navy, and the tiles lighten instead of frosting. */
+  .zone-panel {
+    background: linear-gradient(165deg, #24365c 0%, var(--hub-navy) 55%, #1a2744 100%);
+    border-radius: 22px; padding: 16px 16px 18px; margin-top: 18px;
+    box-shadow: 0 18px 38px -22px rgba(10,24,66,.75), inset 0 1px 0 rgba(255,255,255,.12);
+  }
+  .zone-panel .zone-divider { color: #9fd0ff; margin: 2px 2px 4px; }
+  .zone-panel .zone-divider::before, .zone-panel .zone-divider::after {
+    background: repeating-linear-gradient(90deg, rgba(159,208,255,.35) 0 6px, transparent 6px 12px);
+  }
+  .zone-panel .zone-note { color: rgba(226,235,255,.82); }
+  .zone-panel .tile {
+    background: rgba(255,255,255,.1);
+    border-color: rgba(255,255,255,.16);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 8px 18px -14px rgba(0,0,0,.6);
+  }
+  .zone-panel .tile .tile-name { color: #eef3ff; }
+  .zone-panel .tile .tile-fig { color: #a9c8ff; }
+  .zone-panel .tile.locked {
+    background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.12);
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  .zone-panel .tile.locked .tile-fig { color: rgba(169,200,255,.55); }
+  .zone-panel .tile.locked .tile-name { color: rgba(226,235,255,.6); }
+  .zone-panel .tile.ready { background: rgba(255,255,255,.16); }
+  .zone-panel .tile.ready .tile-fig { color: #bcd6ff; }
   .shelf { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .tile {
     position: relative; background: var(--card);
@@ -464,12 +487,12 @@
   }
   .tile.locked {
     opacity: 1;
-    background: rgba(255,255,255,.38);
-    border-color: rgba(255,255,255,.78);
-    -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
-    box-shadow: 0 10px 24px -20px rgba(92,48,110,.5);
+    background: rgba(255,255,255,.46);
+    border-color: rgba(255,255,255,.82);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    box-shadow: 0 10px 24px -20px rgba(10,24,66,.45);
   }
-  .tile.locked .tile-fig { color: rgba(74,47,117,.62); }
+  .tile.locked .tile-fig { color: rgba(37,64,111,.6); }
   .tile.locked .tile-name { color: var(--hub-ink-soft); }
   /* Unlocked-but-not-yet-built: brightens, swaps the padlock for a "soon" pill. */
   .tile.ready { opacity: 1; }
@@ -1723,39 +1746,32 @@
 <div class="wrap" id="menu">
   <!-- Sunset sky decoration: stars (CSS, masked to the top), soft clouds and
        drifting faceted crystals. Hand-authored SVG, no raster assets. -->
+  <!-- The room: a CSS wall wash that stands on its own, an optional rendered
+       classroom layered over it, and drifting blue wireframe solids drawn
+       from the same line language as the shape tiles. -->
   <div class="hub-sky" aria-hidden="true">
+    <img class="hub-room" id="hubRoom" alt="" decoding="async">
     <svg width="0" height="0" style="position:absolute" focusable="false">
       <defs>
-        <filter id="cloudSoft" x="-30%" y="-60%" width="160%" height="260%">
-          <feGaussianBlur stdDeviation="7" />
-        </filter>
-        <g id="cloudShape" fill="currentColor">
-          <ellipse cx="62" cy="60" rx="54" ry="25" />
-          <ellipse cx="108" cy="45" rx="43" ry="30" />
-          <ellipse cx="147" cy="61" rx="45" ry="22" />
-          <ellipse cx="95" cy="70" rx="66" ry="18" />
+        <g id="wfCube" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
+          <path d="M14 16 L34 16 L34 36 L14 36 Z"/>
+          <path d="M20 8 L40 8 L40 28 L34 28 M20 8 L14 16 M40 8 L34 16 M40 28 L34 36" opacity=".85"/>
         </g>
-        <!-- Hexagon with facet lines to the alternate corners: reads as a cut
-             crystal, and echoes the wireframe solids in the cosmic stage. -->
-        <g id="crystalShape" fill="none" stroke="currentColor" stroke-width="1.6"
-           stroke-linejoin="round">
-          <path d="M24 3 L42 13.5 L42 34.5 L24 45 L6 34.5 L6 13.5 Z" />
-          <path d="M24 3 L24 45 M6 13.5 L42 34.5 M42 13.5 L6 34.5" opacity=".5" />
+        <g id="wfOcta" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
+          <path d="M24 4 L6 24 L24 44 L42 24 Z"/>
+          <path d="M6 24 L42 24 M24 4 L24 44" opacity=".55"/>
+        </g>
+        <g id="wfPyr" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
+          <path d="M24 6 L7 36 L41 36 Z"/>
+          <path d="M7 36 L20 42 L41 36 M24 6 L20 42" opacity=".6"/>
         </g>
       </defs>
     </svg>
-    <div class="hub-cloud c1"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
-    <div class="hub-cloud c2"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
-    <div class="hub-cloud c3"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
-    <div class="hub-cloud c4"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
-    <div class="hub-cloud c5"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
-    <div class="hub-cloud c6"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
-    <div class="hub-cloud c7"><svg viewBox="0 0 210 95" focusable="false"><use href="#cloudShape" filter="url(#cloudSoft)"/></svg></div>
-    <div class="hub-crystal k1"><svg viewBox="0 0 48 48" focusable="false"><use href="#crystalShape"/></svg></div>
-    <div class="hub-crystal k2"><svg viewBox="0 0 48 48" focusable="false"><use href="#crystalShape"/></svg></div>
-    <div class="hub-crystal k3"><svg viewBox="0 0 48 48" focusable="false"><use href="#crystalShape"/></svg></div>
-    <div class="hub-crystal k4"><svg viewBox="0 0 48 48" focusable="false"><use href="#crystalShape"/></svg></div>
-    <div class="hub-crystal k5"><svg viewBox="0 0 48 48" focusable="false"><use href="#crystalShape"/></svg></div>
+    <div class="hub-crystal k1"><svg viewBox="0 0 48 48" focusable="false"><use href="#wfCube"/></svg></div>
+    <div class="hub-crystal k2"><svg viewBox="0 0 48 48" focusable="false"><use href="#wfOcta"/></svg></div>
+    <div class="hub-crystal k3"><svg viewBox="0 0 48 48" focusable="false"><use href="#wfPyr"/></svg></div>
+    <div class="hub-crystal k4"><svg viewBox="0 0 48 48" focusable="false"><use href="#wfOcta"/></svg></div>
+    <div class="hub-crystal k5"><svg viewBox="0 0 48 48" focusable="false"><use href="#wfCube"/></svg></div>
   </div>
   <div class="hub-nav">
     <span class="brand-mark">🧊</span>
@@ -1828,7 +1844,10 @@
       </button>
     </div>
 
-    <!-- CHALLENGE ZONE: shape shelf, unlocks after the main path -->
+    <!-- CHALLENGE ZONE: shape shelf, unlocks after the main path. Sits in its
+         own navy panel so the shelf reads as a distinct place, not a
+         continuation of the main path. -->
+    <div class="zone-panel">
     <div class="zone-divider"><span>✦ Challenge Zone</span></div>
     <p class="zone-note" id="zoneNote">Clear the main path to unlock the shelf — trickier solids to take apart.</p>
 
@@ -1874,6 +1893,7 @@
         <span class="tile-name">Octahedron</span>
         <span class="tile-lock">🔒</span>
       </div>
+    </div>
     </div>
   </div>
 
@@ -4369,6 +4389,20 @@ MIProgress.paintAll();
   }
   // Journey-map stops. The cube is always open; the prism only launches once
   // it's unlocked (the cube is complete) — a locked stop just nudges instead.
+  // The room render is optional. It is attached at runtime and only revealed
+  // once it actually decodes, so a missing or failed asset leaves the CSS wall
+  // showing rather than a broken image box — the hub is designed to stand up
+  // either way.
+  (function () {
+    var room = $("hubRoom");
+    if (!room) return;
+    var src = "assets/room.png";
+    var probe = new Image();
+    probe.onload = function () { room.src = src; room.classList.add("ready"); };
+    probe.onerror = function () { room.remove(); };
+    probe.src = src;
+  })();
+
   $("startCube").addEventListener("click", function () { startActivity("cube"); });
   // Challenge Zone: unlocked once the main path is done, then each tile
   // launches the same seven-step arc for a non-box solid.
