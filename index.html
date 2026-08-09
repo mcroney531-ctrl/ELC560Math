@@ -286,8 +286,10 @@
     flex: 0 0 34px; height: 34px; border-radius: 11px; display: grid; place-items: center;
     background: rgba(64,104,192,.12); color: var(--hub-accent-ink); font-size: 15px;
   }
-  .learn-card .lc-title { font-size: 13.5px; font-weight: 800; }
-  .learn-card .lc-sub { font-size: 11.5px; color: var(--hub-ink-soft); margin-top: 1px; line-height: 1.35; }
+  /* Both are spans (so the surrounding <span> wrapper stays one inline unit)
+     but need to stack, not run together on one line. */
+  .learn-card .lc-title { display: block; font-size: 13.5px; font-weight: 800; }
+  .learn-card .lc-sub { display: block; font-size: 11.5px; color: var(--hub-ink-soft); margin-top: 1px; line-height: 1.35; }
   .learn-card .lc-go { margin-left: auto; color: var(--hub-accent); font-weight: 800; }
 
   /* ---- Progress ---- */
@@ -1920,7 +1922,7 @@
   <!-- HOME: the journey map -->
   <div class="hub-view" id="viewHome">
   <header class="hub-header">
-    <span class="hub-kicker">✦ 3D shapes, opened up</span>
+    <span class="hub-kicker">⬡ 3D shapes, opened up</span>
     <h1>Un<span class="grad">fold</span></h1>
     <p>Spin a solid, unfold it flat into its net, and see exactly where every face, edge and corner lives — then measure it.</p>
   </header>
@@ -1939,7 +1941,7 @@
     <div class="dot-hero-speech">Hi! I'm <b>Cal</b>. Follow the map — one shape at a time!</div>
   </div>
 
-  <div class="section-label">✦ Your journey</div>
+  <div class="section-label">⌂ Your journey</div>
 
   <!-- MAIN PATH: cube → prism → done -->
   <div class="journey">
@@ -1989,7 +1991,7 @@
          own navy panel so the shelf reads as a distinct place, not a
          continuation of the main path. -->
     <div class="zone-panel">
-    <div class="zone-divider"><span>✦ Challenge Zone</span></div>
+    <div class="zone-divider"><span>▲ Challenge Zone</span></div>
     <p class="zone-note" id="zoneNote">Clear the main path to unlock the shelf — trickier solids to take apart.</p>
 
     <div class="shelf" id="shelf">
@@ -2049,7 +2051,7 @@
 
   <!-- LEARN: the five deeper sheets, reachable without being mid-lesson -->
   <div class="hub-view" id="viewLearn" hidden>
-    <div class="section-label">✦ Learn more</div>
+    <div class="section-label">⬡ Learn more</div>
     <p class="view-note">The optional depth from inside the lesson, gathered in one place. Each sheet adapts to the solid you pick.</p>
     <div class="learn-picker" id="learnPicker" role="group" aria-label="Choose a shape"></div>
     <div class="learn-list" id="learnList"></div>
@@ -2074,7 +2076,7 @@
   <nav class="tabbar" id="tabbar" aria-label="Sections">
     <button class="tab on" type="button" data-view="Home"><span class="tab-ico">⌂</span><span class="tab-lbl">Home</span></button>
     <button class="tab" type="button" data-view="Shapes"><span class="tab-ico">◆</span><span class="tab-lbl">Shapes</span></button>
-    <button class="tab" type="button" data-view="Learn"><span class="tab-ico">✦</span><span class="tab-lbl">Learn</span></button>
+    <button class="tab" type="button" data-view="Learn"><span class="tab-ico">⬡</span><span class="tab-lbl">Learn</span></button>
     <button class="tab" type="button" data-view="Progress"><span class="tab-ico">▮</span><span class="tab-lbl">Progress</span></button>
     <button class="tab" type="button" data-view="Badges"><span class="tab-ico">★</span><span class="tab-lbl">Badges</span></button>
   </nav>
@@ -2195,7 +2197,7 @@
   <div class="controls-panel" id="guide">
     <div class="controls-head">
       <div class="step-label" id="stepLabel"></div>
-      <button class="learn-more-btn" id="learnMoreBtn" type="button" hidden>✦ Learn more</button>
+      <button class="learn-more-btn" id="learnMoreBtn" type="button" hidden>⬡ Learn more</button>
     </div>
     <!-- options are rebuilt per shape around its true face count -->
     <div class="choices" id="choices" style="display:none"></div>
@@ -2247,7 +2249,7 @@
     <div class="lm-backdrop" id="lmBackdrop"></div>
     <div class="lm-card" role="dialog" aria-modal="true" aria-labelledby="lmTitle">
       <div class="lm-header">
-        <span class="lm-badge">✦ Learn more</span>
+        <span class="lm-badge">⬡ Learn more</span>
         <h3 class="lm-title" id="lmTitle"></h3>
         <button class="lm-close" id="lmClose" type="button" aria-label="Close">✕</button>
       </div>
@@ -2301,7 +2303,7 @@ var MIProgress = (function () {
       t.classList.toggle("ready", mainDone);
       t.classList.toggle("locked", !mainDone);
       var lock = t.querySelector(".tile-lock");
-      if (lock) lock.textContent = mainDone ? "✦" : "🔒";
+      if (lock) lock.textContent = mainDone ? "✓" : "🔒";
     });
   }
   function markStep(key, stepIndex, totalSteps) {
@@ -3903,7 +3905,7 @@ MIProgress.paintAll();
                 sh.base2D + '</strong>. Getting from there to a solid is where the third dimension arrives — and it happens differently depending on the shape.</p>' +
               '<p>' + sh.ladderStep + '</p>' +
               '<div class="lmi">' +
-                '<div class="lmi-head">✦ Slide to climb the ladder</div>' +
+                '<div class="lmi-head">⬡ Slide to climb the ladder</div>' +
                 '<div class="dsc-stage">' +
                   '<div class="dsc-box ' + sh.base2D + '" id="dscBox"></div>' +
                   '<div class="dsc-solid" id="dscSolid">' + miniSolidSvg(sh.key, 150, 120) + '</div>' +
@@ -3974,7 +3976,7 @@ MIProgress.paintAll();
         html: '<p>A <strong>face</strong> is one flat side of a solid shape. ' + sh.faceBlurb + '</p>' +
               '<p>Counting them while the solid spins is tricky because some always hide around the back — that’s exactly the puzzle we’re about to solve by unfolding it.</p>' +
               '<div class="lmi">' +
-                '<div class="lmi-head">✦ ' + sh.solidLabel + ' anatomy — tap to light each part up</div>' +
+                '<div class="lmi-head">⬡ ' + sh.solidLabel + ' anatomy — tap to light each part up</div>' +
                 '<div class="lmi-ctrls">' +
                   '<button type="button" class="lmi-btn on" data-anat="faces">Faces</button>' +
                   '<button type="button" class="lmi-btn" data-anat="edges">Edges</button>' +
@@ -4037,12 +4039,12 @@ MIProgress.paintAll();
               '<p>Fold them back the right way and they wrap into the solid with no gaps and no overlaps.</p>' +
               (isBox
                 ? '<div class="lmi">' +
-                    '<div class="lmi-head">✦ Which of these fold into a cube?</div>' +
+                    '<div class="lmi-head">⬡ Which of these fold into a cube?</div>' +
                     '<div class="nets-grid" id="netsGrid"></div>' +
                     '<div class="lmi-out" id="netsOut">Tap each pattern to test it. Six squares isn’t enough on its own — the arrangement has to work too.</div>' +
                   '</div>'
                 : '<div class="lmi">' +
-                    '<div class="lmi-head">✦ How this net is put together</div>' +
+                    '<div class="lmi-head">⬡ How this net is put together</div>' +
                     netSvg(sh) +
                     '<div class="lmi-out">' + sh.netBlurb + '</div>' +
                   '</div>')
@@ -4114,7 +4116,7 @@ MIProgress.paintAll();
               '<p>“This face is 3 big” means nothing. <strong>3 centimetres</strong> means something: it’s 3 of a length everyone agrees on. Areas use squared units — a <strong>square centimetre</strong> (cm²) is a square 1 cm on each side.</p>' +
               '<p>That’s what you’re about to do to all <strong>' + sh.F + ' faces</strong> of this ' + sh.solidLabel.toLowerCase() + '.</p>' +
               '<div class="lmi">' +
-                '<div class="lmi-head">✦ Same face, different unit</div>' +
+                '<div class="lmi-head">⬡ Same face, different unit</div>' +
                 '<div class="lmi-ctrls">' +
                   '<button type="button" class="lmi-btn" data-u="2">2 cm squares</button>' +
                   '<button type="button" class="lmi-btn on" data-u="1">1 cm squares</button>' +
@@ -4167,7 +4169,7 @@ MIProgress.paintAll();
               '<p>The little label on each face is how its area is worked out: a rectangle is <strong>width × height</strong>, and a triangle is <strong>half</strong> of that — ½ × base × height. Add every face together and you have the surface area.</p>' +
               (isBox
                 ? '<div class="lmi">' +
-                    '<div class="lmi-head">✦ Build the formula — change any box, watch it hold</div>' +
+                    '<div class="lmi-head">⬡ Build the formula — change any box, watch it hold</div>' +
                     '<div class="fb-row"><label>Width</label><input type="range" class="lmi-range" id="fbW" min="1" max="9" value="' + sh.dim.a + '"><output id="fbWv"></output></div>' +
                     '<div class="fb-row"><label>Height</label><input type="range" class="lmi-range" id="fbH" min="1" max="9" value="' + sh.dim.b + '"><output id="fbHv"></output></div>' +
                     '<div class="fb-row"><label>Depth</label><input type="range" class="lmi-range" id="fbD" min="1" max="9" value="' + sh.dim.c + '"><output id="fbDv"></output></div>' +
@@ -4176,7 +4178,7 @@ MIProgress.paintAll();
                     '<div class="fb-formula">SA = 2 × (w×h + w×d + h×d)</div>' +
                   '</div>'
                 : '<div class="lmi">' +
-                    '<div class="lmi-head">✦ Scale it up — what happens to the area?</div>' +
+                    '<div class="lmi-head">⬡ Scale it up — what happens to the area?</div>' +
                     '<div class="sc-head"><label>Scale every length</label><output id="scKv">×1</output></div>' +
                     '<input type="range" class="lmi-range" id="scK" min="1" max="4" step="0.5" value="1" aria-label="Scale">' +
                     '<div class="fb-terms" id="scTerms"></div>' +
@@ -4652,6 +4654,13 @@ MIProgress.paintAll();
     why: "Why counting isn't measuring, and where the centimetre comes from.",
     sa: "Build the surface-area formula, or watch what scaling does to it."
   };
+  // One icon per sheet rather than a single glyph repeated five times:
+  // a dot growing into a shape, split faces, the net's own cross-hatch (the
+  // same mark the stage's "Net Mode" tag already uses), a measured grid,
+  // and a sum — this one literally is "add the faces up".
+  var LEARN_ICON = {
+    warmup: "○", faces: "◐", net: "▦", why: "▤", sa: "∑"
+  };
   var learnShape = "cube";
   function learnSteps() {
     return steps.map(function (st, i) { return { st: st, i: i }; })
@@ -4680,10 +4689,11 @@ MIProgress.paintAll();
       card.type = "button";
       card.className = "learn-card";
       card.innerHTML =
-        '<span class="lc-ico">✦</span>' +
+        '<span class="lc-ico"></span>' +
         '<span><span class="lc-title"></span>' +
           '<span class="lc-sub"></span></span>' +
         '<span class="lc-go">›</span>';
+      card.querySelector(".lc-ico").textContent = LEARN_ICON[o.st.key] || "⬡";
       card.querySelector(".lc-title").textContent = lm.title;
       card.querySelector(".lc-sub").textContent = LEARN_BLURB[o.st.key] || o.st.name;
       card.addEventListener("click", function () { openSheetFor(o.st, sh); });
