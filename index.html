@@ -147,7 +147,9 @@
      the activity does with --sky-ink. */
   #menu { position: relative; }
   /* Content sits above the decoration layer. */
-  #menu > *:not(.hub-sky) { position: relative; z-index: 1; }
+  /* The tab bar is excluded: it is fixed to the viewport, and this rule's
+     id-level specificity would otherwise force it back to relative. */
+  #menu > *:not(.hub-sky):not(.tabbar) { position: relative; z-index: 1; }
   /* The sky carries the gradient and is fixed to the viewport, not sized to
      #menu — .wrap is only 560px wide, so painting the sunset on #menu itself
      would leave body's purple showing down both margins. Fixed also means it
@@ -201,6 +203,143 @@
   /* Narrow viewports: the content column fills the width, so there is no
      margin to drift in. Drop them to texture rather than hiding them. */
   @media (max-width: 700px) { .hub-sky .hub-crystal { opacity: .12; } }
+  /* ---- Hub sections + tab bar -------------------------------------------
+     The hub is five places, not one page. Views swap inside #menu; the bar is
+     fixed to the viewport but lives inside #menu, so it goes away with the
+     screen and never appears over the activity. */
+  .hub-view[hidden] { display: none; }
+  #menu { padding-bottom: 92px; }        /* room for the fixed bar */
+  .view-note {
+    color: var(--hub-ink-soft); font-size: 13.5px; line-height: 1.5;
+    margin: 0 2px 14px; max-width: 460px;
+  }
+  .tabbar {
+    position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%);
+    z-index: 20; width: min(528px, calc(100vw - 24px));
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;
+    background: rgba(250,251,254,.94);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,.9); border-radius: 22px;
+    padding: 7px 6px;
+    box-shadow: 0 16px 34px -18px rgba(10,24,66,.55), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .tab {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    background: none; border: 0; cursor: pointer; font: inherit;
+    padding: 6px 2px 4px; border-radius: 15px;
+    color: var(--hub-ink-soft);
+    transition: color .18s ease, background .18s ease;
+  }
+  .tab .tab-ico { font-size: 16px; line-height: 1; }
+  .tab .tab-lbl { font-size: 10.5px; font-weight: 800; letter-spacing: .01em; }
+  .tab:hover { color: var(--hub-accent-ink); }
+  .tab.on { color: #fff; background: var(--hub-accent); }
+  .tab:focus-visible { outline: 2px solid var(--hub-accent-ink); outline-offset: 2px; }
+
+  /* ---- Shapes ---- */
+  .shape-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .shape-card {
+    background: var(--hub-panel); border: 1px solid rgba(255,255,255,.9);
+    border-radius: 18px; padding: 14px 13px 12px; text-align: left;
+    display: flex; flex-direction: column; gap: 8px; width: 100%;
+    font: inherit; color: var(--ink); cursor: pointer;
+    box-shadow: 0 12px 26px -18px rgba(10,24,66,.5), inset 0 1px 0 rgba(255,255,255,.9);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .shape-card:active { transform: scale(.985); }
+  .shape-card.locked { cursor: default; background: rgba(255,255,255,.5); }
+  .shape-card-top { display: flex; align-items: center; gap: 10px; }
+  .shape-card .sc-fig { width: 40px; height: 36px; color: var(--hub-accent); flex: 0 0 auto; }
+  .shape-card.locked .sc-fig { color: rgba(37,64,111,.45); }
+  .shape-card .sc-name { font-size: 13.5px; font-weight: 800; letter-spacing: -.01em; }
+  .shape-card .sc-tag { font-size: 11px; font-weight: 700; color: var(--hub-ink-soft); }
+  .sc-stats { display: flex; gap: 6px; }
+  .sc-stat {
+    flex: 1; background: rgba(64,104,192,.09); border-radius: 10px;
+    padding: 5px 4px; text-align: center;
+  }
+  .sc-stat b { display: block; font-size: 14px; font-weight: 800; color: var(--hub-ink); }
+  .sc-stat span { font-size: 9.5px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--hub-ink-soft); }
+  .sc-area { font-size: 11.5px; font-weight: 700; color: var(--hub-ink-soft); }
+  .sc-area b { color: var(--hub-accent-ink); }
+
+  /* ---- Learn ---- */
+  .learn-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .lp-btn {
+    font: inherit; font-size: 11.5px; font-weight: 800; cursor: pointer;
+    padding: 6px 11px; border-radius: 999px;
+    background: rgba(255,255,255,.72); color: var(--hub-ink-soft);
+    border: 1px solid rgba(255,255,255,.9);
+  }
+  .lp-btn.on { background: var(--hub-accent); color: #fff; border-color: transparent; }
+  .learn-list { display: flex; flex-direction: column; gap: 10px; }
+  .learn-card {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+    background: var(--hub-panel); border: 1px solid rgba(255,255,255,.9);
+    border-radius: 16px; padding: 13px 14px; font: inherit; color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 12px 26px -20px rgba(10,24,66,.5), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .learn-card:active { transform: scale(.99); }
+  .learn-card .lc-ico {
+    flex: 0 0 34px; height: 34px; border-radius: 11px; display: grid; place-items: center;
+    background: rgba(64,104,192,.12); color: var(--hub-accent-ink); font-size: 15px;
+  }
+  .learn-card .lc-title { font-size: 13.5px; font-weight: 800; }
+  .learn-card .lc-sub { font-size: 11.5px; color: var(--hub-ink-soft); margin-top: 1px; line-height: 1.35; }
+  .learn-card .lc-go { margin-left: auto; color: var(--hub-accent); font-weight: 800; }
+
+  /* ---- Progress ---- */
+  .prog-summary {
+    background: var(--hub-panel); border: 1px solid rgba(255,255,255,.9);
+    border-radius: 18px; padding: 14px 15px; margin-bottom: 12px;
+    box-shadow: 0 12px 26px -20px rgba(10,24,66,.5);
+  }
+  .prog-summary .ps-big { font-size: 26px; font-weight: 800; color: var(--hub-ink); letter-spacing: -.02em; }
+  .prog-summary .ps-sub { font-size: 12.5px; color: var(--hub-ink-soft); margin-top: 2px; }
+  .prog-list { display: flex; flex-direction: column; gap: 8px; }
+  .prog-row {
+    display: flex; align-items: center; gap: 11px;
+    background: var(--hub-panel); border: 1px solid rgba(255,255,255,.9);
+    border-radius: 14px; padding: 10px 13px;
+  }
+  .prog-row .pr-fig { width: 26px; height: 24px; color: var(--hub-accent); flex: 0 0 auto; }
+  .prog-row .pr-name { font-size: 12.5px; font-weight: 800; flex: 1 1 auto; min-width: 0; }
+  .prog-row .pr-count { font-size: 11.5px; font-weight: 800; color: var(--hub-ink-soft); flex: 0 0 auto; }
+  .prog-row .pr-bar { flex: 0 0 84px; height: 6px; background: rgba(10,24,66,.1); border-radius: 999px; overflow: hidden; }
+  .prog-row .pr-fill { display: block; height: 100%; background: var(--hub-accent); border-radius: 999px; }
+  .prog-row.done .pr-fill { background: #12706a; }
+  .prog-reset {
+    margin-top: 14px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer;
+    background: rgba(255,255,255,.6); color: var(--hub-ink-soft);
+    border: 1px solid rgba(255,255,255,.9); border-radius: 999px; padding: 8px 15px;
+  }
+  .prog-reset.armed { background: #b3261e; color: #fff; border-color: transparent; }
+
+  /* ---- Badges ---- */
+  .badge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  .badge-card {
+    background: var(--hub-panel); border: 1px solid rgba(255,255,255,.9);
+    border-radius: 18px; padding: 14px 12px; text-align: center;
+    box-shadow: 0 12px 26px -20px rgba(10,24,66,.5), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .badge-card.locked { background: rgba(255,255,255,.46); }
+  .badge-medal {
+    width: 46px; height: 46px; margin: 0 auto 8px; border-radius: 50%;
+    display: grid; place-items: center; font-size: 21px;
+    background: linear-gradient(150deg, #6f96e4, var(--hub-accent));
+    color: #fff; box-shadow: 0 6px 14px -6px rgba(10,24,66,.6);
+  }
+  .badge-card.locked .badge-medal {
+    background: rgba(10,24,66,.1); color: rgba(37,64,111,.5); box-shadow: none;
+  }
+  .badge-name { font-size: 12.5px; font-weight: 800; color: var(--hub-ink); }
+  .badge-how { font-size: 10.5px; color: var(--hub-ink-soft); margin-top: 3px; line-height: 1.35; }
+  @media (max-width: 420px) {
+    .tab .tab-lbl { font-size: 9.5px; }
+    .shape-grid, .badge-grid { grid-template-columns: 1fr; }
+  }
   .hub-nav { display: flex; align-items: center; gap: 10px; padding: 6px 2px 0; }
   .brand-mark {
     width: 34px; height: 34px; border-radius: 10px; flex: 0 0 auto;
@@ -1778,6 +1917,8 @@
     <span class="brand-name">Unfold</span>
   </div>
 
+  <!-- HOME: the journey map -->
+  <div class="hub-view" id="viewHome">
   <header class="hub-header">
     <span class="hub-kicker">✦ 3D shapes, opened up</span>
     <h1>Un<span class="grad">fold</span></h1>
@@ -1896,6 +2037,47 @@
     </div>
     </div>
   </div>
+
+  </div><!-- /viewHome -->
+
+  <!-- SHAPES: every solid in the lesson, browsable outside a run -->
+  <div class="hub-view" id="viewShapes" hidden>
+    <div class="section-label">◆ All shapes</div>
+    <p class="view-note">Six solids, from a plain cube to an octahedron. Faces, edges and corners are the counts you'll verify by hand; the area is what the whole surface adds up to.</p>
+    <div class="shape-grid" id="shapeGrid"></div>
+  </div>
+
+  <!-- LEARN: the five deeper sheets, reachable without being mid-lesson -->
+  <div class="hub-view" id="viewLearn" hidden>
+    <div class="section-label">✦ Learn more</div>
+    <p class="view-note">The optional depth from inside the lesson, gathered in one place. Each sheet adapts to the solid you pick.</p>
+    <div class="learn-picker" id="learnPicker" role="group" aria-label="Choose a shape"></div>
+    <div class="learn-list" id="learnList"></div>
+  </div>
+
+  <!-- PROGRESS: read straight from the saved progress store -->
+  <div class="hub-view" id="viewProgress" hidden>
+    <div class="section-label">▮ Your progress</div>
+    <p class="view-note">Saved on this device. Every step you reach is remembered, so you can leave a shape half-done and come back to it.</p>
+    <div class="prog-summary" id="progSummary"></div>
+    <div class="prog-list" id="progList"></div>
+    <button class="prog-reset" id="progReset" type="button">Reset all progress</button>
+  </div>
+
+  <!-- BADGES: derived from completion state, never stored separately -->
+  <div class="hub-view" id="viewBadges" hidden>
+    <div class="section-label">★ Badges</div>
+    <p class="view-note">Earned by finishing shapes — nothing here is awarded for turning up. Locked badges show what they take.</p>
+    <div class="badge-grid" id="badgeGrid"></div>
+  </div>
+
+  <nav class="tabbar" id="tabbar" aria-label="Sections">
+    <button class="tab on" type="button" data-view="Home"><span class="tab-ico">⌂</span><span class="tab-lbl">Home</span></button>
+    <button class="tab" type="button" data-view="Shapes"><span class="tab-ico">◆</span><span class="tab-lbl">Shapes</span></button>
+    <button class="tab" type="button" data-view="Learn"><span class="tab-ico">✦</span><span class="tab-lbl">Learn</span></button>
+    <button class="tab" type="button" data-view="Progress"><span class="tab-ico">▮</span><span class="tab-lbl">Progress</span></button>
+    <button class="tab" type="button" data-view="Badges"><span class="tab-ico">★</span><span class="tab-lbl">Badges</span></button>
+  </nav>
 
   <footer class="hub-foot">
     Built for the E-Learning Heroes community —<br>
@@ -2020,18 +2202,7 @@
     <div class="actions" id="actions"></div>
   </div>
 
-  <!-- Reusable "Learn more" sheet — any step drops its deeper content here. -->
-  <div class="lm-sheet" id="lmSheet" hidden>
-    <div class="lm-backdrop" id="lmBackdrop"></div>
-    <div class="lm-card" role="dialog" aria-modal="true" aria-labelledby="lmTitle">
-      <div class="lm-header">
-        <span class="lm-badge">✦ Learn more</span>
-        <h3 class="lm-title" id="lmTitle"></h3>
-        <button class="lm-close" id="lmClose" type="button" aria-label="Close">✕</button>
-      </div>
-      <div class="lm-body" id="lmBody"></div>
-    </div>
-  </div>
+
 
   <!-- "Why measure?" — Cal hosts this one directly, framing counting vs.
        measuring before the surface-area step needs a unit. -->
@@ -2061,6 +2232,26 @@
       <div class="why-modal-actions">
         <button class="btn primary" id="whyModalGo" type="button">Got it — let's measure →</button>
       </div>
+    </div>
+  </div>
+
+</div><!-- /#activity — closed explicitly. It used to run to end-of-markup on
+     the parser's implicit close, which silently swallowed every overlay
+     declared after it. -->
+
+<!-- The Learn-more sheet lives at document level, not inside #activity:
+     the hub's Learn section opens the same sheets, and a #activity that is
+     display:none would keep them invisible however they were toggled. -->
+<!-- Reusable "Learn more" sheet — any step drops its deeper content here. -->
+  <div class="lm-sheet" id="lmSheet" hidden>
+    <div class="lm-backdrop" id="lmBackdrop"></div>
+    <div class="lm-card" role="dialog" aria-modal="true" aria-labelledby="lmTitle">
+      <div class="lm-header">
+        <span class="lm-badge">✦ Learn more</span>
+        <h3 class="lm-title" id="lmTitle"></h3>
+        <button class="lm-close" id="lmClose" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="lm-body" id="lmBody"></div>
     </div>
   </div>
 
@@ -2128,7 +2319,9 @@ var MIProgress = (function () {
     MAIN.forEach(paint);
     refreshLocks();
   }
-  return { markStep: markStep, paintAll: paintAll, isComplete: isComplete };
+  function clearAll() { try { localStorage.removeItem(KEY); } catch (e) {} }
+  return { markStep: markStep, paintAll: paintAll, isComplete: isComplete,
+           load: load, clearAll: clearAll, MAIN: MAIN };
 })();
 MIProgress.paintAll();
 
@@ -4144,20 +4337,24 @@ MIProgress.paintAll();
   }
 
   // ---------- reusable "Learn more" sheet ----------
-  function openLearnMore() {
-    var raw = steps[step] && steps[step].learnMore;
-    if (!raw) return;
-    // A step's learnMore may be a function of the active shape, so the sheet
-    // can talk about the solid in front of the learner rather than the cube.
-    var lm = typeof raw === "function" ? raw(shape) : raw;
+  // Opening a sheet needs only a step and a shape, not the live lesson state —
+  // which is what lets the Learn section offer the same sheets from the hub.
+  function openSheetFor(st, sh) {
+    var raw = st && st.learnMore;
+    if (!raw) return false;
+    // A step's learnMore may be a function of the shape, so the sheet can talk
+    // about the solid in hand rather than always the cube.
+    var lm = typeof raw === "function" ? raw(sh) : raw;
     lmTitle.textContent = lm.title;
     lmBody.innerHTML = lm.html || "";
     // Wire up the sheet's interactive, if this step ships one. The hook may
     // sit on the learnMore block or alongside it on the step itself.
-    var init = lm.onOpen || steps[step].onOpen;
+    var init = lm.onOpen || st.onOpen;
     if (typeof init === "function") init(lmBody);
     lmSheet.hidden = false;
+    return true;
   }
+  function openLearnMore() { openSheetFor(steps[step], shape); }
   function closeLearnMore() { lmSheet.hidden = true; }
   learnMoreBtn.addEventListener("click", openLearnMore);
   $("lmClose").addEventListener("click", closeLearnMore);
@@ -4389,6 +4586,229 @@ MIProgress.paintAll();
   }
   // Journey-map stops. The cube is always open; the prism only launches once
   // it's unlocked (the cube is complete) — a locked stop just nudges instead.
+  /* ---------- hub sections ------------------------------------------------
+     Five places, all built from data the lesson already keeps: the SHAPES
+     config, the five Learn-more sheets, and the saved progress store. Nothing
+     here invents a second source of truth, so a section can never disagree
+     with the lesson it describes. */
+  var SHAPE_ORDER = ["cube", "rect", "triprism", "pyramid", "tetra", "octa"];
+
+  // Total surface area straight from the net's polygons. Deliberately not
+  // via areaGroups(), which reads face labels off the *active* shape and so
+  // can't be trusted for a shape that isn't currently loaded.
+  function shapeArea(sh) {
+    return sh.net.reduce(function (sum, fs) { return sum + polyArea(fs.poly); }, 0);
+  }
+  // solidLabel is written for mid-sentence use ("the prism folded up"), which
+  // reads as a bare "Prism" beside "Triangular prism" in a list. The journey
+  // title is the properly qualified name.
+  function shapeName(sh) {
+    return (sh.title || sh.solidLabel).replace(/^Unfold the\s+/i, "");
+  }
+  function shapeUnlocked(key) {
+    if (key === "cube") return true;
+    if (key === "rect") return MIProgress.isComplete("cube");
+    return MIProgress.MAIN.every(MIProgress.isComplete);
+  }
+  function unlockNote(key) {
+    if (key === "rect") return "Finish the cube to unlock";
+    return "Clear the main path to unlock";
+  }
+
+  function buildShapes() {
+    var grid = $("shapeGrid");
+    grid.innerHTML = "";
+    SHAPE_ORDER.forEach(function (key) {
+      var sh = SHAPES[key];
+      if (!sh) return;
+      var open = shapeUnlocked(key);
+      var card = document.createElement(open ? "button" : "div");
+      card.className = "shape-card" + (open ? "" : " locked");
+      if (open) card.type = "button";
+      card.innerHTML =
+        '<div class="shape-card-top">' +
+          '<span class="sc-fig">' + miniSolidSvg(key, 40, 36) + '</span>' +
+          '<span><span class="sc-name">' + shapeName(sh) + '</span><br>' +
+            '<span class="sc-tag">' + (open ? (sh.challenge ? "Challenge" : "Main path") : unlockNote(key)) + '</span></span>' +
+        '</div>' +
+        '<div class="sc-stats">' +
+          '<div class="sc-stat"><b>' + sh.F + '</b><span>Faces</span></div>' +
+          '<div class="sc-stat"><b>' + sh.E + '</b><span>Edges</span></div>' +
+          '<div class="sc-stat"><b>' + sh.V + '</b><span>Corners</span></div>' +
+        '</div>' +
+        '<div class="sc-area">Surface area <b>' + fmtArea(shapeArea(sh)) + ' ' + sh.unit + '²</b></div>';
+      if (open) card.addEventListener("click", function () { startActivity(key); });
+      grid.appendChild(card);
+    });
+  }
+
+  // The steps that ship a deeper sheet, with a plain-language line about what
+  // each one actually does. Derived by scanning steps, so a new sheet appears
+  // here without being registered twice.
+  var LEARN_BLURB = {
+    warmup: "How a point becomes a line, a square, then a solid — one dimension at a time.",
+    faces: "Light up faces, edges and corners on a wireframe of this solid.",
+    net: "What a net is, and which flat patterns really do fold up.",
+    why: "Why counting isn't measuring, and where the centimetre comes from.",
+    sa: "Build the surface-area formula, or watch what scaling does to it."
+  };
+  var learnShape = "cube";
+  function learnSteps() {
+    return steps.map(function (st, i) { return { st: st, i: i }; })
+      .filter(function (o) { return !!o.st.learnMore; });
+  }
+  function buildLearn() {
+    var pick = $("learnPicker");
+    pick.innerHTML = "";
+    SHAPE_ORDER.forEach(function (key) {
+      var sh = SHAPES[key];
+      if (!sh) return;
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "lp-btn" + (key === learnShape ? " on" : "");
+      b.textContent = sh.solidLabel;
+      b.addEventListener("click", function () { learnShape = key; buildLearn(); });
+      pick.appendChild(b);
+    });
+    var list = $("learnList");
+    list.innerHTML = "";
+    var sh = SHAPES[learnShape];
+    learnSteps().forEach(function (o) {
+      var raw = o.st.learnMore;
+      var lm = typeof raw === "function" ? raw(sh) : raw;
+      var card = document.createElement("button");
+      card.type = "button";
+      card.className = "learn-card";
+      card.innerHTML =
+        '<span class="lc-ico">✦</span>' +
+        '<span><span class="lc-title"></span>' +
+          '<span class="lc-sub"></span></span>' +
+        '<span class="lc-go">›</span>';
+      card.querySelector(".lc-title").textContent = lm.title;
+      card.querySelector(".lc-sub").textContent = LEARN_BLURB[o.st.key] || o.st.name;
+      card.addEventListener("click", function () { openSheetFor(o.st, sh); });
+      list.appendChild(card);
+    });
+  }
+
+  function buildProgress() {
+    var data = MIProgress.load();
+    var doneCount = 0;
+    SHAPE_ORDER.forEach(function (k) { if (MIProgress.isComplete(k)) doneCount++; });
+    $("progSummary").innerHTML =
+      '<div class="ps-big">' + doneCount + ' of ' + SHAPE_ORDER.length + ' shapes complete</div>' +
+      '<div class="ps-sub">' + (doneCount === SHAPE_ORDER.length
+        ? "Every solid unfolded, measured and counted. Nothing left locked."
+        : doneCount === 0
+          ? "Nothing finished yet — the cube is the place to start."
+          : "Pick up wherever you left off; each shape remembers its own step.") + '</div>';
+    var list = $("progList");
+    list.innerHTML = "";
+    SHAPE_ORDER.forEach(function (key) {
+      var sh = SHAPES[key];
+      if (!sh) return;
+      var d = data[key] || {};
+      var total = d.total || 6, reached = Math.min(d.reached || 0, total);
+      var done = MIProgress.isComplete(key);
+      var row = document.createElement("div");
+      row.className = "prog-row" + (done ? " done" : "");
+      row.innerHTML =
+        '<span class="pr-fig">' + miniSolidSvg(key, 26, 24) + '</span>' +
+        '<span class="pr-name"></span>' +
+        '<span class="pr-bar"><span class="pr-fill" style="width:' +
+          Math.round(reached / total * 100) + '%"></span></span>' +
+        '<span class="pr-count">' + (done ? "Done" : reached + " / " + total) + '</span>';
+      row.querySelector(".pr-name").textContent = shapeName(sh);
+      list.appendChild(row);
+    });
+  }
+
+  // Badges are derived, never stored: every one is a question asked of the
+  // progress store at render time, so they cannot drift out of sync with it.
+  var BADGES = [
+    { icon: "🧊", name: "First Fold", how: "Finish the cube",
+      won: function () { return MIProgress.isComplete("cube"); } },
+    { icon: "🗺️", name: "Path Clear", how: "Finish both main-path shapes",
+      won: function () { return MIProgress.MAIN.every(MIProgress.isComplete); } },
+    { icon: "📐", name: "Triangle Tamer", how: "Finish a shape with triangular faces",
+      won: function () {
+        return ["triprism", "pyramid", "tetra", "octa"].some(MIProgress.isComplete);
+      } },
+    { icon: "🎯", name: "Challenger", how: "Finish any Challenge Zone solid",
+      won: function () {
+        return ["triprism", "pyramid", "tetra", "octa"].some(MIProgress.isComplete);
+      } },
+    { icon: "💎", name: "Eight Faces", how: "Finish the octahedron",
+      won: function () { return MIProgress.isComplete("octa"); } },
+    { icon: "🏆", name: "Every Solid", how: "Finish all six shapes",
+      won: function () { return SHAPE_ORDER.every(MIProgress.isComplete); } }
+  ];
+  function buildBadges() {
+    var grid = $("badgeGrid");
+    grid.innerHTML = "";
+    BADGES.forEach(function (b) {
+      var won = false;
+      try { won = !!b.won(); } catch (e) { won = false; }
+      var card = document.createElement("div");
+      card.className = "badge-card" + (won ? "" : " locked");
+      card.innerHTML =
+        '<div class="badge-medal">' + (won ? b.icon : "🔒") + '</div>' +
+        '<div class="badge-name"></div>' +
+        '<div class="badge-how"></div>';
+      card.querySelector(".badge-name").textContent = b.name;
+      card.querySelector(".badge-how").textContent = won ? "Earned" : b.how;
+      grid.appendChild(card);
+    });
+  }
+
+  var VIEW_BUILDERS = { Shapes: buildShapes, Learn: buildLearn,
+                        Progress: buildProgress, Badges: buildBadges };
+  var currentView = "Home";
+  function showView(name) {
+    currentView = name;
+    ["Home", "Shapes", "Learn", "Progress", "Badges"].forEach(function (v) {
+      var el = $("view" + v);
+      if (el) el.hidden = (v !== name);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) {
+      var on = t.getAttribute("data-view") === name;
+      t.classList.toggle("on", on);
+      t.setAttribute("aria-current", on ? "page" : "false");
+    });
+    // Rebuilt on every visit rather than cached: progress can change between
+    // views, and a stale Badges grid would be worse than a cheap redraw.
+    if (VIEW_BUILDERS[name]) VIEW_BUILDERS[name]();
+    if (name === "Home") MIProgress.paintAll();
+    window.scrollTo(0, 0);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) {
+    t.addEventListener("click", function () { showView(t.getAttribute("data-view")); });
+  });
+
+  // Reset asks twice — one stray tap should not wipe a learner's run.
+  (function () {
+    var btn = $("progReset"), armed = false, timer = null;
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      if (!armed) {
+        armed = true;
+        btn.classList.add("armed");
+        btn.textContent = "Tap again to erase everything";
+        timer = setTimeout(function () {
+          armed = false; btn.classList.remove("armed");
+          btn.textContent = "Reset all progress";
+        }, 4000);
+        return;
+      }
+      clearTimeout(timer);
+      MIProgress.clearAll();
+      armed = false; btn.classList.remove("armed");
+      btn.textContent = "Reset all progress";
+      buildProgress();
+      MIProgress.paintAll();
+    });
+  })();
+
   // The room render is optional. It is attached at runtime and only revealed
   // once it actually decodes, so a missing or failed asset leaves the CSS wall
   // showing rather than a broken image box — the hub is designed to stand up
@@ -4426,6 +4846,9 @@ MIProgress.paintAll();
     activity.style.display = "none";
     menu.style.display = "flex";
     document.body.classList.remove("in-activity");
+    // Come back to the section you left from, rebuilt — a shape just finished
+    // can change progress, badges and what is unlocked.
+    showView(currentView);
     MIProgress.paintAll();   // refresh progress + unlocks on return
   }
   function resetActivity() {

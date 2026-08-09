@@ -12,7 +12,9 @@ Most math activities show you a formula and quiz you on it. This one withholds t
 
 ## Structure
 
-A hub laid out as a **journey map** — a main path of shapes to work through, plus a locked Challenge Zone that opens once the path is clear. Progress is saved to `localStorage`, so stops unlock and step counts persist between visits.
+The hub has five sections behind a tab bar — **Home**, **Shapes**, **Learn**, **Progress** and **Badges**. Every one is built from data the lesson already keeps (the `SHAPES` config, the five Learn-more sheets, and the saved progress store), so no section can drift out of step with the lesson it describes. Badges in particular are *derived* at render time rather than stored, so they can't disagree with progress.
+
+Home is a **journey map** — a main path of shapes to work through, plus a locked Challenge Zone that opens once the path is clear. Progress is saved to `localStorage`, so stops unlock and step counts persist between visits.
 
 | | Stop | Faces / Edges / Corners | Surface area |
 |---|---|---|---|
