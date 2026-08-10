@@ -6,7 +6,7 @@
 <title>Unfold · 3D Shapes &amp; Nets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=National+Park:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=National+Park:wght@400;600;700;800&family=Permanent+Marker&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #f6f4ef;
@@ -133,9 +133,8 @@
   @media (min-width: 1100px) {
     #activity { max-width: 1060px; }
     .stage { max-height: 660px; }
-    .dot-stage { width: 260px; }
     .dot-stage .dot-avatar { width: 54px; }
-    .dot-stage .dot-bubble { font-size: 12.5px; padding: 8px 11px; }
+    .dot-stage .dot-bubble { font-size: 13.5px; padding: 9px 13px; }
   }
 
   /* ============ MENU HUB ============ */
@@ -697,56 +696,17 @@
     z-index: 1;
   }
 
-  /* counters */
-  .counters { display: flex; gap: 8px; margin: 6px 0 10px; }
-  .counter {
-    flex: 1; background: var(--card); border: 1px solid rgba(0,0,0,.06);
-    border-radius: 14px; padding: 8px 6px; text-align: center;
-  }
-  .counter .num { font-size: 20px; font-weight: 800; letter-spacing: -.02em; }
-  .counter .num.unknown { color: #c9c6bf; }
-  .counter .lbl {
-    display: flex; align-items: center; justify-content: center; gap: 4px;
-    font-size: 11px; color: var(--ink-soft); text-transform: uppercase;
-    letter-spacing: .08em; font-weight: 700; margin-top: 1px;
-  }
-  /* The same three glyphs used on the "Solid parts" legend on the stage,
-     so a learner can connect the counter to the thing it is counting
-     without reading English at all: an outlined face, an edge as a line,
-     a corner as a point. Drawn in CSS rather than as an SVG/emoji set so
-     they inherit currentColor and stay crisp at any size. */
-  .lbl-ico { flex: 0 0 auto; display: inline-block; }
-  .lbl-ico-face { width: 9px; height: 9px; border: 1.4px solid currentColor; border-radius: 2px; }
-  .lbl-ico-edge { width: 11px; height: 0; border-top: 1.6px solid currentColor; }
-  .lbl-ico-corner { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .counter.pop .num { animation: pop .5s ease; }
-  /* Earned: the card flips to deep purple with white type, so the top row
-     shows at a glance which of the three have been worked out. */
-  .counter {
-    transition: background .45s ease, border-color .45s ease, box-shadow .45s ease;
-  }
-  .counter.solved { background: var(--accent-deep); border-color: transparent; }
-  .counter.solved .num { color: #fff; }
-  .counter.solved .lbl { color: rgba(255,255,255,.78); }
   @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
 
-  /* Stage = the staging area: a spotlit scene with Dot living inside it.
-     The controls where the learner completes each step sit in a separate
-     panel below. */
+  /* Stage = the staging area: the whiteboard with the solid/net living on
+     it. The controls where the learner completes each step sit in a
+     separate panel below. */
   .stage {
     position: relative; height: 56vh; min-height: 420px; max-height: 560px;
     border: 1px solid rgba(150,180,255,.22);
     border-radius: var(--radius);
     overflow: hidden;
-    /* The spot-* transitions must live here, on the element JS sets them on;
-       declared on .spotlight they would never fire, since the properties only
-       inherit down to it. Kept in one declaration so border-color survives. */
-    transition: border-color .6s ease,
-                --spot-x .55s ease, --spot-y .55s ease,
-                --spot-in .55s ease, --spot-out .55s ease;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .stage { transition: border-color .6s ease; }
+    transition: border-color .6s ease;
   }
   /* Both modes share one physical surface now: a rendered whiteboard.
      background-size:cover crops to fill whatever aspect the stage box ends
@@ -759,79 +719,28 @@
     background: #eef0fa url('assets/whiteboard.jpg') center / cover no-repeat;
   }
   .scene-region:active { cursor: grabbing; }
-  /* Spotlight: a strong pool of light on the focused component, deep shadow
-     everywhere else — theatrical, so the shape reads as the star. */
-  /* The pool of light is aimed, not fixed. --spot-x/y track whatever the step
-     is actually about (the solid, the flat net, one glowing face, the ruler's
-     drop zone) and --spot-in/out size it to that region, so everything else
-     falls into shadow instead of a standing circle sitting at mid-stage
-     regardless of where the learner should be looking. JS sets the vars in
-     px; these rules only carry the colour of each world. */
-  /* One dim tone for both modes now, tuned for the whiteboard rather than
-     the near-black used against the old dark-cosmic material. The old
-     alphas (.55/.74) were tuned against a background that was already dark,
-     where crushing the edges further barely registered; the same numbers
-     over a light photo swallowed most of the board on anything but a wide-
-     open region (the warm-up step's opening starts small, so this showed up
-     immediately). Base state is now a light wash — present, not a blackout —
-     with the stronger dim reserved for genuinely guided moments. */
-  .spotlight {
-    position: absolute; inset: 0; z-index: 3; pointer-events: none;
-    background: radial-gradient(circle at var(--spot-x, 50%) var(--spot-y, 46%),
-      transparent 0, transparent var(--spot-in, 17%),
-      rgba(22,32,92,.16) var(--spot-out, 58%), rgba(14,20,64,.3) 100%);
-    transition: background .55s ease;
-  }
-  /* Guided moments (measuring, focused tapping) pull the house lights down
-     further so the one thing Cal is talking about is unmistakable. */
-  .stage.guided .spotlight {
-    background: radial-gradient(circle at var(--spot-x, 50%) var(--spot-y, 46%),
-      transparent 0, transparent var(--spot-in, 14%),
-      rgba(18,26,78,.48) var(--spot-out, 52%), rgba(11,16,54,.66) 100%);
-  }
-  /* Registering the spotlight vars as lengths lets the browser interpolate
-     them, so the light sweeps to its new mark instead of cutting. The
-     transition has to sit on .stage, which is where JS sets the values —
-     a transition on .spotlight would never fire, since the property only
-     inherits down to it. */
-  @property --spot-x { syntax: "<length-percentage>"; inherits: true; initial-value: 50%; }
-  @property --spot-y { syntax: "<length-percentage>"; inherits: true; initial-value: 46%; }
-  @property --spot-in { syntax: "<length-percentage>"; inherits: true; initial-value: 17%; }
-  @property --spot-out { syntax: "<length-percentage>"; inherits: true; initial-value: 58%; }
 
-
-  /* Dot lives inside the staging area (top-right), guiding from within the
-     scene with a speech bubble carrying the step instruction. Kept compact
-     and click-transparent so it never blocks the net underneath. */
-  /* Cal walks the stage. He is anchored top-left and moved with a transform
-     (rather than swapping top/right, which cannot animate between `auto`
-     values), so he glides to the area each step is about instead of sitting
-     in one corner being easy to forget. JS picks the mark. */
+  /* Cal is docked above the board now — a fixed, always-visible spot rather
+     than a spotlighted mark that walked to whatever the step was about. He
+     used to live inside the stage and re-aim a whole-scene vignette every
+     time the focus changed; both the walking and the vignette turned out to
+     be more machinery than the lesson needed once the live counts moved
+     onto the board itself (see .solid-parts below) — there's no longer
+     anything that needs a moving light to point at. */
   .dot-stage {
-    position: absolute; top: 0; left: 0; z-index: 6;
-    display: flex; align-items: flex-start; gap: 4px;
-    width: min(46%, 230px);
-    pointer-events: none;
-    transform: translate(var(--cal-x, 0px), var(--cal-y, 8px));
-    transition: transform .6s cubic-bezier(.4,.9,.3,1);
+    display: flex; align-items: flex-start; gap: 10px;
+    width: 100%; margin: 6px 0 10px;
   }
-  /* On a left-hand mark the bubble reads better with Cal on its left, so the
-     avatar and the bubble's tail swap sides. */
-  .dot-stage.flip { flex-direction: row-reverse; }
-  .dot-stage.flip .dot-bubble::before { left: -4px; right: auto; }
-  @media (prefers-reduced-motion: reduce) {
-    .dot-stage { transition: none; }
-  }
-  .dot-stage .dot-avatar { flex: 0 0 auto; order: 2; margin-top: 3px; width: 46px; }
+  .dot-stage .dot-avatar { flex: 0 0 auto; width: 46px; }
   .dot-stage .dot-bubble {
-    order: 1; position: relative; flex: 1 1 auto; min-width: 0;
+    position: relative; flex: 1 1 auto; min-width: 0;
     background: rgba(255,255,255,.93);
-    border-radius: 11px; padding: 6px 9px; font-size: 11.5px; line-height: 1.35;
+    border-radius: 11px; padding: 8px 11px; font-size: 12.5px; line-height: 1.35;
     color: var(--ink); box-shadow: 0 8px 20px -9px rgba(0,0,0,.55);
   }
   .dot-stage .dot-bubble strong { color: var(--accent); }
   .dot-stage .dot-bubble::before {
-    content: ""; position: absolute; right: -4px; top: 10px; width: 9px; height: 9px;
+    content: ""; position: absolute; left: -4px; top: 10px; width: 9px; height: 9px;
     background: rgba(255,255,255,.93);
     transform: rotate(45deg);
   }
@@ -1097,12 +1006,20 @@
   .net-note.fold { top: 70px; left: 16px; }
   .net-note.tabs { bottom: 62px; left: 108px; }
 
-  /* A persistent legend pairing each counter's glyph with its name, so the
-     vocabulary from the top counters is available right on the board
-     rather than assumed. Sits opposite Cal's corner so neither ever
-     collides with the guide system's own placement logic. */
+  /* A persistent legend pairing each counter's glyph with its name — and,
+     now that the top counter row is gone, the live count itself, "written"
+     on the board in a marker font next to each row. Docked top-right,
+     mirroring the mode tag's top-left chip, so it's never competing with
+     the center-aligned hint/area-readout/step-track furniture below it and
+     stays put at every viewport this app ships at — nothing needs hiding
+     it on narrow screens any more, since it's now the only place the
+     counts show at all. */
   .solid-parts {
-    position: absolute; right: 14px; bottom: 54px; z-index: 2;
+    /* Clears the whiteboard photo's own painted corner bracket — unlike the
+       mode tag opposite it, this sits with no backing chip (it's meant to
+       read as marker on the board itself), so it has to dodge the frame
+       art rather than simply paint over it. */
+    position: absolute; top: 32px; right: 20px; z-index: 2;
     text-align: right; pointer-events: none;
   }
   .sp-head {
@@ -1114,13 +1031,30 @@
     font-size: 12.5px; font-weight: 700; color: var(--board-ink);
     margin-top: 3px;
   }
+  .sp-row.pop { animation: pop .5s ease; }
   .sp-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--board-ink); opacity: .6; }
   .sp-ico { flex: 0 0 auto; }
   .sp-ico-face { width: 12px; height: 12px; border: 1.6px solid var(--board-ink); border-radius: 2px; }
   .sp-ico-edge { width: 15px; height: 0; border-top: 1.8px solid var(--board-ink); }
   .sp-ico-corner { width: 8px; height: 8px; border-radius: 50%; background: var(--board-ink); }
+  /* The count itself, in a handwriting face so it reads as marker on the
+     whiteboard rather than app chrome — unknown ("?") is a faint hint,
+     solved snaps to full ink and a slightly larger size the moment it's
+     revealed, same beat the old counter pills used for "you've earned
+     this number." */
+  .sp-row .num {
+    font-family: "Permanent Marker", cursive; font-weight: 400;
+    font-size: 17px; line-height: 1; min-width: 15px;
+    color: var(--board-ink); transition: color .3s ease, font-size .3s ease;
+  }
+  .sp-row .num.unknown { color: rgba(22,32,92,.32); }
+  .sp-row .num.solved { font-size: 20px; }
   @media (max-width: 480px) {
-    .solid-parts { display: none; }   /* not enough width beside a narrow net without overlapping it */
+    .solid-parts { top: 24px; right: 14px; }
+    .sp-head { font-size: 9.5px; }
+    .sp-row { font-size: 11px; gap: 5px; margin-top: 2px; }
+    .sp-row .num { font-size: 15px; }
+    .sp-row .num.solved { font-size: 17px; }
   }
 
   /* Step tracker built into the stage atmosphere: a horizontal row of
@@ -1735,21 +1669,6 @@
       0 6px 14px -7px rgba(43,42,51,.35);
   }
   #activity .back-btn:active { transform: translateY(2px) scale(.95); }
-  #activity .counter {
-    border: none; border-radius: 16px;
-    box-shadow:
-      inset 0 3px 5px rgba(255,255,255,.95),
-      inset 0 -5px 8px rgba(43,42,51,.08),
-      0 8px 16px -9px rgba(43,42,51,.3);
-  }
-  /* On the deep-purple card the bright inner highlight would read as a
-     white smear, so the puff is re-lit for a dark surface. */
-  #activity .counter.solved {
-    box-shadow:
-      inset 0 3px 6px rgba(255,255,255,.28),
-      inset 0 -6px 10px rgba(0,0,0,.3),
-      0 9px 18px -9px rgba(61,58,158,.75);
-  }
 
   /* Cal — rendered guide character (image asset) */
   .cal-img {
@@ -2077,10 +1996,17 @@
     </div>
   </header>
 
-  <div class="counters">
-    <div class="counter" id="cFaces"><div class="num unknown">?</div><div class="lbl"><span class="lbl-ico lbl-ico-face"></span>Faces</div></div>
-    <div class="counter" id="cEdges"><div class="num unknown">?</div><div class="lbl"><span class="lbl-ico lbl-ico-edge"></span>Edges</div></div>
-    <div class="counter" id="cCorners"><div class="num unknown">?</div><div class="lbl"><span class="lbl-ico lbl-ico-corner"></span>Corners</div></div>
+  <!-- Cal is stationary now: docked here, above the board, in the band the
+       top counters used to occupy. He no longer walks to the subject and
+       the whole-stage spotlight that used to walk with him is retired —
+       the counts themselves live on the board (see .solid-parts below), so
+       there's nothing left that needs a moving light or a moving guide to
+       point at it. -->
+  <div class="dot-stage" id="dotStage">
+    <div class="dot-avatar" id="dotAvatar" aria-hidden="true">
+      <img class="cal-img" src="assets/cal.png" alt="Cal, your math guide">
+    </div>
+    <div class="dot-bubble" id="dotBubble" role="status" aria-live="polite"></div>
   </div>
 
   <div class="stage" id="stage">
@@ -2092,21 +2018,18 @@
          flat net itself, not the material under it. -->
     <span class="net-note fold" aria-hidden="true">Fold along the lines ↓</span>
     <span class="net-note tabs" aria-hidden="true">↑ Tabs hold it together</span>
+    <!-- The live face/edge/corner counts, "handwritten" on the board itself
+         in a marker font — this is what the old top counter pills used to
+         show, freeing that band for Cal to dock in permanently. -->
     <div class="solid-parts" id="solidParts" aria-hidden="true">
       <div class="sp-head">Solid parts</div>
-      <div class="sp-row"><span class="sp-dot"></span>Faces<span class="sp-ico sp-ico-face"></span></div>
-      <div class="sp-row"><span class="sp-dot"></span>Edges<span class="sp-ico sp-ico-edge"></span></div>
-      <div class="sp-row"><span class="sp-dot"></span>Corners<span class="sp-ico sp-ico-corner"></span></div>
+      <div class="sp-row"><span class="sp-dot"></span>Faces<span class="sp-ico sp-ico-face"></span><span class="num unknown" id="cFaces">?</span></div>
+      <div class="sp-row"><span class="sp-dot"></span>Edges<span class="sp-ico sp-ico-edge"></span><span class="num unknown" id="cEdges">?</span></div>
+      <div class="sp-row"><span class="sp-dot"></span>Corners<span class="sp-ico sp-ico-corner"></span><span class="num unknown" id="cCorners">?</span></div>
     </div>
     <div class="mode-tag" id="modeTag">
       <span class="mode-tag-title">🧊 Cube Mode</span>
       <span class="mode-tag-sub">Explore the 3D shape</span>
-    </div>
-    <div class="dot-stage" id="dotStage">
-      <div class="dot-bubble" id="dotBubble" role="status" aria-live="polite"></div>
-      <div class="dot-avatar" id="dotAvatar" aria-hidden="true">
-        <img class="cal-img" src="assets/cal.png" alt="Cal, your math guide">
-      </div>
     </div>
     <div class="hint" id="hint">Drag to spin the cube</div>
     <div class="big-count" id="bigCount">1</div>
@@ -2119,7 +2042,6 @@
     <div class="atmos-track" id="stepTrack" aria-hidden="true">
       <span class="tnode"></span><span class="tnode"></span><span class="tnode"></span><span class="tnode"></span><span class="tnode"></span>
     </div>
-    <div class="spotlight" id="spotlight"></div>
     <div class="scene">
       <div class="orbit" id="orbit">
         <!-- Faces and hinges are generated from the active shape's net spec -->
@@ -2276,7 +2198,7 @@ MIProgress.paintAll();
   var modeTagTitle = modeTag.querySelector(".mode-tag-title");
   var modeTagSub = modeTag.querySelector(".mode-tag-sub");
   var stepLabel = $("stepLabel"), actionsEl = $("actions"), choicesEl = $("choices");
-  var dotAvatar = $("dotAvatar"), dotBubble = $("dotBubble"), dotStage = $("dotStage");
+  var dotAvatar = $("dotAvatar"), dotBubble = $("dotBubble");
   var pupils = Array.prototype.slice.call(dotAvatar.querySelectorAll(".dot-pupil"));
   var stepTrack = $("stepTrack");
   var trackNodes = [];   // built to match steps.length in buildTrack()
@@ -2301,144 +2223,19 @@ MIProgress.paintAll();
 
   // ---------- focus system ----------
   // keep: array of face indices to leave lit (others dim), or null to clear.
+  // Used to drive the whole-stage spotlight and walk Cal to the subject; both
+  // retired (see the "Cal is stationary now" note below) in favour of Cal
+  // sitting fixed above the board and the board itself carrying the counts,
+  // so this is down to what it always also did on its own: dim the faces
+  // that are not the point of the current moment.
   function setFocus(keep, guided) {
-    stage.classList.toggle("guided", !!guided);
     faces.forEach(function (f, i) {
       var lit = !keep || keep.indexOf(i) !== -1;
       f.classList.toggle("dimmed", !!keep && !lit);
       f.classList.toggle("focused", !!(keep && guided && lit && keep.length === 1));
     });
-    guideFocus = keep && keep.length ? keep.slice() : null;
-    aimGuide();
   }
   function clearFocus() { setFocus(null, false); }
-
-  /* ---------- aiming the light, and walking Cal to it -------------------
-     One region of interest drives both: the spotlight tightens onto it, and
-     Cal takes the nearest mark that does not cover it. Everything is derived
-     from live geometry rather than a per-step, per-shape table of positions,
-     so each of the six nets — and every fold state in between — is handled
-     without a lookup that could fall out of step with the shapes. */
-  var guideFocus = null;        // face indices the step is about, or null
-  var guideOverride = null;     // an explicit scene-local rect (the ruler zone)
-
-  function unionFaceRect(list) {
-    var l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
-    list.forEach(function (i) {
-      if (!faces[i]) return;
-      var f = faceLocalRect(i);
-      l = Math.min(l, f.left); t = Math.min(t, f.top);
-      r = Math.max(r, f.right); b = Math.max(b, f.bottom);
-    });
-    if (!isFinite(l)) return null;
-    return { left: l, top: t, right: r, bottom: b, cx: (l + r) / 2, cy: (t + b) / 2 };
-  }
-  // What the learner should be looking at right now.
-  function guideRegion() {
-    if (guideOverride) return guideOverride;
-    if (guideFocus) { var u = unionFaceRect(guideFocus); if (u) return u; }
-    if (!faces.length) return null;
-    return netLocalRect();     // the whole solid, or the whole flat net
-  }
-
-  // The individual lit shapes, for judging what Cal would actually cover.
-  // Only worth doing when the net is flat: a cross-shaped net leaves its
-  // bounding box's corners empty, and Cal standing in one covers nothing.
-  // Folded up, the faces' projected boxes overlap each other heavily and the
-  // silhouette is compact, so the box is the honest measure there.
-  function guideParts() {
-    if (guideOverride) return [guideOverride];
-    if (p > 0.5) return [guideRegion()].filter(Boolean);
-    var list = guideFocus || faces.map(function (_, i) { return i; });
-    return list.map(function (i) { return faces[i] && faceLocalRect(i); }).filter(Boolean);
-  }
-
-  function aimGuide() {
-    if (activity.style.display === "none") return;
-    var t = guideRegion();
-    if (!t) return;
-    var s = sceneRect();
-    if (!s.width || !s.height) return;
-    // Light: centred on the region, opening just wide enough to clear it.
-    var reach = Math.max(40, Math.hypot(t.right - t.left, t.bottom - t.top) / 2);
-    var tight = stage.classList.contains("guided");
-    stage.style.setProperty("--spot-x", t.cx.toFixed(1) + "px");
-    stage.style.setProperty("--spot-y", t.cy.toFixed(1) + "px");
-    stage.style.setProperty("--spot-in", (reach * (tight ? 1.02 : 1.18)).toFixed(1) + "px");
-    stage.style.setProperty("--spot-out", (reach * (tight ? 2.0 : 2.6)).toFixed(1) + "px");
-    placeCal(t, s, guideParts());
-  }
-
-  // The stage's fixed furniture. Cal has to keep off this as well as off the
-  // subject: the readout and step track sit along the floor and the mode tag
-  // in the top-left, exactly where a mark wants to be. Measured live rather
-  // than assumed, since which pieces are showing changes step to step.
-  function chromeRects() {
-    var s = sceneRect(), out = [];
-    [modeTag, hint, bigCount, overlayTag, areaReadout, stepTrack, solidParts].forEach(function (el) {
-      if (!el) return;
-      var cs = getComputedStyle(el);
-      if (cs.display === "none" || cs.visibility === "hidden" || +cs.opacity < 0.05) return;
-      var r = el.getBoundingClientRect();
-      if (!r.width || !r.height) return;
-      out.push({ left: r.left - s.left, top: r.top - s.top,
-                 right: r.right - s.left, bottom: r.bottom - s.top });
-    });
-    return out;
-  }
-
-  // Cal takes the mark closest to the action that does not sit on top of it —
-  // near enough to be pointing at the right thing, never in front of it.
-  function placeCal(t, s, parts) {
-    var r = dotStage.getBoundingClientRect();
-    var cw = r.width || Math.min(230, s.width * 0.46), ch = r.height || 62;
-    var pad = 10;
-    var chrome = chromeRects();
-    var marks = [
-      { x: pad, y: 8, flip: true, upper: true },
-      { x: s.width - cw - pad, y: 8, flip: false, upper: true },
-      { x: pad, y: s.height - ch - 8, flip: true, upper: false },
-      { x: s.width - cw - pad, y: s.height - ch - 8, flip: false, upper: false }
-    ];
-    // Slide each mark clear of any furniture it lands on — upper marks down,
-    // lower marks up. Derived from the measured chrome, so a taller mode tag
-    // or a second readout can't quietly start overlapping again. Two passes,
-    // since clearing one piece can push a mark onto another.
-    marks.forEach(function (m) {
-      for (var pass = 0; pass < 2; pass++) {
-        chrome.forEach(function (q) {
-          if (Math.min(m.x + cw, q.right) <= Math.max(m.x, q.left)) return;   // no x overlap
-          if (Math.min(m.y + ch, q.bottom) <= Math.max(m.y, q.top)) return;   // no y overlap
-          if (m.upper) m.y = q.bottom + 6;
-          else m.y = q.top - ch - 6;
-        });
-      }
-      m.y = Math.max(6, Math.min(s.height - ch - 6, m.y));
-    });
-    var overlapWith = function (m, list) {
-      var area = 0;
-      list.forEach(function (q) {
-        var ow = Math.max(0, Math.min(m.x + cw, q.right) - Math.max(m.x, q.left));
-        var oh = Math.max(0, Math.min(m.y + ch, q.bottom) - Math.max(m.y, q.top));
-        area += ow * oh;
-      });
-      return Math.min(1, area / (cw * ch));   // 0..1 of Cal
-    };
-    var best = marks[1], bestScore = -Infinity;
-    marks.forEach(function (m) {
-      var covered = overlapWith(m, parts && parts.length ? parts : [t]);
-      var onChrome = overlapWith(m, chrome);
-      var dist = Math.hypot((m.x + cw / 2) - t.cx, (m.y + ch / 2) - t.cy);
-      // Closest wins, but covering the subject is heavily disqualifying and
-      // sitting on the furniture nearly as much.
-      var M = Math.max(s.width, s.height);
-      var score = -dist - covered * 4 * M - onChrome * 3 * M;
-      if (score > bestScore) { bestScore = score; best = m; }
-    });
-    dotStage.style.setProperty("--cal-x", Math.round(best.x) + "px");
-    dotStage.style.setProperty("--cal-y", Math.round(best.y) + "px");
-    dotStage.classList.toggle("flip", best.flip);
-  }
 
   // ---------- geometry state ----------
   var S = 96;                 // base unit in px (pixels per shape-unit; responsive)
@@ -3263,7 +3060,7 @@ MIProgress.paintAll();
       p = from + (target - from) * easeInOut(t);
       render();
       if (t < 1) requestAnimationFrame(frame);
-      else { p = target; render(); aimGuide(); if (done) done(); }
+      else { p = target; render(); if (done) done(); }
     }
     requestAnimationFrame(frame);
   }
@@ -3337,11 +3134,12 @@ MIProgress.paintAll();
   function revealCounter(id, n) {
     if (revealed[id]) return;
     revealed[id] = true;
-    var el = $(id), num = el.querySelector(".num");
+    var num = $(id), row = num.closest(".sp-row");
     num.textContent = n;
     num.classList.remove("unknown");
-    el.classList.add("solved", "pop");
-    setTimeout(function () { el.classList.remove("pop"); }, 600);
+    num.classList.add("solved");
+    row.classList.add("pop");
+    setTimeout(function () { row.classList.remove("pop"); }, 600);
   }
 
   // ---------- Dot, the guide character ----------
@@ -3380,10 +3178,6 @@ MIProgress.paintAll();
     dotBubble.innerHTML = html;
     if (celebrate) { dotAnimate("celebrate"); dotBurst(); }
     else dotAnimate("bounce");
-    // A longer line makes Cal taller, and his mark is picked from his
-    // measured box — so re-aim once the new text has actually laid out,
-    // or he keeps the previous message's footing and grows onto the floor.
-    requestAnimationFrame(aimGuide);
   }
 
   // ---------- guided steps ----------
@@ -3677,17 +3471,6 @@ MIProgress.paintAll();
     placeRuler(parkX, parkY);
     ruler.classList.add("on", "parked");
     showDropHint();
-    // During a pass the drop zone — not just the face — is where the learner
-    // has to act, so the light covers both and Cal stands off that pair.
-    var L = measureLanding();
-    guideOverride = {
-      left: Math.min(L.boxLeft, f.left), top: Math.min(L.boxTop, f.top),
-      right: Math.max(L.boxLeft + L.boxW, f.right),
-      bottom: Math.max(L.boxTop + L.boxH, f.bottom)
-    };
-    guideOverride.cx = (guideOverride.left + guideOverride.right) / 2;
-    guideOverride.cy = (guideOverride.top + guideOverride.bottom) / 2;
-    aimGuide();
     var whereH = sp.tri
       ? (sp.baseAtTop ? "along the <strong>top edge</strong>" : "along the <strong>bottom edge</strong>")
       : "across the <strong>bottom</strong>";
@@ -3720,7 +3503,6 @@ MIProgress.paintAll();
   }
   function completeMeasure() {
     measure.active = false;
-    guideOverride = null;   // the light goes back to following the faces
     var sp = measure.spec;
     var b = sp.across, hgt = sp.down, area = sp.area;
     // The ruler's readings have done their job; the grid now carries the idea.
@@ -4264,7 +4046,6 @@ MIProgress.paintAll();
     ruler.classList.remove("on", "parked", "locked", "vert", "snapping");
     dropHint.classList.remove("show");
     closeWhyModal();
-    guideOverride = null;   // per-step aiming must never leak forward
     clearFocus();
     setHunt(null);
     dotSay(s.textKey && shape[s.textKey] ? shape[s.textKey] : s.text, false);
@@ -4804,9 +4585,10 @@ MIProgress.paintAll();
     saTotal = 0; saCount = 0;
     revealed = {};
     ["cFaces", "cEdges", "cCorners"].forEach(function (id) {
-      var el = $(id), num = el.querySelector(".num");
+      var num = $(id), row = num.closest(".sp-row");
       num.textContent = "?"; num.classList.add("unknown");
-      el.classList.remove("solved", "pop");
+      num.classList.remove("solved");
+      row.classList.remove("pop");
     });
     faces.forEach(function (f) { f.classList.remove("counted", "sa-shown"); });
     areaLabels.forEach(function (l) { l.textContent = ""; });
@@ -4822,7 +4604,7 @@ MIProgress.paintAll();
   }
 
   window.addEventListener("resize", function () {
-    if (activity.style.display !== "none") { sizeFaces(); aimGuide(); }
+    if (activity.style.display !== "none") sizeFaces();
   });
 
   // initial
