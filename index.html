@@ -816,19 +816,17 @@
     overflow: hidden;
     transition: border-color .6s ease;
   }
-  /* Both modes share one physical surface now: a rendered whiteboard.
-     background-size:cover crops to fill whatever aspect the stage box ends
-     up at, and the render's own painted frame and marker tray stay near the
-     edges at every size down to a phone in landscape or a tablet — but a
-     phone in portrait pairs a narrow width with a tall 56vh box, and cover
-     has to zoom the (roughly 4:3) photo so far to fill that skinny shape
-     that the frame gets cropped off every side at once, not just trimmed.
-     Below 480px there's no zoom level of a 4:3 photo that fills a box this
-     narrow-and-tall without losing the frame, so it switches to contain
-     instead: the whole render (frame included) shrinks to fit, and the
-     stage's own #eef0fa backing shows past its edges — which reads as
-     empty desk/wall rather than a letterboxing bug, since it's the same
-     tone the photo already fades to. */
+  /* Both modes share one physical surface now: a rendered whiteboard, shown
+     with background-size:cover so it fills the stage edge to edge with no
+     letterboxing. The render is a 4:3 photo (1448×1086); the vh-driven
+     height above pairs a narrow width with a tall box on a phone in
+     portrait, and cover has to zoom a 4:3 photo so far to fill a box that
+     skinny that the painted frame crops off every side at once. Rather than
+     shrink the photo to fit and show gaps around it (tried first — reads as
+     a small picture pasted on a blank card, not a surface filling the
+     stage), the fix is to stop asking a 4:3 photo to fill a non-4:3 box:
+     below 480px the stage's own shape switches to match the render's, so
+     cover never needs to crop the frame away in the first place. */
   .scene-region {
     position: absolute; inset: 0; overflow: hidden;
     touch-action: none; cursor: grab;
@@ -836,7 +834,7 @@
   }
   .scene-region:active { cursor: grabbing; }
   @media (max-width: 480px) {
-    .scene-region { background-size: contain; }
+    .stage { height: auto; min-height: 0; max-height: none; aspect-ratio: 4 / 3; }
   }
 
   /* Cal is docked above the board now — a fixed, always-visible spot rather
