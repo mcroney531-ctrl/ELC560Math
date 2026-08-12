@@ -839,7 +839,14 @@
   .scene-region {
     position: absolute; inset: 0; overflow: hidden;
     touch-action: none; cursor: grab;
-    background: #eef0fa url('assets/whiteboard.jpg') center / cover no-repeat;
+    /* The whiteboard photo covers this completely once decoded, but this
+       colour is what actually shows for that first paint, and at any
+       corner-rounding or cover-fit rounding error real devices hit that
+       desktop testing doesn't reproduce. Matched to the page's own
+       periwinkle (--board-bg-a) rather than a near-white guess, so any
+       sliver that does show blends into the room instead of flashing a
+       stark white patch against it. */
+    background: var(--board-bg-a) url('assets/whiteboard.jpg') center / cover no-repeat;
   }
   .scene-region:active { cursor: grabbing; }
   @media (max-width: 480px) {
