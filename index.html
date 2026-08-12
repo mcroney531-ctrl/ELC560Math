@@ -196,6 +196,15 @@
   @media (max-width: 400px) {
     .hub-room { object-position: 25% 40%; }
   }
+  /* .wrap is nearly edge-to-edge below ~700px (the same cutoff the crystals
+     already use to get out of the way, see .hub-crystal below), so hero text
+     and cards sit directly over the render's own whiteboard diagrams with no
+     margin to breathe in — full strength there reads as visual noise rather
+     than atmosphere. Dimmed rather than hidden: enough is still visible to
+     read as "a room," just quiet enough not to compete with the real content. */
+  @media (max-width: 700px) {
+    .hub-room.ready { opacity: .35; }
+  }
   .hub-sky::after {
     content: ""; position: absolute; inset: 0;
     background:
