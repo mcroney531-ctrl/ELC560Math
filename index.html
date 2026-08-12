@@ -188,6 +188,14 @@
     opacity: 0; transition: opacity .6s ease;
   }
   .hub-room.ready { opacity: 1; }
+  /* The render's desk and whiteboard sit in its left third — centred cover
+     crop reads great from ~400px up, but on the narrowest phones the crop
+     window lands almost entirely on the bare right wall, losing the room's
+     whole character. Shifting the anchor left trades some of that empty
+     wall for the desk/whiteboard staying in frame. */
+  @media (max-width: 400px) {
+    .hub-room { object-position: 25% 40%; }
+  }
   .hub-sky::after {
     content: ""; position: absolute; inset: 0;
     background:
@@ -4550,7 +4558,7 @@ MIProgress.paintAll();
   (function () {
     var room = $("hubRoom");
     if (!room) return;
-    var src = "assets/room.png";
+    var src = "assets/room.jpg";
     var probe = new Image();
     probe.onload = function () { room.src = src; room.classList.add("ready"); };
     probe.onerror = function () { room.remove(); };
