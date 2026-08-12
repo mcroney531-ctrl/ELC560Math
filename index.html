@@ -132,6 +132,15 @@
   /* The Geometry activity uses the spotlit staging + in-scene Dot, which
      wants more room — widen it so nothing feels cramped when embedded. */
   #activity { max-width: 760px; }
+  /* The activity's own stage is the thing that wants to feel like a real
+     surface filling the screen, not a card floating in it — .wrap's normal
+     16px page margin (same as the hub uses) reads as unused space around it
+     on a narrow phone specifically because the stage now fills its own box
+     edge to edge (see .scene-region above). Tightened for #activity only,
+     so the hub's already-tuned spacing is untouched. */
+  @media (max-width: 480px) {
+    #activity { padding-left: 8px; padding-right: 8px; }
+  }
   /* Wide canvas (embeds up to 1920×1080): give the stage real room so the
      net and Cal's bubble never fight for space. */
   @media (min-width: 1100px) {
@@ -1147,6 +1156,15 @@
   .stage.net-mode .net-note { opacity: .85; }
   .net-note.fold { top: 70px; left: 16px; }
   .net-note.tabs { bottom: 62px; left: 108px; }
+  /* At the short, narrow-phone stage height, the net's own top/bottom rows
+     start close enough to the edges (TOP_CHROME/BOTTOM_CHROME were sized
+     for one line of mode-tag, not a mode-tag plus a separate note line)
+     that these fixed-position hints land on top of the faces themselves
+     rather than beside them. They're supplementary flavour text, not
+     required to complete the step, so they're the ones that give way. */
+  @media (max-width: 480px) {
+    .net-note { display: none; }
+  }
 
   /* A persistent legend pairing each counter's glyph with its name — and,
      now that the top counter row is gone, the live count itself, "written"
@@ -1240,6 +1258,12 @@
      switch between, since both modes read against the same material. */
   .mode-tag {
     position: absolute; top: 10px; left: 10px; z-index: 5;
+    /* The net-mode subtitle ("Opened out flat — every face at once") is
+       long enough to run the tag's auto width right into the Solid Parts
+       legend's own corner on a narrow phone — capped relative to the
+       board's own width (not a fixed px) so it wraps instead of colliding,
+       at any size where the legend also needs the room. */
+    max-width: calc(100% - 128px);
     background: rgba(224,224,248,.82); color: var(--board-ink);
     padding: 8px 13px; border-radius: 12px; line-height: 1.2; pointer-events: none;
     border: 1px solid rgba(255,255,255,.7);
@@ -1250,6 +1274,16 @@
   .mode-tag .mode-tag-sub {
     display: block; font-size: 10.5px; font-weight: 600; font-style: italic;
     color: var(--board-ink-soft); margin-top: 1px;
+  }
+  /* The net-mode subtitle ("Opened out flat — every face at once") is long
+     enough that even width-capped it still wraps to two lines on a narrow
+     phone, growing the tag tall enough to run into the net's own top row —
+     the fold hint's own reserved band (TOP_CHROME in sizeFaces()) was sized
+     for the tag's normal one-line height, not this. The title alone still
+     says which mode it is; the subtitle is flavour, so it's the one that
+     goes rather than fighting the layout for more vertical room. */
+  @media (max-width: 480px) {
+    .mode-tag .mode-tag-sub { display: none; }
   }
   .hint {
     position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%);
