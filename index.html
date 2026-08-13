@@ -121,6 +121,21 @@
       linear-gradient(180deg, var(--board-bg-a) 0%, var(--board-bg-b) 100%);
     background-attachment: fixed;
   }
+  /* The rendered backdrop, when there is one. It's a sibling of #activity
+     rather than a child, fixed to the viewport and painted with z-index -1
+     so it sits behind every in-flow (static-positioned) element on the page
+     without needing to touch #activity's own stacking. Hidden outside the
+     activity screen so it costs nothing on the hub. */
+  .act-bg {
+    display: none;
+    position: fixed; inset: 0; z-index: -1;
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: 50% 38%;
+    opacity: 0; transition: opacity .6s ease;
+    pointer-events: none;
+  }
+  body.in-activity .act-bg { display: block; }
+  body.in-activity .act-bg.ready { opacity: 1; }
   .wrap {
     max-width: 560px;
     margin: 0 auto;
@@ -2177,6 +2192,12 @@
 </div>
 
 <!-- ================= GEOMETRY ACTIVITY ================= -->
+<!-- Optional rendered backdrop behind the activity chrome — deliberately
+     out-of-focus (the render itself is a soft bokeh blur, not just dimmed),
+     since the header, mode-tag, Cal's bubble and the controls panel all sit
+     directly on top of it. Same reveal-on-decode pattern as .hub-room: a
+     missing or slow asset just leaves the CSS gradient below it showing. -->
+<img class="act-bg" id="actBg" alt="" decoding="async">
 <div class="wrap" id="activity">
   <header class="act-header">
     <button class="back-btn" id="backBtn" aria-label="Back to menu">←</button>
@@ -4737,6 +4758,18 @@ MIProgress.paintAll();
     var probe = new Image();
     probe.onload = function () { room.src = src; room.classList.add("ready"); };
     probe.onerror = function () { room.remove(); };
+    probe.src = src;
+  })();
+
+  // Same optional-asset pattern as the hub's room render, for the activity's
+  // blurred backdrop.
+  (function () {
+    var bg = $("actBg");
+    if (!bg) return;
+    var src = "assets/activity-bg.jpg";
+    var probe = new Image();
+    probe.onload = function () { bg.src = src; bg.classList.add("ready"); };
+    probe.onerror = function () { bg.remove(); };
     probe.src = src;
   })();
 
