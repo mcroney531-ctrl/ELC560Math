@@ -1824,8 +1824,12 @@
       inset 0 -2px 4px rgba(255,255,255,.5);
   }
   /* A step whose only move is one action gets a single wide button, centred,
-     with the clay drop-shadow breathing until it's clicked — so there's never
-     a question of what to press next. Pulsing stops on press. */
+     with a glow breathing around it until it's clicked — so there's never a
+     question of what to press next. Pulsing stops on press. The glow uses
+     the shape's own --face3/--glow3 teal — already the app's brightest
+     accent — rather than the button's own navy, which just produced a
+     bigger dark shadow, not something that read as "look here" against a
+     white card. */
   #activity .btn.solo {
     flex: 0 1 auto; min-width: 62%; margin: 0 auto;
     animation: soloPulse 1.9s ease-in-out infinite;
@@ -1837,13 +1841,15 @@
       box-shadow:
         inset 0 4px 6px rgba(255,255,255,.4),
         inset 0 -6px 10px rgba(0,0,0,.25),
-        0 10px 20px -8px rgba(32,48,80,.65);
+        0 0 0 0 rgba(6,214,160,.55),
+        0 10px 20px -8px rgba(32,48,80,.5);
     }
     50% {
       box-shadow:
         inset 0 4px 6px rgba(255,255,255,.4),
         inset 0 -6px 10px rgba(0,0,0,.25),
-        0 16px 30px -6px rgba(32,48,80,.9);
+        0 0 28px 6px rgba(6,214,160,.85),
+        0 10px 20px -8px rgba(32,48,80,.5);
     }
   }
   @media (prefers-reduced-motion: reduce) {
