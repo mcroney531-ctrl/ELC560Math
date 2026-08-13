@@ -847,6 +847,7 @@
      separate panel below. */
   .stage {
     position: relative; height: 56vh; min-height: 420px; max-height: 560px;
+    margin-top: 10px;
     border: 1px solid rgba(150,180,255,.22);
     border-radius: var(--radius);
     overflow: hidden;
@@ -882,33 +883,34 @@
     .stage { height: auto; min-height: 0; max-height: none; aspect-ratio: 1287 / 1016; }
   }
 
-  /* Cal is docked above the board now — a fixed, always-visible spot rather
+  /* Cal is docked on the board now — a fixed, always-visible spot rather
      than a spotlighted mark that walked to whatever the step was about. He
-     used to live inside the stage and re-aim a whole-scene vignette every
-     time the focus changed; both the walking and the vignette turned out to
-     be more machinery than the lesson needed once the live counts moved
-     onto the board itself (see .solid-parts below) — there's no longer
-     anything that needs a moving light to point at. */
-  .dot-stage {
-    display: flex; align-items: flex-start; gap: 10px;
-    width: 100%; margin: 6px 0 10px;
+     used to live in a separate band above the stage and re-aim a
+     whole-scene vignette every time the focus changed; both the walking
+     and the vignette turned out to be more machinery than the lesson
+     needed once the live counts moved onto the board itself (see
+     .solid-parts below) — there's no longer anything that needs a moving
+     light to point at. */
+  .dot-stage { position: absolute; top: 10px; left: 10px; right: 10px; z-index: 5; }
+  /* Pulled out of flow and overlapped onto the bubble's top-left corner —
+     a badge-style avatar rather than a flex column beside the bubble — so
+     the bubble's own box can run the board's full width instead of "row
+     width minus the avatar". padding-left on the bubble keeps its text
+     clear of him. */
+  .dot-stage .dot-avatar {
+    position: absolute; left: -6px; top: -8px; width: 50px; z-index: 1;
+    filter: drop-shadow(0 5px 8px rgba(22,32,92,.4));
   }
-  .dot-stage .dot-avatar { flex: 0 0 auto; width: 46px; }
   /* Navy to match the Challenge Zone panel, with the same light-on-navy
      treatment that panel uses: white body copy, a lighter periwinkle-blue
      for the bolded bits so they still stand out against the dark fill. */
   .dot-stage .dot-bubble {
-    position: relative; flex: 1 1 auto; min-width: 0;
+    width: 100%; box-sizing: border-box;
     background: var(--accent);
-    border-radius: 11px; padding: 8px 11px; font-size: 12.5px; line-height: 1.35;
+    border-radius: 11px; padding: 9px 13px 9px 50px; font-size: 12.5px; line-height: 1.35;
     color: #eef3ff; box-shadow: 0 8px 20px -9px rgba(0,0,0,.55);
   }
   .dot-stage .dot-bubble strong { color: #9fd0ff; }
-  .dot-stage .dot-bubble::before {
-    content: ""; position: absolute; left: -4px; top: 10px; width: 9px; height: 9px;
-    background: var(--accent);
-    transform: rotate(45deg);
-  }
 
   /* Controls panel: the "workbench" below the staging where the learner
      answers and advances. */
@@ -1193,29 +1195,31 @@
   .net-note.fold { top: 70px; left: 16px; }
   .net-note.tabs { bottom: 62px; left: 108px; }
   /* At the short, narrow-phone stage height, the net's own top/bottom rows
-     start close enough to the edges (TOP_CHROME/BOTTOM_CHROME were sized
-     for one line of mode-tag, not a mode-tag plus a separate note line)
-     that these fixed-position hints land on top of the faces themselves
-     rather than beside them. They're supplementary flavour text, not
-     required to complete the step, so they're the ones that give way. */
+     start close enough to the edges that these fixed-position hints land on
+     top of the faces themselves rather than beside them. They're
+     supplementary flavour text, not required to complete the step, so
+     they're the ones that give way. */
   @media (max-width: 480px) {
     .net-note { display: none; }
   }
 
   /* A persistent legend pairing each counter's glyph with its name — and,
      now that the top counter row is gone, the live count itself, "written"
-     on the board in a marker font next to each row. Docked top-right,
-     mirroring the mode tag's top-left chip, so it's never competing with
-     the center-aligned hint/area-readout/step-track furniture below it and
-     stays put at every viewport this app ships at — nothing needs hiding
-     it on narrow screens any more, since it's now the only place the
-     counts show at all. */
+     on the board in a marker font next to each row. Docked bottom-right, out
+     of the way of Cal's full-width bubble up top and the center-aligned
+     hint/area-readout/step-track furniture below it, and stays put at every
+     viewport this app ships at — nothing needs hiding it on narrow screens
+     any more, since it's now the only place the counts show at all. */
   .solid-parts {
-    /* Clears the whiteboard photo's own painted corner bracket — unlike the
-       mode tag opposite it, this sits with no backing chip (it's meant to
-       read as marker on the board itself), so it has to dodge the frame
-       art rather than simply paint over it. */
-    position: absolute; top: 32px; right: 20px; z-index: 2;
+    /* Cal's now-full-width bubble runs the top edge, so this drops just
+       below it instead of sharing the old top-right corner with it. Bottom
+       anchoring was the first instinct, but the step track and the drag
+       hint both already live down there, centred and wide enough to reach
+       this corner on a narrow phone — nowhere near the bottom is actually
+       free. Just under the bubble is: clear of the hint/track below, and
+       (being a fixed px offset rather than tracking the bubble's own
+       height) still clear of it even on the rare two-line message. */
+    position: absolute; top: 68px; right: 20px; z-index: 2;
     text-align: right; pointer-events: none;
   }
   .sp-head {
@@ -1245,12 +1249,30 @@
   }
   .sp-row .num.unknown { color: rgba(22,32,92,.32); }
   .sp-row .num.solved { font-size: 20px; }
+  /* Below ~480px the board is short enough that there's no band left that's
+     simultaneously clear of Cal's bubble above (which can wrap to two lines
+     at this width) and the hint/step-track below (a wide, centred pill that
+     reaches most corners on a narrow board). The one spot already proven
+     clear of the net itself, at any height, is .big-count's own — vertically
+     centred in the scene — so this reuses that exact band on the opposite
+     side rather than staking out new territory that has to be re-verified
+     against Cal and the bottom furniture on every shape. */
   @media (max-width: 480px) {
-    .solid-parts { top: 24px; right: 14px; }
-    .sp-head { font-size: 9.5px; }
-    .sp-row { font-size: 11px; gap: 5px; margin-top: 2px; }
+    .solid-parts { top: 50%; right: auto; left: 4px; bottom: auto; transform: translateY(-50%); text-align: left; }
+    .sp-row { justify-content: flex-start; font-size: 11px; gap: 3px; margin-top: 2px; }
     .sp-row .num { font-size: 15px; }
     .sp-row .num.solved { font-size: 17px; }
+    /* Icon + count alone is still legible (each icon's own shape already
+       carries "face/edge/corner" — see .sp-ico-*): the bullet dot was only
+       ever separating that word from the icon, and "SOLID PARTS" itself
+       turned out to be the widest thing in the block once the words on
+       each row were gone — wider than any row, so it alone kept forcing
+       this back out to the width that started colliding with nets again.
+       Measured against all six shapes' nets, the rectangular prism's net
+       reaches furthest into this left margin — tighter than the
+       octahedron's zigzag row that first defined how far this needed to
+       shrink — so this is sized to clear that, not just the common case. */
+    .sp-head, .sp-label, .sp-dot { display: none; }
   }
 
   /* Step tracker built into the stage atmosphere: a horizontal row of
@@ -1288,38 +1310,6 @@
   @keyframes nodePulse {
     0%, 100% { filter: drop-shadow(0 0 6px rgba(64,104,192,.6)); }
     50% { filter: drop-shadow(0 0 13px rgba(64,104,192,.95)); }
-  }
-  /* One light-glass chip for both modes now — a pale blue tint over the
-     whiteboard rather than the dark-glass/cream-paper pair this used to
-     switch between, since both modes read against the same material. */
-  .mode-tag {
-    position: absolute; top: 10px; left: 10px; z-index: 5;
-    /* The net-mode subtitle ("Opened out flat — every face at once") is
-       long enough to run the tag's auto width right into the Solid Parts
-       legend's own corner on a narrow phone — capped relative to the
-       board's own width (not a fixed px) so it wraps instead of colliding,
-       at any size where the legend also needs the room. */
-    max-width: calc(100% - 128px);
-    background: rgba(224,224,248,.82); color: var(--board-ink);
-    padding: 8px 13px; border-radius: 12px; line-height: 1.2; pointer-events: none;
-    border: 1px solid rgba(255,255,255,.7);
-    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    box-shadow: 0 6px 14px -9px rgba(22,32,92,.4);
-  }
-  .mode-tag .mode-tag-title { font-size: 12.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
-  .mode-tag .mode-tag-sub {
-    display: block; font-size: 10.5px; font-weight: 600; font-style: italic;
-    color: var(--board-ink-soft); margin-top: 1px;
-  }
-  /* The net-mode subtitle ("Opened out flat — every face at once") is long
-     enough that even width-capped it still wraps to two lines on a narrow
-     phone, growing the tag tall enough to run into the net's own top row —
-     the fold hint's own reserved band (TOP_CHROME in sizeFaces()) was sized
-     for the tag's normal one-line height, not this. The title alone still
-     says which mode it is; the subtitle is flavour, so it's the one that
-     goes rather than fighting the layout for more vertical room. */
-  @media (max-width: 480px) {
-    .mode-tag .mode-tag-sub { display: none; }
   }
   .hint {
     position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%);
@@ -2206,21 +2196,23 @@
     </div>
   </header>
 
-  <!-- Cal is stationary now: docked here, above the board, in the band the
-       top counters used to occupy. He no longer walks to the subject and
-       the whole-stage spotlight that used to walk with him is retired —
-       the counts themselves live on the board (see .solid-parts below), so
-       there's nothing left that needs a moving light or a moving guide to
-       point at it. -->
-  <div class="dot-stage" id="dotStage">
-    <div class="dot-avatar" id="dotAvatar" aria-hidden="true">
-      <img class="cal-img" src="assets/cal.png" alt="Cal, your math guide">
-    </div>
-    <div class="dot-bubble" id="dotBubble" role="status" aria-live="polite"></div>
-  </div>
-
   <div class="stage" id="stage">
     <div class="scene-region" id="sceneRegion">
+    <!-- Cal is stationary now: docked directly on the board, in the band
+         the mode-tag chip used to occupy. He no longer walks to the subject
+         and the whole-stage spotlight that used to walk with him is
+         retired — the counts themselves live on the board (see
+         .solid-parts below), so there's nothing left that needs a moving
+         light or a moving guide to point at it. The avatar is pulled out
+         of flow and overlaps the bubble's top-left corner instead of
+         sharing a row with it, so the bubble itself spans the board's full
+         width rather than "row width minus the avatar column". -->
+    <div class="dot-stage" id="dotStage">
+      <div class="dot-bubble" id="dotBubble" role="status" aria-live="polite"></div>
+      <div class="dot-avatar" id="dotAvatar" aria-hidden="true">
+        <img class="cal-img" src="assets/cal.png" alt="Cal, your math guide">
+      </div>
+    </div>
     <!-- Cube mode and net mode now share one physical surface — a rendered
          whiteboard (assets/whiteboard.jpg) — instead of the two separate
          "cosmic dark" / "warm paper" decoration layers this used to
@@ -2233,13 +2225,9 @@
          show, freeing that band for Cal to dock in permanently. -->
     <div class="solid-parts" id="solidParts" aria-hidden="true">
       <div class="sp-head">Solid parts</div>
-      <div class="sp-row"><span class="sp-dot"></span>Faces<span class="sp-ico sp-ico-face"></span><span class="num unknown" id="cFaces">?</span></div>
-      <div class="sp-row"><span class="sp-dot"></span>Edges<span class="sp-ico sp-ico-edge"></span><span class="num unknown" id="cEdges">?</span></div>
-      <div class="sp-row"><span class="sp-dot"></span>Corners<span class="sp-ico sp-ico-corner"></span><span class="num unknown" id="cCorners">?</span></div>
-    </div>
-    <div class="mode-tag" id="modeTag">
-      <span class="mode-tag-title">🧊 Cube Mode</span>
-      <span class="mode-tag-sub">Explore the 3D shape</span>
+      <div class="sp-row"><span class="sp-dot"></span><span class="sp-label">Faces</span><span class="sp-ico sp-ico-face"></span><span class="num unknown" id="cFaces">?</span></div>
+      <div class="sp-row"><span class="sp-dot"></span><span class="sp-label">Edges</span><span class="sp-ico sp-ico-edge"></span><span class="num unknown" id="cEdges">?</span></div>
+      <div class="sp-row"><span class="sp-dot"></span><span class="sp-label">Corners</span><span class="sp-ico sp-ico-corner"></span><span class="num unknown" id="cCorners">?</span></div>
     </div>
     <div class="hint" id="hint">Drag to spin the cube</div>
     <div class="big-count" id="bigCount">1</div>
@@ -2415,10 +2403,8 @@ MIProgress.paintAll();
   var stage = $("stage"), sceneRegion = $("sceneRegion"), orbit = $("orbit"), centerer = $("centerer");
   var hingeT = $("hingeT"), hingeR = $("hingeR"), hingeB = $("hingeB"),
       hingeL = $("hingeL"), hingeK = $("hingeK");
-  var hint = $("hint"), bigCount = $("bigCount"), overlayTag = $("overlayTag"), modeTag = $("modeTag");
+  var hint = $("hint"), bigCount = $("bigCount"), overlayTag = $("overlayTag");
   var solidParts = $("solidParts");
-  var modeTagTitle = modeTag.querySelector(".mode-tag-title");
-  var modeTagSub = modeTag.querySelector(".mode-tag-sub");
   var stepLabel = $("stepLabel"), actionsEl = $("actions"), choicesEl = $("choices");
   var dotAvatar = $("dotAvatar"), dotBubble = $("dotBubble");
   var pupils = Array.prototype.slice.call(dotAvatar.querySelectorAll(".dot-pupil"));
@@ -3167,10 +3153,13 @@ MIProgress.paintAll();
     sizeFaces();
   }
 
-  // The mode tag and Cal's bubble sit across the top of the scene; the area
+  // Cal's now-full-width bubble runs across the top of the scene; the area
   // readout and step track across the bottom. The flat net is fitted into the
-  // band between them rather than the whole box.
-  var TOP_CHROME = 46, BOTTOM_CHROME = 58;
+  // band between them rather than the whole box. Sized for the bubble's
+  // worst case — a narrow phone, where it can run to ~80px tall — rather
+  // than its usual single-line height, since one shared constant has to
+  // clear it at every viewport.
+  var TOP_CHROME = 86, BOTTOM_CHROME = 58;
 
   function sizeFaces() {
     if (!netInfo) return;
@@ -3252,15 +3241,10 @@ MIProgress.paintAll();
     // Overlays only make sense on the folded cube.
     if (p < 0.92 && (overlays.edges || overlays.corners)) setOverlay(null);
 
-    // Mode indicator: which side of the fold are we looking at. The sub-line
-    // says what the mode *is* in a few words, so the label never assumes the
-    // learner already knows what a "net" is.
+    // Which side of the fold are we looking at — still drives .net-mode
+    // (the board's own net-vs-solid styling), even with the mode-tag chip
+    // that used to spell this out gone.
     var netMode = p < 0.5;
-    modeTagTitle.textContent = netMode ? "▦ Net Mode" : "🧊 " + shape.solidLabel + " Mode";
-    modeTagSub.textContent = netMode
-      ? "Opened out flat — every face at once"
-      : "The " + shape.solidLabel.toLowerCase() + " folded up, in 3D";
-    modeTag.classList.toggle("net", netMode);
     stage.classList.toggle("net-mode", netMode);
 
     // Warm-up reveal: once the learner has rotated far enough off face-on for
