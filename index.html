@@ -1249,17 +1249,18 @@
   }
   .sp-row .num.unknown { color: rgba(22,32,92,.32); }
   .sp-row .num.solved { font-size: 20px; }
-  /* Below ~480px the board is short enough that there's no band left that's
-     simultaneously clear of Cal's bubble above (which can wrap to two lines
-     at this width) and the hint/step-track below (a wide, centred pill that
-     reaches most corners on a narrow board). The one spot already proven
-     clear of the net itself, at any height, is .big-count's own — vertically
-     centred in the scene — so this reuses that exact band on the opposite
-     side rather than staking out new territory that has to be re-verified
-     against Cal and the bottom furniture on every shape. */
+  /* Below ~480px, a vertical stack of three labelled rows was landing as a
+     lone column floating in the middle of the board, disconnected from
+     everything else on it. Laid out as one compact horizontal row instead
+     — icon+count, icon+count, icon+count — it's short enough (one line, not
+     three) to tuck back into the same top-right corner the legend uses on
+     every larger screen, just under Cal's bubble, instead of staking out
+     new territory in the middle of the board. */
   @media (max-width: 480px) {
-    .solid-parts { top: 50%; right: auto; left: 4px; bottom: auto; transform: translateY(-50%); text-align: left; }
-    .sp-row { justify-content: flex-start; font-size: 11px; gap: 3px; margin-top: 2px; }
+    /* .sp-head is display:none below, so flexing .solid-parts itself lines
+       up just the three rows — no separate wrapper needed. */
+    .solid-parts { top: 88px; display: flex; flex-direction: row; gap: 10px; }
+    .sp-row { font-size: 11px; gap: 3px; margin-top: 0; }
     .sp-row .num { font-size: 15px; }
     .sp-row .num.solved { font-size: 17px; }
     /* Icon + count alone is still legible (each icon's own shape already
@@ -1269,9 +1270,8 @@
        each row were gone — wider than any row, so it alone kept forcing
        this back out to the width that started colliding with nets again.
        Measured against all six shapes' nets, the rectangular prism's net
-       reaches furthest into this left margin — tighter than the
-       octahedron's zigzag row that first defined how far this needed to
-       shrink — so this is sized to clear that, not just the common case. */
+       reaches furthest into this corner — tighter than the octahedron's
+       zigzag row that first defined how far this needed to shrink. */
     .sp-head, .sp-label, .sp-dot { display: none; }
   }
 
@@ -3153,13 +3153,14 @@ MIProgress.paintAll();
     sizeFaces();
   }
 
-  // Cal's now-full-width bubble runs across the top of the scene; the area
-  // readout and step track across the bottom. The flat net is fitted into the
-  // band between them rather than the whole box. Sized for the bubble's
-  // worst case — a narrow phone, where it can run to ~80px tall — rather
-  // than its usual single-line height, since one shared constant has to
-  // clear it at every viewport.
-  var TOP_CHROME = 86, BOTTOM_CHROME = 58;
+  // Cal's now-full-width bubble runs across the top of the scene, with the
+  // Solid Parts legend tucked just under it in the same corner on narrow
+  // phones (see .solid-parts); the area readout and step track sit across
+  // the bottom. The flat net is fitted into the band between them rather
+  // than the whole box. Sized for the tallest thing up there — a narrow
+  // phone's two-line bubble (~80px) plus Solid Parts' own row below it —
+  // since one shared constant has to clear all of it at every viewport.
+  var TOP_CHROME = 118, BOTTOM_CHROME = 58;
 
   function sizeFaces() {
     if (!netInfo) return;
