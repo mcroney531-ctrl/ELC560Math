@@ -145,8 +145,11 @@
     flex-direction: column;
   }
   /* The Geometry activity uses the spotlit staging + in-scene Dot, which
-     wants more room — widen it so nothing feels cramped when embedded. */
-  #activity { max-width: 760px; }
+     wants more room — widen it so nothing feels cramped when embedded.
+     Bottom padding matches the fixed tab bar's footprint (see .tabbar),
+     which now shows here too, so it never overlaps the Next button or the
+     step footer. */
+  #activity { max-width: 760px; padding-bottom: 92px; }
   /* The activity's own stage is the thing that wants to feel like a real
      surface filling the screen, not a card floating in it — .wrap's normal
      16px page margin (same as the hub uses) reads as unused space around it
@@ -179,10 +182,10 @@
      element sitting on the open sky opts into --hub-ink itself, exactly as
      the activity does with --sky-ink. */
   #menu { position: relative; }
-  /* Content sits above the decoration layer. */
-  /* The tab bar is excluded: it is fixed to the viewport, and this rule's
-     id-level specificity would otherwise force it back to relative. */
-  #menu > *:not(.hub-sky):not(.tabbar) { position: relative; z-index: 1; }
+  /* Content sits above the decoration layer. The tab bar no longer lives
+     inside #menu (it's a document-level nav shared with the activity), so
+     this only has .hub-sky left to exclude. */
+  #menu > *:not(.hub-sky) { position: relative; z-index: 1; }
   /* The sky carries the gradient and is fixed to the viewport, not sized to
      #menu — .wrap is only 560px wide, so painting the sunset on #menu itself
      would leave body's purple showing down both margins. Fixed also means it
@@ -254,25 +257,34 @@
      margin to drift in. Drop them to texture rather than hiding them. */
   @media (max-width: 700px) { .hub-sky .hub-crystal { opacity: .12; } }
   /* ---- Hub sections + tab bar -------------------------------------------
-     The hub is five places, not one page. Views swap inside #menu; the bar is
-     fixed to the viewport but lives inside #menu, so it goes away with the
-     screen and never appears over the activity. */
+     The hub is five places, not one page. Views swap inside #menu; the bar
+     itself is hidden only on Home (the actual landing page) and shown
+     everywhere else — every activity, plus Shapes/Learn/Progress/Badges.
+     Learn, Progress and Badges have no other way back to Home, so hiding
+     the bar on all of the hub (not just Home) would strand a visitor
+     there. See the body.hub-away toggle in showView(). */
   .hub-view[hidden] { display: none; }
   #menu { padding-bottom: 92px; }        /* room for the fixed bar */
   .view-note {
     color: var(--hub-ink-soft); font-size: 13.5px; line-height: 1.5;
     margin: 0 2px 14px; max-width: 460px;
   }
+  /* The bar itself is hidden on Home — where it filled a blank landing page
+     with a full-width switcher — and shown inside an activity (filling the
+     blank space below the step panel) or on any other hub section, gated by
+     the same body.in-activity / body.hub-away classes JS already tracks. */
   .tabbar {
+    display: none;
     position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%);
     z-index: 20; width: min(528px, calc(100vw - 24px));
-    display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;
+    grid-template-columns: repeat(5, 1fr); gap: 2px;
     background: rgba(250,251,254,.94);
     -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
     border: 1px solid rgba(255,255,255,.9); border-radius: 22px;
     padding: 7px 6px;
     box-shadow: 0 16px 34px -18px rgba(10,24,66,.55), inset 0 1px 0 rgba(255,255,255,.9);
   }
+  body.in-activity .tabbar, body.hub-away .tabbar { display: grid; }
   .tab {
     display: flex; flex-direction: column; align-items: center; gap: 3px;
     background: none; border: 0; cursor: pointer; font: inherit;
@@ -2177,14 +2189,6 @@
     <div class="badge-grid" id="badgeGrid"></div>
   </div>
 
-  <nav class="tabbar" id="tabbar" aria-label="Sections">
-    <button class="tab on" type="button" data-view="Home"><span class="tab-ico">⌂</span><span class="tab-lbl">Home</span></button>
-    <button class="tab" type="button" data-view="Shapes"><span class="tab-ico">◆</span><span class="tab-lbl">Shapes</span></button>
-    <button class="tab" type="button" data-view="Learn"><span class="tab-ico">⬡</span><span class="tab-lbl">Learn</span></button>
-    <button class="tab" type="button" data-view="Progress"><span class="tab-ico">▮</span><span class="tab-lbl">Progress</span></button>
-    <button class="tab" type="button" data-view="Badges"><span class="tab-ico">★</span><span class="tab-lbl">Badges</span></button>
-  </nav>
-
   <footer class="hub-foot">
     Built for the E-Learning Heroes community —<br>
     Challenge #560 · Teaching Math Online with E-Learning Activities
@@ -2308,6 +2312,18 @@
 </div><!-- /#activity — closed explicitly. It used to run to end-of-markup on
      the parser's implicit close, which silently swallowed every overlay
      declared after it. -->
+
+<!-- The tab bar lives at document level too, not inside #menu: it now shows
+     only during an activity (filling the blank space below the step panel)
+     and is hidden on the hub itself, so it can't be a child of either screen
+     without being torn down and rebuilt every time the other one toggles. -->
+<nav class="tabbar" id="tabbar" aria-label="Sections">
+  <button class="tab on" type="button" data-view="Home"><span class="tab-ico">⌂</span><span class="tab-lbl">Home</span></button>
+  <button class="tab" type="button" data-view="Shapes"><span class="tab-ico">◆</span><span class="tab-lbl">Shapes</span></button>
+  <button class="tab" type="button" data-view="Learn"><span class="tab-ico">⬡</span><span class="tab-lbl">Learn</span></button>
+  <button class="tab" type="button" data-view="Progress"><span class="tab-ico">▮</span><span class="tab-lbl">Progress</span></button>
+  <button class="tab" type="button" data-view="Badges"><span class="tab-ico">★</span><span class="tab-lbl">Badges</span></button>
+</nav>
 
 <!-- The Learn-more sheet lives at document level, not inside #activity:
      the hub's Learn section opens the same sheets, and a #activity that is
@@ -4708,6 +4724,10 @@ MIProgress.paintAll();
       var el = $("view" + v);
       if (el) el.hidden = (v !== name);
     });
+    // Drives the tab bar's visibility on the hub: hidden on Home (the
+    // actual landing page), shown on the other four sections since they
+    // have no other way back to Home. See .tabbar / body.hub-away in CSS.
+    document.body.classList.toggle("hub-away", name !== "Home");
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) {
       var on = t.getAttribute("data-view") === name;
       t.classList.toggle("on", on);
@@ -4720,7 +4740,14 @@ MIProgress.paintAll();
     window.scrollTo(0, 0);
   }
   Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) {
-    t.addEventListener("click", function () { showView(t.getAttribute("data-view")); });
+    t.addEventListener("click", function () {
+      var name = t.getAttribute("data-view");
+      // The bar only shows during an activity now, so every tap here means
+      // "leave this activity and go to that hub section" — showMenu(name)
+      // does both in one step rather than exiting to the old view first.
+      if (document.body.classList.contains("in-activity")) showMenu(name);
+      else showView(name);
+    });
   });
 
   // Reset asks twice — one stray tap should not wipe a learner's run.
@@ -4791,14 +4818,18 @@ MIProgress.paintAll();
   function nudgeLocked(el) {
     el.classList.remove("nudge"); void el.offsetWidth; el.classList.add("nudge");
   }
-  $("backBtn").addEventListener("click", showMenu);
-  function showMenu() {
+  $("backBtn").addEventListener("click", function () { showMenu(); });
+  // view: which hub section to land on. Defaults to the one the learner left
+  // from; the tab bar passes the tapped section explicitly when it's tapped
+  // mid-activity, so tapping "Badges" there exits straight to Badges rather
+  // than back to wherever the learner started.
+  function showMenu(view) {
     activity.style.display = "none";
     menu.style.display = "flex";
     document.body.classList.remove("in-activity");
-    // Come back to the section you left from, rebuilt — a shape just finished
-    // can change progress, badges and what is unlocked.
-    showView(currentView);
+    // Rebuilt regardless of which view — a shape just finished can change
+    // progress, badges and what is unlocked.
+    showView(view || currentView);
     MIProgress.paintAll();   // refresh progress + unlocks on return
   }
   function resetActivity() {
