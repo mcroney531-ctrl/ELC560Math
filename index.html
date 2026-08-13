@@ -827,15 +827,17 @@
   }
   /* Both modes share one physical surface now: a rendered whiteboard, shown
      with background-size:cover so it fills the stage edge to edge with no
-     letterboxing. The render is a 4:3 photo (1448×1086); the vh-driven
-     height above pairs a narrow width with a tall box on a phone in
-     portrait, and cover has to zoom a 4:3 photo so far to fill a box that
-     skinny that the painted frame crops off every side at once. Rather than
-     shrink the photo to fit and show gaps around it (tried first — reads as
-     a small picture pasted on a blank card, not a surface filling the
-     stage), the fix is to stop asking a 4:3 photo to fill a non-4:3 box:
-     below 480px the stage's own shape switches to match the render's, so
-     cover never needs to crop the frame away in the first place. */
+     letterboxing. The render is cropped tight to its own painted frame
+     (1287×1016 — the original product photo carried ~40-80px of plain
+     white backdrop past the frame on every side, which no CSS trick could
+     hide, since it's the photo's own pixels: any crop that showed all of
+     the frame necessarily showed that backdrop too, reading as "a photo
+     pasted on a white card" rather than a surface filling the stage). The
+     vh-driven height above pairs a narrow width with a tall box on a phone
+     in portrait, and cover has to zoom the photo so far to fill a box that
+     skinny that the frame crops off every side at once — so below 480px
+     the stage's own shape switches to match the render's real aspect,
+     rather than the render's aspect trying to match an unrelated box. */
   .scene-region {
     position: absolute; inset: 0; overflow: hidden;
     touch-action: none; cursor: grab;
@@ -850,7 +852,7 @@
   }
   .scene-region:active { cursor: grabbing; }
   @media (max-width: 480px) {
-    .stage { height: auto; min-height: 0; max-height: none; aspect-ratio: 4 / 3; }
+    .stage { height: auto; min-height: 0; max-height: none; aspect-ratio: 1287 / 1016; }
   }
 
   /* Cal is docked above the board now — a fixed, always-visible spot rather
