@@ -486,7 +486,10 @@
   }
   .hub-header h1 { font-size: 36px; line-height: 1.05; letter-spacing: -.02em; color: var(--hub-ink); }
   .hub-header h1 { letter-spacing: -.03em; }
-  .hub-header h1 .grad { color: var(--hub-accent); }
+  /* --hub-accent-ink, not --hub-accent: the fill token measures only 5:1 as
+     text against the daylight-bright corner of the hero, since it's close
+     in hue to the wall behind it. The text token clears ~9.75:1 there. */
+  .hub-header h1 .grad { color: var(--hub-accent-ink); }
   .hub-header p { color: var(--hub-ink-soft); margin-top: 10px; font-size: 15.5px; line-height: 1.5; max-width: 420px; }
 
   /* Dot hero */
