@@ -1,4 +1,4 @@
-# Unfold — ELC #560
+# Explore 3D Shapes — ELC #560
 
 An interactive e-learning lesson built for [E-Learning Heroes Challenge #560](https://community.articulate.com/) — *Teaching Math Online with E-Learning Activities*.
 
