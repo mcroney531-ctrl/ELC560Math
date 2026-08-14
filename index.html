@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Unfold · 3D Shapes &amp; Nets</title>
+<title>Explore 3D Shapes · Nets &amp; Surface Area</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=National+Park:wght@400;600;700;800&family=Caveat+Brush&display=swap" rel="stylesheet">
@@ -178,6 +178,22 @@
     #activity .stage { height: auto; min-height: 0; max-height: 820px; aspect-ratio: 1287 / 1016; }
     .dot-stage .dot-avatar { width: 54px; }
     .dot-stage .dot-bubble { font-size: 13.5px; padding: 9px 13px; }
+    /* The board grows by roughly half again at this size but the Solid
+       Parts legend is fixed px, so it shrinks away into fine print in the
+       corner. Scale it to match — it is the only place the face/edge/corner
+       counts are shown, so it has to stay readable at arm's length.
+       Scoped under #activity for the same reason .stage above is: the base
+       rules live much later in this file, so at equal specificity source
+       order would beat this media query at every viewport. */
+    #activity .solid-parts { top: 84px; right: 40px; }
+    #activity .sp-head { font-size: 14px; letter-spacing: .08em; margin-bottom: 6px; }
+    #activity .sp-row { font-size: 16px; gap: 9px; margin-top: 5px; }
+    #activity .sp-row .num { font-size: 23px; min-width: 20px; }
+    #activity .sp-row .num.solved { font-size: 27px; }
+    #activity .sp-dot { width: 5px; height: 5px; }
+    #activity .sp-ico-face { width: 15px; height: 15px; border-width: 2px; }
+    #activity .sp-ico-edge { width: 19px; border-top-width: 2.2px; }
+    #activity .sp-ico-corner { width: 10px; height: 10px; }
   }
 
   /* ============ MENU HUB ============ */
@@ -2113,14 +2129,14 @@
   </div>
   <div class="hub-nav">
     <span class="brand-mark">🧊</span>
-    <span class="brand-name">Unfold</span>
+    <span class="brand-name">Explore 3D Shapes</span>
   </div>
 
   <!-- HOME: the journey map -->
   <div class="hub-view" id="viewHome">
   <header class="hub-header">
-    <span class="hub-kicker">⬡ 3D shapes, opened up</span>
-    <h1>Un<span class="grad">fold</span></h1>
+    <span class="hub-kicker">⬡ Nets, faces &amp; surface area</span>
+    <h1>Explore <span class="grad">3D Shapes</span></h1>
     <p>Spin a solid, unfold it flat into its net, and see exactly where every face, edge and corner lives — then measure it.</p>
   </header>
 
