@@ -160,10 +160,22 @@
     #activity { padding-left: 8px; padding-right: 8px; }
   }
   /* Wide canvas (embeds up to 1920×1080): give the stage real room so the
-     net and Cal's bubble never fight for space. */
+     net and Cal's bubble never fight for space. A plain max-height here
+     (as this used to be) leaves the width free to grow independently —
+     at 1060px wide × 660px tall the box is proportionally much wider than
+     the whiteboard photo (1287×1016), so cover crops top and bottom to
+     fill it, zooming in until the bottom ledge (and its markers) falls
+     outside the frame. Matching the box to the photo's own aspect ratio,
+     the same fix the narrow-phone rule below already uses, shows the
+     whole board with no crop at any width in between. Scoped as
+     "#activity .stage" rather than bare ".stage": the base .stage rule
+     (with its own height/max-height) is defined much later in this file,
+     so at equal specificity source order would let it win over this media
+     query regardless of viewport — the extra #activity ancestor is what
+     actually makes this override stick. */
   @media (min-width: 1100px) {
     #activity { max-width: 1060px; }
-    .stage { max-height: 660px; }
+    #activity .stage { height: auto; min-height: 0; max-height: 820px; aspect-ratio: 1287 / 1016; }
     .dot-stage .dot-avatar { width: 54px; }
     .dot-stage .dot-bubble { font-size: 13.5px; padding: 9px 13px; }
   }
@@ -885,7 +897,12 @@
      in portrait, and cover has to zoom the photo so far to fill a box that
      skinny that the frame crops off every side at once — so below 480px
      the stage's own shape switches to match the render's real aspect,
-     rather than the render's aspect trying to match an unrelated box. */
+     rather than the render's aspect trying to match an unrelated box. The
+     same mismatch shows up at the other extreme, a wide box that's short
+     relative to its width (see the 1100px+ rule above) — cover then crops
+     top and bottom instead of the sides, hiding the board's bottom ledge,
+     so that breakpoint matches the render's aspect too rather than fighting
+     it with an independent max-height. */
   .scene-region {
     position: absolute; inset: 0; overflow: hidden;
     touch-action: none; cursor: grab;
@@ -1204,24 +1221,7 @@
      dark" from net-mode's "warm paper" are gone along with the two
      backgrounds they were built to sit on — both modes now share the one
      whiteboard surface, so there is nothing left for them to cross-fade
-     between. The fold-hint notes survive, recoloured for the board: they
-     annotate the net regardless of what is drawn underneath it. */
-  .net-note {
-    position: absolute; font-size: 12px; font-weight: 700; font-style: italic;
-    color: var(--board-ink-soft); opacity: 0; transition: opacity .5s ease;
-    white-space: nowrap; z-index: 1;
-  }
-  .stage.net-mode .net-note { opacity: .85; }
-  .net-note.fold { top: 70px; left: 16px; }
-  .net-note.tabs { bottom: 62px; left: 108px; }
-  /* At the short, narrow-phone stage height, the net's own top/bottom rows
-     start close enough to the edges that these fixed-position hints land on
-     top of the faces themselves rather than beside them. They're
-     supplementary flavour text, not required to complete the step, so
-     they're the ones that give way. */
-  @media (max-width: 480px) {
-    .net-note { display: none; }
-  }
+     between. */
 
   /* A persistent legend pairing each counter's glyph with its name — and,
      now that the top counter row is gone, the live count itself, "written"
@@ -2247,10 +2247,7 @@
     <!-- Cube mode and net mode now share one physical surface — a rendered
          whiteboard (assets/whiteboard.jpg) — instead of the two separate
          "cosmic dark" / "warm paper" decoration layers this used to
-         cross-fade between. The fold-hint notes are kept: they annotate the
-         flat net itself, not the material under it. -->
-    <span class="net-note fold" aria-hidden="true">Fold along the lines ↓</span>
-    <span class="net-note tabs" aria-hidden="true">↑ Tabs hold it together</span>
+         cross-fade between. -->
     <!-- The live face/edge/corner counts, "handwritten" on the board itself
          in a marker font — this is what the old top counter pills used to
          show, freeing that band for Cal to dock in permanently. -->
