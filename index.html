@@ -3885,7 +3885,15 @@ MIProgress.paintAll();
                   '<div class="dsc-box ' + sh.base2D + '" id="dscBox"></div>' +
                   '<div class="dsc-solid" id="dscSolid">' + miniSolidSvg(sh.key, 150, 120) + '</div>' +
                 '</div>' +
-                '<input type="range" class="lmi-range" id="dscRange" min="0" max="300" value="0" aria-label="Dimension">' +
+                // step=50 (not the default 1): a drag with 301 possible
+                // positions moves with no perceptible detent at all, unlike
+                // the surface-area scale slider (1-4, step 0.5 — one
+                // in-between value per rung). Matching that same ratio here
+                // is what actually produces the "locks at each rung while
+                // you drag" feel, not the settle-on-release code below —
+                // that only resolves the one in-between position (50/150/
+                // 250) per pair of rungs down to whichever is closer.
+                '<input type="range" class="lmi-range" id="dscRange" min="0" max="300" step="50" value="0" aria-label="Dimension">' +
                 '<div class="lmi-out" id="dscOut"></div>' +
               '</div>',
         onOpen: function (body) {
