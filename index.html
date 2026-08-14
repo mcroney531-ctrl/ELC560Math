@@ -751,6 +751,14 @@
   .zone-panel .tile.locked .tile-name { color: rgba(226,235,255,.6); }
   .zone-panel .tile.ready { background: rgba(255,255,255,.16); }
   .zone-panel .tile.ready .tile-fig { color: #bcd6ff; }
+  /* Finished: a genuine "done" state, distinct from merely unlocked — a
+     green ring + a real checkmark badge, so a glance at the shelf shows
+     which of these you've actually finished vs. just have access to. */
+  .zone-panel .tile.done {
+    background: rgba(16,163,110,.18); border-color: rgba(56,214,163,.5);
+  }
+  .zone-panel .tile.done .tile-fig { color: #6be3c0; }
+  .zone-panel .tile.done .tile-lock { color: #6be3c0; }
   .zone-panel .tile:active {
     transform: translateY(1px) scale(.97);
     box-shadow: inset 0 4px 8px rgba(0,0,0,.3), inset 0 -1px 2px rgba(255,255,255,.1);
@@ -787,6 +795,9 @@
   .tile.ready { opacity: 1; }
   .tile.ready .tile-fig { color: var(--accent); }
   .tile.ready .tile-lock { content: none; }
+  /* Finished: a genuine "done" state, distinct from merely unlocked. */
+  .tile.done .tile-fig { color: #0a9b6c; }
+  .tile.done .tile-lock { color: #0a9b6c; font-weight: 800; }
 
   /* ---- Badges: another dashed trail, same .stop/.trail-link pieces as the
      main journey map, so earning one reads as a stop on the same path
@@ -1322,7 +1333,7 @@
      from "done" by its pulse and scale rather than a light-vs-dark flip
      that no longer makes sense once both states sit on the same board. */
   .tnode {
-    width: 19px; height: 19px; box-sizing: border-box;
+    width: 24px; height: 24px; box-sizing: border-box;
     background: rgba(22,32,92,.1); border: 1.5px solid rgba(22,32,92,.28);
     clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
     transition: background .35s ease, border-color .35s ease, transform .35s ease, filter .35s ease;
@@ -1412,11 +1423,14 @@
     .area-plus.pop { animation: none; }
   }
 
-  /* Per-face area label, shown during the surface-area step */
+  /* Per-face area label, shown during the surface-area step. Back inside
+     .face (percentages need a real-sized containing block — .fnode is
+     zero-size, so a label parked there instead collapses to one shared
+     corner no matter which face it's on), anchored via --lx/--ly: the
+     centroid nudged toward the triangle's base, away from its apex,
+     whichever direction that is — see buildNet's baseMid/LEAN_AWAY. */
   .area-label {
-    /* Hung off the centroid toward the face's wide end (see --ay), so it
-       stays inside triangles whichever way the apex points. */
-    position: absolute; top: var(--ay, calc(var(--cy, 50%) + 21%)); left: var(--cx, 50%);
+    position: absolute; top: var(--ly, var(--cy, 50%)); left: var(--lx, var(--cx, 50%));
     transform: translate(-50%, -50%);
     display: none; white-space: nowrap;
     background: rgba(255,255,255,.95); color: #2b2a33;
@@ -1426,8 +1440,14 @@
   }
   .face.sa-shown .area-label { display: block; }
   /* Triangle captions ("½·4·4") are longer than a rectangle's "4×6" and the
-     shape narrows towards its apex, so they get a tighter size. */
-  .face:not(.rect) .area-label { font-size: calc(var(--fs, 60px) * .135); padding: 1px 5px; }
+     shape narrows towards its apex, so they get a tighter size. The "=area"
+     wraps onto its own line (see faceDimLabel), so this also drops the
+     999px pill radius for a small rounded card — a two-line pill reads as
+     an odd stretched oval — and tightens the line-height to match. */
+  .face:not(.rect) .area-label {
+    font-size: calc(var(--fs, 60px) * .135); padding: 2px 6px;
+    border-radius: 8px; line-height: 1.3; text-align: center;
+  }
 
   /* ---- Per-item focus system -------------------------------------------
      Guides attention to exactly the face Cal is talking about. Dimming uses
@@ -1662,8 +1682,8 @@
      corners show twice; folded up they land on top of each other, which is
      exactly the point being made. */
   .corner {
-    position: absolute; width: 13px; height: 13px; border-radius: 50%;
-    margin: -6.5px 0 0 -6.5px;
+    position: absolute; width: 22px; height: 22px; border-radius: 50%;
+    margin: -11px 0 0 -11px;
     background: #fff; border: 3px solid #fff;
     box-shadow: 0 0 12px rgba(255,255,255,.9), 0 0 4px rgba(0,0,0,.4);
     opacity: 0; transition: opacity .3s; z-index: 4; pointer-events: none;
@@ -2389,10 +2409,13 @@ var MIProgress = (function () {
       ? "Main path cleared — the shelf is open. Same unfold, trickier solids: triangles, points and all."
       : "Clear the main path to unlock the shelf — trickier solids to take apart.";
     Array.prototype.forEach.call(document.querySelectorAll(".tile"), function (t) {
-      t.classList.toggle("ready", mainDone);
+      var key = t.getAttribute("data-shape");
+      var done = mainDone && isComplete(key);
       t.classList.toggle("locked", !mainDone);
+      t.classList.toggle("ready", mainDone && !done);
+      t.classList.toggle("done", done);
       var lock = t.querySelector(".tile-lock");
-      if (lock) lock.textContent = mainDone ? "✓" : "🔒";
+      if (lock) lock.textContent = !mainDone ? "🔒" : done ? "✓" : "";
     });
   }
   function markStep(key, stepIndex, totalSteps) {
@@ -3109,24 +3132,23 @@ MIProgress.paintAll();
         if (Math.abs(p[0] - best[0]) < 1e-6) return p[1] < best[1] ? p : best;
         return p[0] < best[0] ? p : best;
       }, fs.poly[0]);
-      // The size label hangs off the centroid, and it has to hang toward the
-      // *wide* end or it overflows the shape. On a triangle that means away
-      // from the apex: below the centroid when the apex points up, above it
-      // when the apex points down.
-      var apexDown = false, apex = null;
+      // Find the triangle's apex and its base's midpoint, whichever way the
+      // triangle is oriented — the base edge can be horizontal (apex up or
+      // down) or vertical (apex left or right, e.g. the pyramid's east/west
+      // faces), so both are checked rather than assuming a horizontal base.
+      var apex = null, baseMid = null;
       if (fs.poly.length === 3) {
         for (var e = 0; e < 3; e++) {
           var p1 = fs.poly[e], p2 = fs.poly[(e + 1) % 3];
-          if (Math.abs(p1[1] - p2[1]) < 1e-6) {
+          if (Math.abs(p1[1] - p2[1]) < 1e-6 || Math.abs(p1[0] - p2[0]) < 1e-6) {
             apex = fs.poly[[0, 1, 2].filter(function (j) {
               return j !== e && j !== (e + 1) % 3;
             })[0]];
-            apexDown = apex[1] > p1[1];
+            baseMid = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
             break;
           }
         }
       }
-      face.style.setProperty("--ay", apexDown ? "calc(var(--cy) - 20%)" : "calc(var(--cy) + 21%)");
       // Where the number parks once the label owns the middle. On a triangle
       // the label hangs toward the wide end, so the number goes the other
       // way — along the centroid→apex line, which is always interior and
@@ -3139,6 +3161,16 @@ MIProgress.paintAll();
         (((ctr[0] + (toward[0] - ctr[0]) * LEAN) - minX) / (maxX - minX) * 100).toFixed(2) + "%");
       face.style.setProperty("--by",
         (((ctr[1] + (toward[1] - ctr[1]) * LEAN) - minY) / (maxY - minY) * 100).toFixed(2) + "%");
+      // The area label leans the *other* way from centroid — toward the
+      // base's midpoint, away from the apex — so it always sits in the
+      // triangle's wide end regardless of which way it's pointing.
+      if (apex) {
+        var LABEL_LEAN = 0.38;
+        var lx = ctr[0] + (baseMid[0] - ctr[0]) * LABEL_LEAN;
+        var ly = ctr[1] + (baseMid[1] - ctr[1]) * LABEL_LEAN;
+        face.style.setProperty("--lx", ((lx - minX) / (maxX - minX) * 100).toFixed(2) + "%");
+        face.style.setProperty("--ly", ((ly - minY) / (maxY - minY) * 100).toFixed(2) + "%");
+      }
       face.setAttribute("data-fi", i);
       face.id = "face" + (i + 1);   // stable hook for tests and deep links
       // Non-rectangles are cut out of their bounding box with a clip path.
@@ -3487,8 +3519,13 @@ MIProgress.paintAll();
     var area = polyArea(fs.poly);
     if (fs.poly.length === 4) return fmtArea(bb.w) + "×" + fmtArea(bb.h) + "=" + fmtArea(area);
     // Triangle: label it with the base and height that produce its area.
+    // The "=result" goes on its own line rather than widening the label —
+    // triangle faces are already the tight fit .area-label's own comment
+    // warns about, and a triangle's clip-path crops anything that spills
+    // past its slanted edges, so a wider single line can get cut mid-glyph
+    // right where the pill runs past the slope.
     var base = Math.max(bb.w, bb.h);
-    return "½·" + fmtArea(base) + "·" + fmtArea(2 * area / base) + "=" + fmtArea(area);
+    return "½·" + fmtArea(base) + "·" + fmtArea(2 * area / base) + "<br>=" + fmtArea(area);
   }
   function updateAreaReadout() {
     areaReadout.innerHTML = "Surface area: <strong>" + fmtArea(saTotal) + "</strong> " + shape.unit + "²";
@@ -3840,7 +3877,7 @@ MIProgress.paintAll();
     var f = faces[idx];
     if (f.classList.contains("sa-shown")) return false;
     f.classList.add("sa-shown");
-    areaLabels[idx].textContent = faceDimLabel(idx);
+    areaLabels[idx].innerHTML = faceDimLabel(idx);
     var added = faceAreas()[idx];
     saTotal += added; saCount++;
     showAreaPlus(added);
@@ -4287,6 +4324,7 @@ MIProgress.paintAll();
         if (p > 0.05) animateFold(0, 900);
         saTotal = 0; saCount = 0;
         faces.forEach(function (f) { f.classList.remove("counted", "sa-shown"); });
+        areaLabels.forEach(function (l) { l.textContent = ""; });
         clearMeasureArt();
         updateAreaReadout();
         areaReadout.classList.add("show");
