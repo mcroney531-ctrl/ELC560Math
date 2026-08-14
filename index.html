@@ -1721,6 +1721,13 @@
     opacity: 1; pointer-events: auto; cursor: pointer;
     animation: huntPulse 1.7s ease-in-out infinite;
   }
+  /* The bar itself gets the same green glow the pulsing Next/advance buttons
+     use elsewhere, synced to the same 1.7s beat as the opacity pulse above
+     so the two read as one breathing highlight rather than two competing
+     animations. */
+  .scene.hunt-edges .edge-hit:before {
+    animation: edgeGlowPulse 1.7s ease-in-out infinite;
+  }
   .scene.hunt-edges .edge-hit:hover:before {
     background: #fff; box-shadow: 0 0 9px rgba(255,255,255,.95);
   }
@@ -1730,8 +1737,13 @@
   }
   .scene.hunt-corners .corner:hover { opacity: 1; transform: scale(1.3); }
   @keyframes huntPulse { 0%, 100% { opacity: .38; } 50% { opacity: .95; } }
+  @keyframes edgeGlowPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(6,214,160,.55); }
+    50% { box-shadow: 0 0 14px 5px rgba(6,214,160,.9); }
+  }
   @media (prefers-reduced-motion: reduce) {
     .scene.hunt-edges .edge-hit, .scene.hunt-corners .corner { animation: none; opacity: .8; }
+    .scene.hunt-edges .edge-hit:before { animation: none; }
   }
 
   /* guide panel */
@@ -1838,11 +1850,11 @@
   }
   /* A step whose only move is one action gets a single wide button, centred,
      with a glow breathing around it until it's clicked — so there's never a
-     question of what to press next. Pulsing stops on press. The glow uses
-     the shape's own --face3/--glow3 teal — already the app's brightest
-     accent — rather than the button's own navy, which just produced a
-     bigger dark shadow, not something that read as "look here" against a
-     white card. */
+     question of what to press next. Pulsing stops on press. Purple reads as
+     the app's own "ready to advance" signal — the same rgba(139,92,246,…)
+     shows up again on .controls-panel.awaiting-choice below, so a step that
+     needs an in-panel answer (pick a face count) and a step that's just
+     waiting on a tap both glow the same color. */
   #activity .btn.solo {
     flex: 0 1 auto; min-width: 62%; margin: 0 auto;
     animation: soloPulse 1.9s ease-in-out infinite;
@@ -1865,19 +1877,44 @@
       box-shadow:
         inset 0 4px 6px rgba(255,255,255,.4),
         inset 0 -6px 10px rgba(0,0,0,.25),
-        0 0 0 0 rgba(6,214,160,.55),
+        0 0 0 0 rgba(139,92,246,.55),
         0 10px 20px -8px rgba(32,48,80,.5);
     }
     50% {
       box-shadow:
         inset 0 4px 6px rgba(255,255,255,.4),
         inset 0 -6px 10px rgba(0,0,0,.25),
-        0 0 28px 6px rgba(6,214,160,.85),
+        0 0 28px 6px rgba(139,92,246,.85),
         0 10px 20px -8px rgba(32,48,80,.5);
+    }
+  }
+  /* The controls panel gets the same purple breathing glow whenever the
+     step's answer has to be picked from inside it (right now: the face-count
+     choices) rather than found on the stage — .awaiting-choice is toggled in
+     JS alongside the choices themselves, so it's only ever on while a
+     question is actually live. */
+  .controls-panel.awaiting-choice {
+    animation: panelGlowPulse 1.9s ease-in-out infinite;
+  }
+  @keyframes panelGlowPulse {
+    0%, 100% {
+      box-shadow:
+        inset 0 3px 5px rgba(255,255,255,.9),
+        inset 0 -6px 10px rgba(32,48,80,.05),
+        0 0 0 0 rgba(139,92,246,.45),
+        0 10px 30px -20px rgba(43,42,51,.4);
+    }
+    50% {
+      box-shadow:
+        inset 0 3px 5px rgba(255,255,255,.9),
+        inset 0 -6px 10px rgba(32,48,80,.05),
+        0 0 30px 5px rgba(139,92,246,.75),
+        0 10px 30px -20px rgba(43,42,51,.4);
     }
   }
   @media (prefers-reduced-motion: reduce) {
     #activity .btn.solo, #activity .btn.primary:not(.solo) { animation: none; }
+    .controls-panel.awaiting-choice { animation: none; }
   }
   #activity .choice {
     border: none; border-radius: 18px;
@@ -2444,6 +2481,7 @@ MIProgress.paintAll();
   var hint = $("hint"), bigCount = $("bigCount"), overlayTag = $("overlayTag");
   var solidParts = $("solidParts");
   var stepLabel = $("stepLabel"), actionsEl = $("actions"), choicesEl = $("choices");
+  var guide = $("guide");
   var dotAvatar = $("dotAvatar"), dotBubble = $("dotBubble");
   var pupils = Array.prototype.slice.call(dotAvatar.querySelectorAll(".dot-pupil"));
   var stepTrack = $("stepTrack");
@@ -2903,13 +2941,13 @@ MIProgress.paintAll();
       dim: { a: 3, b: 3, c: 3 }, unit: "cm",
       title: "Unfold the Cube",
       solidLabel: "Cube",
-      buildup: "Straight on, a cube looks like a flat square. <strong>Drag it</strong> — as it turns, the depth appears.",
+      buildup: "Straight on, a cube looks like a flat square. <strong>Drag it.</strong> As it turns, the depth appears.",
       buildupDone: "<strong>There it is — 3D!</strong> That “flat square” was a cube all along. A solid is a 2D shape given <strong>depth</strong>.",
-      intro: "This is a cube. Drag to spin it. A “face” is one flat side — <strong>how many can you count?</strong>",
-      netDesc: "This flat pattern is the cube’s net. All 6 faces are identical squares — <strong>tap each one</strong> to check it off.",
+      intro: "This is a cube. Drag to spin it. A “face” is one flat side. <strong>Count the faces.</strong>",
+      netDesc: "This flat pattern is the cube’s net. All 6 faces are identical squares. <strong>Tap each face to check it off.</strong>",
       whyIntro: "We’ve counted faces, edges and corners. New question: how much <strong>paper</strong> would wrap this cube?",
       saRuler: true,   // first shape: measure one face by hand before tapping
-      saIntro: "Let’s <strong>measure a face properly</strong> — with a ruler, like you would in real life.",
+      saIntro: "Let’s measure this the way you would in real life. <strong>Measure a face with your ruler.</strong>",
       counted: "<strong>All 6 counted!</strong> Fold these squares back up and they wrap perfectly into the cube.",
       done: "🎉 <strong>You did it!</strong> 6 square faces, 12 edges, 8 corners — and you’ve seen exactly where each one lives.",
       next: "rect"
@@ -2927,12 +2965,12 @@ MIProgress.paintAll();
       dim: { a: 4, b: 3, c: 2 }, unit: "cm",  // 4×3×2 → three distinct face areas: 12, 8, 6
       title: "Unfold the Rectangular Prism",
       solidLabel: "Prism",
-      buildup: "Head-on, this prism looks like a flat rectangle. <strong>Drag it</strong> — the depth appears and it becomes a box.",
+      buildup: "Head-on, this prism looks like a flat rectangle. <strong>Drag it.</strong> The depth appears and it becomes a box.",
       buildupDone: "<strong>3D!</strong> A flat rectangle given <strong>depth</strong> becomes a rectangular prism — a box.",
-      intro: "A rectangular prism — a box. Drag to spin it. <strong>How many flat faces can you count?</strong>",
-      netDesc: "The prism’s net: 6 rectangles in three matching pairs. <strong>Tap each one</strong> to check it off.",
+      intro: "A rectangular prism — a box. Drag to spin it. <strong>Count the faces.</strong>",
+      netDesc: "The prism’s net: 6 rectangles in three matching pairs. <strong>Tap each face to check it off.</strong>",
       whyIntro: "Same question, trickier shape: how much paper wraps this box? Its faces aren’t all the same, so the measuring matters more.",
-      saIntro: "You measured by hand last time — now the labels do it for you. This box is <strong>4 × 3 × 2 cm</strong>, so <strong>tap each face</strong> to add up three different sizes.",
+      saIntro: "You measured by hand last time — now the labels do it for you. This box is <strong>4 × 3 × 2 cm</strong>. <strong>Tap each face to add up its area.</strong>",
       counted: "<strong>All 6 counted!</strong> Three matching pairs — top &amp; bottom, front &amp; back, end &amp; end.",
       done: "🎉 <strong>Same 6 faces, 12 edges and 8 corners as the cube</strong> — but with three face sizes, which makes its surface area more interesting.",
       next: null
@@ -2954,10 +2992,10 @@ MIProgress.paintAll();
       unit: "cm",
       title: "Unfold the Triangular Prism",
       solidLabel: "Triangular prism",
-      buildup: "Face-on it reads as a plain triangle. <strong>Drag it</strong> — the depth appears and it becomes a wedge.",
+      buildup: "Face-on it reads as a plain triangle. <strong>Drag it.</strong> The depth appears and it becomes a wedge.",
       buildupDone: "<strong>3D!</strong> A triangle given <strong>depth</strong> becomes a prism — a wedge with two matching ends.",
-      intro: "A triangular prism. Its faces aren’t all the same shape any more — <strong>drag to spin it and count them</strong>.",
-      netDesc: "Three rectangles in a row, capped by two triangles. <strong>Tap each of the 5</strong> to check it off.",
+      intro: "A triangular prism. Its faces aren’t all the same shape any more. <strong>Count the faces.</strong>",
+      netDesc: "Three rectangles in a row, capped by two triangles. <strong>Tap each face to check it off.</strong>",
       whyIntro: "New wrinkle: this one has <strong>triangles</strong>. How much paper wraps a shape whose faces aren’t all rectangles?",
       saIntro: "Rectangles are width × height. Triangles are <strong>half</strong> of that — ½ × base × height. <strong>Tap each face.</strong>",
       counted: "<strong>All 5 counted!</strong> Three rectangles wrap around, and the two triangles cap the ends.",
@@ -2979,12 +3017,12 @@ MIProgress.paintAll();
       unit: "cm",
       title: "Unfold the Square Pyramid",
       solidLabel: "Square pyramid",
-      buildup: "From straight above, a pyramid is just a square. <strong>Drag it</strong> — the point rises out of the page.",
+      buildup: "From straight above, a pyramid is just a square. <strong>Drag it.</strong> The point rises out of the page.",
       buildupDone: "<strong>3D!</strong> Four triangles leaning in from a square base, meeting at a single point on top.",
-      intro: "A square pyramid. One face is a square, the rest are triangles — <strong>drag to spin it and count them</strong>.",
-      netDesc: "A square base with four triangles fanned off its edges. <strong>Tap each of the 5</strong> to check it off.",
+      intro: "A square pyramid. One face is a square, the rest are triangles. <strong>Count the faces.</strong>",
+      netDesc: "A square base with four triangles fanned off its edges. <strong>Tap each face to check it off.</strong>",
       whyIntro: "How much paper wraps a pyramid? One square plus four triangles — and they’re measured differently.",
-      saIntro: "The base is 4 × 4. Each triangle is ½ × base × slant height. <strong>Tap each face</strong> to add them up.",
+      saIntro: "The base is 4 × 4. Each triangle is ½ × base × slant height. <strong>Tap each face to add up its area.</strong>",
       counted: "<strong>All 5 counted!</strong> Fold the four triangles up and they meet at a single point — the apex.",
       done: "🎉 <strong>5 faces, 8 edges, 5 corners.</strong> Notice the odd one out: four corners on the base, one at the top.",
       next: null
@@ -3002,12 +3040,12 @@ MIProgress.paintAll();
       unit: "cm",
       title: "Unfold the Tetrahedron",
       solidLabel: "Tetrahedron",
-      buildup: "It looks like a flat triangle head-on. <strong>Drag it</strong> — and a fourth face appears behind.",
+      buildup: "It looks like a flat triangle head-on. <strong>Drag it.</strong> A fourth face appears behind.",
       buildupDone: "<strong>3D!</strong> Four triangles, and that’s the whole shape — the simplest solid there is.",
-      intro: "A tetrahedron — the smallest possible solid. <strong>Drag to spin it and count the faces.</strong>",
-      netDesc: "Its net is one big triangle made of four smaller ones. <strong>Tap each of the 4</strong> to check it off.",
+      intro: "A tetrahedron — the smallest possible solid. Drag to spin it. <strong>Count the faces.</strong>",
+      netDesc: "Its net is one big triangle made of four smaller ones. <strong>Tap each face to check it off.</strong>",
       whyIntro: "Every face here is a triangle, so every measurement uses ½ × base × height.",
-      saIntro: "Four identical triangles, each ½ × 4 × 3.46. <strong>Tap each face</strong> to add them up.",
+      saIntro: "Four identical triangles, each ½ × 4 × 3.46. <strong>Tap each face to add up its area.</strong>",
       counted: "<strong>All 4 counted!</strong> Fold the three outer triangles up and they close into a point.",
       done: "🎉 <strong>4 faces, 6 edges, 4 corners.</strong> You can’t build a solid from fewer — this is the minimum.",
       next: null
@@ -3025,12 +3063,12 @@ MIProgress.paintAll();
       unit: "cm",
       title: "Unfold the Octahedron",
       solidLabel: "Octahedron",
-      buildup: "Edge-on it looks like a flat diamond. <strong>Drag it</strong> — and it opens into eight faces.",
+      buildup: "Edge-on it looks like a flat diamond. <strong>Drag it.</strong> It opens into eight faces.",
       buildupDone: "<strong>3D!</strong> Eight triangles — like two square pyramids glued base to base.",
-      intro: "An octahedron: eight triangular faces. Spinning and counting is genuinely hard here — <strong>try it</strong>.",
-      netDesc: "Eight triangles in two zigzag rows. <strong>Tap each of the 8</strong> to check it off.",
+      intro: "An octahedron: eight triangular faces. Spinning and counting is genuinely hard here. <strong>Count the faces.</strong>",
+      netDesc: "Eight triangles in two zigzag rows. <strong>Tap each face to check it off.</strong>",
       whyIntro: "Eight faces to wrap. Same rule though — every one is ½ × base × height.",
-      saIntro: "Eight identical triangles, each ½ × 4 × 3.46. <strong>Tap each face</strong> to add them up.",
+      saIntro: "Eight identical triangles, each ½ × 4 × 3.46. <strong>Tap each face to add up its area.</strong>",
       counted: "<strong>All 8 counted!</strong> Those two rows roll up into a diamond with a point at the top and bottom.",
       done: "🎉 <strong>8 faces, 12 edges, 6 corners.</strong> Same 12 edges as a cube — but eight faces instead of six.",
       next: null
@@ -3834,8 +3872,8 @@ MIProgress.paintAll();
       applyFaceArea(measure.idx);
       // Stay lit through the payoff — this face is the point right now.
       setTimeout(function () {
-        dotSay("Your turn — <strong>tap the other " + (shape.F - 1) + " faces</strong> to add them up. " +
-               "No ruler needed; the labels do the measuring now.", false);
+        dotSay("Your turn. <strong>Tap the other " + (shape.F - 1) + " faces to add them up.</strong> " +
+               "No ruler needed — the labels do the measuring now.", false);
         refreshSAFocus();   // now the finished face dims and the to-do list lights
       }, 2600);
     }, cells * 55 + 320);
@@ -4051,6 +4089,7 @@ MIProgress.paintAll();
       enter: function () {
         orientation = Q_START; render();   // back to the friendly angled view after the warm-up
         choicesEl.style.display = "flex";
+        guide.classList.add("awaiting-choice");
         hint.textContent = "Drag to spin the " + shape.solidLabel.toLowerCase();
         hint.classList.add("show");
         setTimeout(function () { hint.classList.remove("show"); }, 3500);
@@ -4379,6 +4418,7 @@ MIProgress.paintAll();
     setHunt(null);
     dotSay(s.textKey && shape[s.textKey] ? shape[s.textKey] : s.text, false);
     choicesEl.style.display = "none";
+    guide.classList.remove("awaiting-choice");
     learnMoreBtn.hidden = !s.learnMore;   // the scale-down door only shows where there's depth
     renderDots();
     s.enter();
@@ -4462,10 +4502,10 @@ MIProgress.paintAll();
     scene.classList.toggle("hunt-edges", kind === "edges");
     scene.classList.toggle("hunt-corners", kind === "corners");
     if (kind === "edges") {
-      dotSay("An <strong>edge</strong> is a line where two faces meet. <strong>Tap one</strong> on the " +
-             shape.solidLabel.toLowerCase() + " to light them all up.", false);
+      dotSay("An <strong>edge</strong> is a line where two faces meet. <strong>Tap one on the " +
+             shape.solidLabel.toLowerCase() + " to light them all up.</strong>", false);
     } else if (kind === "corners") {
-      dotSay("Now a <strong>corner</strong> — a point where edges meet. <strong>Tap one.</strong>", false);
+      dotSay("Now a <strong>corner</strong> — a point where edges meet. <strong>Tap one to light them all up.</strong>", false);
     }
   }
   function onHunt(kind) {
@@ -4535,6 +4575,7 @@ MIProgress.paintAll();
     }
     var next = $("act-next");
     if (next) next.disabled = false;
+    guide.classList.remove("awaiting-choice");
   });
 
   /* Face tapping — step "net" (count them) and step "sa" (add up the areas).
