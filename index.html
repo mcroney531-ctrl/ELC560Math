@@ -440,31 +440,11 @@
     box-shadow: inset 0 3px 5px rgba(10,24,66,.15), inset 0 -1px 2px rgba(255,255,255,.4);
   }
 
-  /* ---- Badges ---- */
-  .badge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
-  .badge-card {
-    background: var(--hub-panel); border: 1px solid rgba(255,255,255,.9);
-    border-radius: 18px; padding: 14px 12px; text-align: center;
-    box-shadow:
-      inset 0 2px 4px rgba(255,255,255,.9),
-      inset 0 -3px 6px rgba(10,24,66,.05),
-      0 12px 26px -20px rgba(10,24,66,.5);
-  }
-  .badge-card.locked { background: rgba(255,255,255,.46); }
-  .badge-medal {
-    width: 46px; height: 46px; margin: 0 auto 8px; border-radius: 50%;
-    display: grid; place-items: center; font-size: 21px;
-    background: linear-gradient(150deg, #6f96e4, var(--hub-accent));
-    color: #fff; box-shadow: 0 6px 14px -6px rgba(10,24,66,.6);
-  }
-  .badge-card.locked .badge-medal {
-    background: rgba(10,24,66,.1); color: rgba(37,64,111,.5); box-shadow: none;
-  }
-  .badge-name { font-size: 12.5px; font-weight: 800; color: var(--hub-ink); }
-  .badge-how { font-size: 10.5px; color: var(--hub-ink-soft); margin-top: 3px; line-height: 1.35; }
+  /* ---- Badges: styled in the ".journey map" section below, which is where
+     the .stop/.trail-link pieces it reuses are defined. ---- */
   @media (max-width: 420px) {
     .tab .tab-lbl { font-size: 9.5px; }
-    .shape-grid, .badge-grid { grid-template-columns: 1fr; }
+    .shape-grid { grid-template-columns: 1fr; }
   }
   .hub-nav { display: flex; align-items: center; gap: 10px; padding: 6px 2px 0; }
   .brand-mark {
@@ -796,18 +776,37 @@
   .tile.ready .tile-fig { color: var(--accent); }
   .tile.ready .tile-lock { content: none; }
 
+  /* ---- Badges: another dashed trail, same .stop/.trail-link pieces as the
+     main journey map, so earning one reads as a stop on the same path
+     rather than a plain grid of medals. Each badge <div> carries the shared
+     "stop" and "tile" classes for the clay card + locked/frosted treatment,
+     plus badge-item for the medal-shaped (round) pin and the earned tag. */
+  .badge-trail .stop { cursor: default; }
+  .badge-item .stop-pin {
+    border-radius: 50%;
+    background: linear-gradient(150deg, #6f96e4, var(--hub-accent));
+    color: #fff;
+  }
+  .badge-item.locked .stop-lock { border-radius: 50%; }
+  .badge-tag {
+    flex: 0 0 auto; font-weight: 800; font-size: 12.5px;
+    color: #0a7a52; background: rgba(16,163,110,.14);
+    padding: 8px 14px; border-radius: 999px;
+  }
+  .badge-item.locked .badge-tag { display: none; }
+
   /* Wide canvas (embeds up to 1920×1080): the hub stayed capped at the same
      560px column no matter how wide the viewport got, leaving a dead strip
      down the right side in a desktop/PC embed even though the activity
      screen already widens (see #activity above). Give the hub the same
      treatment and put the room to use: the journey map splits into two
      columns — main path beside the Challenge Zone — instead of stacking,
-     and the shape/badge grids pick up a third column. */
+     and the shape grid picks up a third column. */
   @media (min-width: 1100px) {
     #menu { max-width: 1040px; }
     .journey { display: grid; grid-template-columns: 1.15fr .85fr; align-items: start; gap: 22px; }
     .zone-panel { margin-top: 0; }
-    .shape-grid, .badge-grid { grid-template-columns: repeat(3, 1fr); }
+    .shape-grid { grid-template-columns: repeat(3, 1fr); }
   }
 
   /* ============ ACTIVITY ============ */
@@ -1840,6 +1839,17 @@
   }
   #activity .btn.solo:active:not(:disabled),
   #activity .btn.solo:disabled { animation: none; }
+  /* Next/advance buttons get the same breathing glow the moment they stop
+     being disabled — most start disabled (see setActions' `disabled: true`)
+     until the step's action is actually completed, so the pulse kicking in
+     doubles as the "you're done, keep going" cue. Solo buttons are excluded
+     here since they already pulse via the rule above. */
+  #activity .btn.primary:not(.solo):not(:disabled) {
+    animation: soloPulse 1.9s ease-in-out infinite;
+  }
+  #activity .btn.primary:not(.solo):active:not(:disabled) {
+    animation: none;
+  }
   @keyframes soloPulse {
     0%, 100% {
       box-shadow:
@@ -1857,7 +1867,7 @@
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    #activity .btn.solo { animation: none; }
+    #activity .btn.solo, #activity .btn.primary:not(.solo) { animation: none; }
   }
   #activity .choice {
     border: none; border-radius: 18px;
@@ -2196,7 +2206,7 @@
   <div class="hub-view" id="viewBadges" hidden>
     <div class="section-label">★ Badges</div>
     <p class="view-note">Earned by finishing shapes — nothing here is awarded for turning up. Locked badges show what they take.</p>
-    <div class="badge-grid" id="badgeGrid"></div>
+    <div class="trail badge-trail" id="badgeGrid"></div>
   </div>
 
 </div>
@@ -2886,13 +2896,13 @@ MIProgress.paintAll();
       dim: { a: 3, b: 3, c: 3 }, unit: "cm",
       title: "Unfold the Cube",
       solidLabel: "Cube",
-      buildup: "Straight on, a cube looks like a flat square. Drag it — as it turns, the depth appears.",
+      buildup: "Straight on, a cube looks like a flat square. <strong>Drag it</strong> — as it turns, the depth appears.",
       buildupDone: "<strong>There it is — 3D!</strong> That “flat square” was a cube all along. A solid is a 2D shape given <strong>depth</strong>.",
-      intro: "This is a cube. Drag to spin it. A “face” is one flat side — how many can you count?",
-      netDesc: "This flat pattern is the cube’s net. All 6 faces are identical squares — tap each one to check it off.",
+      intro: "This is a cube. Drag to spin it. A “face” is one flat side — <strong>how many can you count?</strong>",
+      netDesc: "This flat pattern is the cube’s net. All 6 faces are identical squares — <strong>tap each one</strong> to check it off.",
       whyIntro: "We’ve counted faces, edges and corners. New question: how much <strong>paper</strong> would wrap this cube?",
       saRuler: true,   // first shape: measure one face by hand before tapping
-      saIntro: "Let’s measure a face properly — with a ruler, like you would in real life.",
+      saIntro: "Let’s <strong>measure a face properly</strong> — with a ruler, like you would in real life.",
       counted: "<strong>All 6 counted!</strong> Fold these squares back up and they wrap perfectly into the cube.",
       done: "🎉 <strong>You did it!</strong> 6 square faces, 12 edges, 8 corners — and you’ve seen exactly where each one lives.",
       next: "rect"
@@ -2910,12 +2920,12 @@ MIProgress.paintAll();
       dim: { a: 4, b: 3, c: 2 }, unit: "cm",  // 4×3×2 → three distinct face areas: 12, 8, 6
       title: "Unfold the Rectangular Prism",
       solidLabel: "Prism",
-      buildup: "Head-on, this prism looks like a flat rectangle. Drag it — the depth appears and it becomes a box.",
+      buildup: "Head-on, this prism looks like a flat rectangle. <strong>Drag it</strong> — the depth appears and it becomes a box.",
       buildupDone: "<strong>3D!</strong> A flat rectangle given <strong>depth</strong> becomes a rectangular prism — a box.",
-      intro: "A rectangular prism — a box. Drag to spin it. How many flat faces can you count?",
-      netDesc: "The prism’s net: 6 rectangles in three matching pairs. Tap each one to check it off.",
+      intro: "A rectangular prism — a box. Drag to spin it. <strong>How many flat faces can you count?</strong>",
+      netDesc: "The prism’s net: 6 rectangles in three matching pairs. <strong>Tap each one</strong> to check it off.",
       whyIntro: "Same question, trickier shape: how much paper wraps this box? Its faces aren’t all the same, so the measuring matters more.",
-      saIntro: "You measured by hand last time — now the labels do it for you. This box is <strong>4 × 3 × 2 cm</strong>, so tap each face to add up three different sizes.",
+      saIntro: "You measured by hand last time — now the labels do it for you. This box is <strong>4 × 3 × 2 cm</strong>, so <strong>tap each face</strong> to add up three different sizes.",
       counted: "<strong>All 6 counted!</strong> Three matching pairs — top &amp; bottom, front &amp; back, end &amp; end.",
       done: "🎉 <strong>Same 6 faces, 12 edges and 8 corners as the cube</strong> — but with three face sizes, which makes its surface area more interesting.",
       next: null
@@ -2937,12 +2947,12 @@ MIProgress.paintAll();
       unit: "cm",
       title: "Unfold the Triangular Prism",
       solidLabel: "Triangular prism",
-      buildup: "Face-on it reads as a plain triangle. Drag it — the depth appears and it becomes a wedge.",
+      buildup: "Face-on it reads as a plain triangle. <strong>Drag it</strong> — the depth appears and it becomes a wedge.",
       buildupDone: "<strong>3D!</strong> A triangle given <strong>depth</strong> becomes a prism — a wedge with two matching ends.",
-      intro: "A triangular prism. Its faces aren’t all the same shape any more — drag to spin it and count them.",
-      netDesc: "Three rectangles in a row, capped by two triangles. Tap each of the 5 to check it off.",
+      intro: "A triangular prism. Its faces aren’t all the same shape any more — <strong>drag to spin it and count them</strong>.",
+      netDesc: "Three rectangles in a row, capped by two triangles. <strong>Tap each of the 5</strong> to check it off.",
       whyIntro: "New wrinkle: this one has <strong>triangles</strong>. How much paper wraps a shape whose faces aren’t all rectangles?",
-      saIntro: "Rectangles are width × height. Triangles are <strong>half</strong> of that — ½ × base × height. Tap each face.",
+      saIntro: "Rectangles are width × height. Triangles are <strong>half</strong> of that — ½ × base × height. <strong>Tap each face.</strong>",
       counted: "<strong>All 5 counted!</strong> Three rectangles wrap around, and the two triangles cap the ends.",
       done: "🎉 <strong>5 faces, 9 edges, 6 corners.</strong> Fewer faces than a cube — but two different face shapes to measure.",
       next: null
@@ -2962,12 +2972,12 @@ MIProgress.paintAll();
       unit: "cm",
       title: "Unfold the Square Pyramid",
       solidLabel: "Square pyramid",
-      buildup: "From straight above, a pyramid is just a square. Drag it — the point rises out of the page.",
+      buildup: "From straight above, a pyramid is just a square. <strong>Drag it</strong> — the point rises out of the page.",
       buildupDone: "<strong>3D!</strong> Four triangles leaning in from a square base, meeting at a single point on top.",
-      intro: "A square pyramid. One face is a square, the rest are triangles — drag to spin it and count them.",
-      netDesc: "A square base with four triangles fanned off its edges. Tap each of the 5 to check it off.",
+      intro: "A square pyramid. One face is a square, the rest are triangles — <strong>drag to spin it and count them</strong>.",
+      netDesc: "A square base with four triangles fanned off its edges. <strong>Tap each of the 5</strong> to check it off.",
       whyIntro: "How much paper wraps a pyramid? One square plus four triangles — and they’re measured differently.",
-      saIntro: "The base is 4 × 4. Each triangle is ½ × base × slant height. Tap each face to add them up.",
+      saIntro: "The base is 4 × 4. Each triangle is ½ × base × slant height. <strong>Tap each face</strong> to add them up.",
       counted: "<strong>All 5 counted!</strong> Fold the four triangles up and they meet at a single point — the apex.",
       done: "🎉 <strong>5 faces, 8 edges, 5 corners.</strong> Notice the odd one out: four corners on the base, one at the top.",
       next: null
@@ -2985,12 +2995,12 @@ MIProgress.paintAll();
       unit: "cm",
       title: "Unfold the Tetrahedron",
       solidLabel: "Tetrahedron",
-      buildup: "It looks like a flat triangle head-on. Drag it — and a fourth face appears behind.",
+      buildup: "It looks like a flat triangle head-on. <strong>Drag it</strong> — and a fourth face appears behind.",
       buildupDone: "<strong>3D!</strong> Four triangles, and that’s the whole shape — the simplest solid there is.",
-      intro: "A tetrahedron — the smallest possible solid. Drag to spin it and count the faces.",
-      netDesc: "Its net is one big triangle made of four smaller ones. Tap each of the 4 to check it off.",
+      intro: "A tetrahedron — the smallest possible solid. <strong>Drag to spin it and count the faces.</strong>",
+      netDesc: "Its net is one big triangle made of four smaller ones. <strong>Tap each of the 4</strong> to check it off.",
       whyIntro: "Every face here is a triangle, so every measurement uses ½ × base × height.",
-      saIntro: "Four identical triangles, each ½ × 4 × 3.46. Tap each face to add them up.",
+      saIntro: "Four identical triangles, each ½ × 4 × 3.46. <strong>Tap each face</strong> to add them up.",
       counted: "<strong>All 4 counted!</strong> Fold the three outer triangles up and they close into a point.",
       done: "🎉 <strong>4 faces, 6 edges, 4 corners.</strong> You can’t build a solid from fewer — this is the minimum.",
       next: null
@@ -3008,12 +3018,12 @@ MIProgress.paintAll();
       unit: "cm",
       title: "Unfold the Octahedron",
       solidLabel: "Octahedron",
-      buildup: "Edge-on it looks like a flat diamond. Drag it — and it opens into eight faces.",
+      buildup: "Edge-on it looks like a flat diamond. <strong>Drag it</strong> — and it opens into eight faces.",
       buildupDone: "<strong>3D!</strong> Eight triangles — like two square pyramids glued base to base.",
-      intro: "An octahedron: eight triangular faces. Spinning and counting is genuinely hard here — try it.",
-      netDesc: "Eight triangles in two zigzag rows. Tap each of the 8 to check it off.",
+      intro: "An octahedron: eight triangular faces. Spinning and counting is genuinely hard here — <strong>try it</strong>.",
+      netDesc: "Eight triangles in two zigzag rows. <strong>Tap each of the 8</strong> to check it off.",
       whyIntro: "Eight faces to wrap. Same rule though — every one is ½ × base × height.",
-      saIntro: "Eight identical triangles, each ½ × 4 × 3.46. Tap each face to add them up.",
+      saIntro: "Eight identical triangles, each ½ × 4 × 3.46. <strong>Tap each face</strong> to add them up.",
       counted: "<strong>All 8 counted!</strong> Those two rows roll up into a diamond with a point at the top and bottom.",
       done: "🎉 <strong>8 faces, 12 edges, 6 corners.</strong> Same 12 edges as a cube — but eight faces instead of six.",
       next: null
@@ -3429,8 +3439,37 @@ MIProgress.paintAll();
     }
   }
 
+  var dotReduceMotion = window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Streams `html` into `el` a character at a time. Tags stay balanced at
+  // every partial frame (an open <strong> gets auto-closed at the cursor)
+  // so a mid-type snapshot is always valid HTML — the only tag these
+  // strings ever use is <strong>, but this handles nesting generally.
+  function streamText(el, html, speed) {
+    clearInterval(el._streamTimer);
+    if (dotReduceMotion) { el.innerHTML = html; return; }
+    var tokens = html.match(/<[^>]+>|[^<]/g) || [];
+    var out = "", open = [], i = 0;
+    el.innerHTML = "";
+    function tick() {
+      while (i < tokens.length && /^<\//.test(tokens[i])) { out += tokens[i]; open.pop(); i++; }
+      while (i < tokens.length && /^<[a-zA-Z]/.test(tokens[i])) {
+        out += tokens[i];
+        open.push(tokens[i].match(/^<([a-zA-Z0-9]+)/)[1]);
+        i++;
+      }
+      if (i >= tokens.length) { el.innerHTML = out; clearInterval(el._streamTimer); return; }
+      out += tokens[i]; i++;
+      var closers = "";
+      for (var j = open.length - 1; j >= 0; j--) closers += "</" + open[j] + ">";
+      el.innerHTML = out + closers;
+    }
+    tick();
+    el._streamTimer = setInterval(tick, speed || 16);
+  }
+
   function dotSay(html, celebrate) {
-    dotBubble.innerHTML = html;
+    streamText(dotBubble, html, 16);
     if (celebrate) { dotAnimate("celebrate"); dotBurst(); }
     else dotAnimate("bounce");
   }
@@ -3878,7 +3917,7 @@ MIProgress.paintAll();
       key: "warmup",
       name: "Build it up",
       textKey: "buildup",
-      text: "Straight on, a solid can look flat. Drag it — as it turns, its depth appears.",
+      text: "Straight on, a solid can look flat. <strong>Drag it</strong> — as it turns, its depth appears.",
       learnMore: function (sh) { return {
         title: "From a dot to a solid",
         html: '<p>Every solid is built by adding one <strong>dimension</strong> at a time — climb the ladder:</p>' +
@@ -3967,7 +4006,7 @@ MIProgress.paintAll();
       key: "faces",
       name: "Look closely",
       textKey: "intro",
-      text: "This is a cube. Drag to spin it. A “face” is one flat side — how many can you count?",
+      text: "This is a cube. Drag to spin it. A “face” is one flat side — <strong>how many can you count?</strong>",
       learnMore: function (sh) { return {
         title: "What’s a face?",
         html: '<p>A <strong>face</strong> is one flat side of a solid shape. ' + sh.faceBlurb + '</p>' +
@@ -4014,7 +4053,7 @@ MIProgress.paintAll();
     { // unfold
       key: "unfold",
       name: "The big reveal",
-      text: "Half the faces always hide around the back. So let’s cheat — unfold it flat and see all of them at once.",
+      text: "Half the faces always hide around the back. So let’s cheat — <strong>unfold it flat</strong> and see all of them at once.",
       enter: function () {
         setActions([
           { id: "unfold", text: "▶ Unfold the cube", primary: true },
@@ -4026,7 +4065,7 @@ MIProgress.paintAll();
       key: "net",
       name: "Meet the net",
       textKey: "netDesc",
-      text: "This flat pattern is the cube’s net. All 6 faces are identical squares — tap each one to check it off.",
+      text: "This flat pattern is the cube’s net. All 6 faces are identical squares — <strong>tap each one</strong> to check it off.",
       learnMore: function (sh) {
         var isBox = sh.net.length === 6 && sh.net.every(function (f) { return f.poly.length === 4; });
         return {
@@ -4092,7 +4131,7 @@ MIProgress.paintAll();
     { // fold back, edges & corners
       key: "edges",
       name: "Edges & corners",
-      text: "Fold it back up. Faces meet at edges; edges meet at corners — and you're going to find them on the shape yourself.",
+      text: "<strong>Fold it back up.</strong> Faces meet at edges; edges meet at corners — and you're going to find them on the shape yourself.",
       enter: function () {
         faces.forEach(function (f) { f.classList.remove("counted"); });
         // One move, one button: a wide pulsing "Refold" and nothing else.
@@ -4154,7 +4193,7 @@ MIProgress.paintAll();
       key: "sa",
       name: "Surface area",
       textKey: "saIntro",
-      text: "The net’s payoff: flat, every face is easy to measure. Tap each face to add up its area — that total is the surface area.",
+      text: "The net’s payoff: flat, every face is easy to measure. <strong>Tap each face</strong> to add up its area — that total is the surface area.",
       learnMore: function (sh) {
         var isBox = sh.net.length === 6 && sh.net.every(function (f) { return f.poly.length === 4; });
         var groups = areaGroups(sh);
@@ -4416,10 +4455,10 @@ MIProgress.paintAll();
     scene.classList.toggle("hunt-edges", kind === "edges");
     scene.classList.toggle("hunt-corners", kind === "corners");
     if (kind === "edges") {
-      dotSay("An <strong>edge</strong> is a line where two faces meet. Tap one on the " +
+      dotSay("An <strong>edge</strong> is a line where two faces meet. <strong>Tap one</strong> on the " +
              shape.solidLabel.toLowerCase() + " to light them all up.", false);
     } else if (kind === "corners") {
-      dotSay("Now a <strong>corner</strong> — a point where edges meet. Tap one.", false);
+      dotSay("Now a <strong>corner</strong> — a point where edges meet. <strong>Tap one.</strong>", false);
     }
   }
   function onHunt(kind) {
@@ -4763,18 +4802,35 @@ MIProgress.paintAll();
   function buildBadges() {
     var grid = $("badgeGrid");
     grid.innerHTML = "";
-    BADGES.forEach(function (b) {
+    // Reuses the journey map's own .stop + .trail-link pieces, so earning a
+    // badge reads as another stop on the same dashed path rather than a
+    // disconnected grid of medals.
+    BADGES.forEach(function (b, i) {
       var won = false;
       try { won = !!b.won(); } catch (e) { won = false; }
-      var card = document.createElement("div");
-      card.className = "badge-card" + (won ? "" : " locked");
-      card.innerHTML =
-        '<div class="badge-medal">' + (won ? b.icon : "🔒") + '</div>' +
-        '<div class="badge-name"></div>' +
-        '<div class="badge-how"></div>';
-      card.querySelector(".badge-name").textContent = b.name;
-      card.querySelector(".badge-how").textContent = won ? "Earned" : b.how;
-      grid.appendChild(card);
+      var item = document.createElement("div");
+      item.className = "stop badge-item" + (won ? "" : " locked");
+      item.innerHTML =
+        '<span class="stop-pin">' +
+          '<span class="stop-num">' + (i + 1) + '</span>' +
+          '<span class="stop-ico">' + b.icon + '</span>' +
+          '<span class="stop-lock">🔒</span>' +
+        '</span>' +
+        '<span class="stop-body">' +
+          '<span class="stop-title"></span>' +
+          '<span class="stop-sub"></span>' +
+        '</span>' +
+        '<span class="badge-tag">✓ Earned</span>';
+      item.querySelector(".stop-title").textContent = b.name;
+      item.querySelector(".stop-sub").textContent = b.how;
+      grid.appendChild(item);
+      if (i < BADGES.length - 1) {
+        var link = document.createElement("span");
+        link.className = "trail-link";
+        link.setAttribute("aria-hidden", "true");
+        link.innerHTML = "<i></i><i></i><i></i>";
+        grid.appendChild(link);
+      }
     });
   }
 
