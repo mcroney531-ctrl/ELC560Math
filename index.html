@@ -181,7 +181,7 @@
        #activity rule, which is defined later in this file and would other-
        wise win on source order at equal specificity (same trap as .stage
        and the legend above). */
-    #activity.wrap { --board-h: min(820px, max(240px, calc(100vh - var(--act-chrome)))); }
+    #activity.wrap { --board-h: min(820px, max(200px, calc(100vh - var(--act-chrome)))); }
     .dot-stage .dot-avatar { width: 54px; }
     .dot-stage .dot-bubble { font-size: 13.5px; padding: 9px 13px; }
     /* The board grows by roughly half again at this size but the Solid
@@ -319,6 +319,18 @@
     box-shadow: 0 16px 34px -18px rgba(10,24,66,.55), inset 0 1px 0 rgba(255,255,255,.9);
   }
   body.in-activity .tabbar, body.hub-away .tabbar { display: grid; }
+  /* A very short embed (a 854×480 web object, a landscape phone) cannot fit
+     the board, the controls panel and a floating bar at once, so the page
+     has to scroll — and a bar floating over scrolling content is exactly
+     what buried the Next button. Below this height it rides with the page
+     instead, where it can never cover a control. */
+  @media (max-height: 560px) {
+    .tabbar {
+      position: static; left: auto; bottom: auto; transform: none;
+      margin: 4px auto 12px;
+    }
+    #activity, #menu { padding-bottom: 16px; }
+  }
   .tab {
     display: flex; flex-direction: column; align-items: center; gap: 3px;
     background: none; border: 0; cursor: pointer; font: inherit;
@@ -506,42 +518,49 @@
   .hub-header h1 .grad { color: var(--hub-accent-ink); }
   .hub-header p { color: var(--hub-ink-soft); margin-top: 10px; font-size: 15.5px; line-height: 1.5; max-width: 420px; }
 
-  /* Dot hero */
-  .dot-hero-wrap { position: relative; height: 126px; margin: 14px 0 6px; pointer-events: none; }
+  /* Dot hero. Cal used to sit dead centre with a short one-line bubble
+     tucked to his right. The bubble now carries the intro copy that used to
+     be a paragraph under the title, so it needs real width: Cal moves to a
+     fixed left position and the bubble runs from his right edge to the
+     right margin, which gives it room at every width instead of the sliver
+     a centred Cal left behind on a phone. */
+  .dot-hero-wrap { position: relative; height: 148px; margin: 12px 0 6px; pointer-events: none; }
   .dot-hero {
-    position: absolute; left: 50%; top: 50%;
+    position: absolute; left: 64px; top: 50%;
     width: 110px; height: 110px;
     transform: translate(-50%, -50%);
   }
   .dot-hero .dot-mini { transform: scale(.58); }
   .dot-hero-ring {
-    position: absolute; left: 50%; top: 53%; width: 162px; height: 50px;
+    position: absolute; left: 64px; top: 53%; width: 162px; height: 50px;
     transform: translate(-50%, -50%) rotate(-8deg);
     border: 2px solid rgba(32,48,80,.3); border-radius: 50%;
     pointer-events: none;
   }
   .dot-hero-shadow {
-    position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+    position: absolute; left: 64px; bottom: 8px; transform: translateX(-50%);
     width: 72px; height: 12px; border-radius: 50%;
     background: rgba(32,48,80,.3); filter: blur(7px);
     pointer-events: none;
   }
   .dot-hero-speech {
-    /* Anchored fully to Cal's right (he spans ±46px of center) so it can
-       never sit on his face; width clamped so it stays inside the wrap. */
-    position: absolute; top: -8px; left: calc(50% + 54px);
-    max-width: min(140px, calc(50% - 66px)); background: var(--card);
-    border-radius: 13px; padding: 7px 10px;
-    font-size: 11px; font-weight: 600; line-height: 1.35;
+    /* Clear of Cal (he spans ±46px of his centre) and stretched to the right
+       margin, so the copy wraps to a few comfortable lines rather than a
+       narrow column. */
+    position: absolute; top: 50%; left: 126px; right: 6px;
+    transform: translateY(-50%);
+    max-width: none; background: var(--card);
+    border-radius: 13px; padding: 9px 12px;
+    font-size: 12px; font-weight: 600; line-height: 1.4;
     box-shadow: 0 10px 24px -12px rgba(43,42,51,.4);
     border: 1px solid rgba(0,0,0,.05);
   }
   .dot-hero-speech b { color: var(--accent); }
   .dot-hero-speech::after {
-    content: ""; position: absolute; left: -6px; top: 18px;
+    content: ""; position: absolute; left: -6px; top: 50%;
     width: 12px; height: 12px; background: var(--card);
     border-left: 1px solid rgba(0,0,0,.05); border-bottom: 1px solid rgba(0,0,0,.05);
-    transform: rotate(45deg);
+    transform: translateY(-50%) rotate(45deg);
   }
   /* Floating marks around Cal — brightened to read against the night sky. */
   .deco { position: absolute; font-weight: 800; pointer-events: none; }
@@ -858,9 +877,12 @@
        he lines up with the zone panel's left edge below him at any #menu
        width this breakpoint produces. */
     .dot-hero, .dot-hero-ring, .dot-hero-shadow { left: calc((100% - 22px) * 0.575 + 22px); }
+    /* Cal sits over the Challenge Zone column here, so the bubble runs from
+       his right edge to the right margin — the copy is long enough that the
+       old fixed 210px cap turned it into a narrow tower. */
     .dot-hero-speech {
       left: calc((100% - 22px) * 0.575 + 22px + 54px);
-      max-width: 210px;
+      right: 6px; max-width: none;
     }
   }
 
@@ -938,7 +960,7 @@
      trade — a cropped board hides the ledge and the markers. */
   #activity {
     --act-chrome: 300px;
-    --board-h: min(560px, max(240px, min(56vh, calc(100vh - var(--act-chrome)))));
+    --board-h: min(560px, max(200px, min(56vh, calc(100vh - var(--act-chrome)))));
   }
   .stage {
     position: relative;
@@ -2167,7 +2189,6 @@
   <header class="hub-header">
     <span class="hub-kicker">⬡ Nets, faces &amp; surface area</span>
     <h1>Explore <span class="grad">3D Shapes</span></h1>
-    <p>Spin a solid, unfold it flat into its net, and see exactly where every face, edge and corner lives — then measure it.</p>
   </header>
 
   <div class="dot-hero-wrap" aria-hidden="true">
@@ -2181,7 +2202,7 @@
       <img class="cal-img cal-hero" src="assets/cal.png" alt="Cal, your math guide">
       <div class="dot-hero-shadow"></div>
     </div>
-    <div class="dot-hero-speech">Hi! I'm <b>Cal</b>. Follow the map — one shape at a time!</div>
+    <div class="dot-hero-speech">Hi! I'm <b>Cal</b>. Spin a solid, unfold it flat into its net, and find every face, edge and corner — then measure it. Follow the map, one shape at a time!</div>
   </div>
 
   <div class="section-label">⌂ Your journey</div>
@@ -3331,8 +3352,27 @@ MIProgress.paintAll();
   // since one shared constant has to clear all of it at every viewport.
   var TOP_CHROME = 118, BOTTOM_CHROME = 58;
 
+  /* Hand CSS the real height of everything stacked around the board, so the
+     board's own budget (--board-h) can shrink to fit it. This has to be
+     measured rather than assumed: the controls panel is not a fixed height —
+     the face-count step adds a row of choices, and free play can wrap its
+     button row — and a constant sized for the short steps let the panel grow
+     down under the fixed tab bar on the taller ones. */
+  function fitChrome() {
+    if (!activity || activity.style.display === "none") return;
+    var head = activity.querySelector(".act-header");
+    var cs = getComputedStyle(activity);
+    // stage margin-top + controls-panel margin-top, which are 10px each.
+    var GAPS = 20;
+    var chrome = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) +
+                 (head ? head.offsetHeight : 0) +
+                 (guide ? guide.offsetHeight : 0) + GAPS;
+    activity.style.setProperty("--act-chrome", Math.ceil(chrome) + "px");
+  }
+
   function sizeFaces() {
     if (!netInfo) return;
+    fitChrome();   // must land before the scene is measured below
     // Scale cm → px so the whole flat net fits the scene with a margin.
     var w = sceneRegion.clientWidth;
     var h = sceneRegion.clientHeight - TOP_CHROME - BOTTOM_CHROME;
@@ -4553,6 +4593,9 @@ MIProgress.paintAll();
     learnMoreBtn.hidden = !s.learnMore;   // the scale-down door only shows where there's depth
     renderDots();
     s.enter();
+    // enter() is what swaps the panel's buttons/choices, so the board's
+    // height budget can only be recomputed once it has run.
+    sizeFaces();
   }
 
   // ---------- reusable "Learn more" sheet ----------
