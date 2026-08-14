@@ -3248,11 +3248,19 @@ MIProgress.paintAll();
       fnodes.push({ el: node, spec: fs, minX: minX, minY: minY, maxX: maxX, maxY: maxY });
     });
 
+    // The ruler's hashmark numbers and its span callout are sized off this
+    // (see --s below), and they are drawn on the face the ruler actually
+    // measures — so it has to be that face's height, not the root face's.
+    // They only differ on the triangular prism, whose ruler face is one of
+    // the 3 cm end triangles while its root face is the 6 cm long side:
+    // measuring off the root there sized the type for a face twice as tall
+    // as the one it landed on, and the labels swamped the little triangle.
+    var anchorFace = fnodes[shape.measureFace || 0] || fnodes[0];
     netInfo = {
       bbox: bbox,
       w: bbox.x1 - bbox.x0,
       h: bbox.y1 - bbox.y0,
-      anchorH: fnodes[0].maxY - fnodes[0].minY
+      anchorH: anchorFace.maxY - anchorFace.minY
     };
     sizeFaces();
   }
@@ -3273,8 +3281,8 @@ MIProgress.paintAll();
     var h = sceneRegion.clientHeight - TOP_CHROME - BOTTOM_CHROME;
     var pad = 1.1;
     S = Math.min(w / (netInfo.w * pad), h / (netInfo.h * pad), 46);
-    // --s drives the ruler and hashmark sizing (cube only, where the anchor
-    // face is representative); per-face type uses --fs, set in layout().
+    // --s drives the hashmark + callout type, scaled to the face the ruler
+    // measures (see anchorH); per-face type uses --fs, set in layout().
     document.documentElement.style.setProperty("--s", (netInfo.anchorH * S) + "px");
     layout();
   }
@@ -3765,6 +3773,32 @@ MIProgress.paintAll();
     tag.textContent = fmtArea(units) + " " + shape.unit;
     face.appendChild(tag);
     setTimeout(function () { tag.classList.add("show"); }, whole * 70 + 220);
+    // The base callout is still on the face when the height callout lands.
+    // On a right triangle the height line runs down one side instead of
+    // through the middle, and the face is short, so there is no spot where
+    // both pills fit without colliding — the two numbers ended up printed
+    // over each other. Measure it and, only when they actually clash, let
+    // the base one go: Cal has already called that number out, and the
+    // payoff line right after repeats the whole ½ × base × height.
+    if (axis === "v") {
+      requestAnimationFrame(function () {
+        var prev = face.querySelector(".span-tag.h");
+        if (!prev) return;
+        var a = prev.getBoundingClientRect(), b = tag.getBoundingClientRect();
+        var hitsTag = a.left < b.right && b.left < a.right &&
+                      a.top < b.bottom && b.top < a.bottom;
+        // It also can't sit on the hashmark numbers it's meant to label.
+        var hitsNums = Array.prototype.some.call(
+          face.querySelectorAll(".hashes.v .hash-num"), function (n) {
+            var r = n.getBoundingClientRect();
+            return a.left < r.right && r.left < a.right &&
+                   a.top < r.bottom && r.top < a.bottom;
+          });
+        if (!hitsTag && !hitsNums) return;
+        prev.style.transition = "opacity .35s ease";
+        prev.style.opacity = "0";
+      });
+    }
   }
 
   // The face carved into its unit squares — the bridge from "3 × 3" to "9 cm²".
