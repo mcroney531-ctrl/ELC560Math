@@ -1322,7 +1322,7 @@
      reached, brightest and pulsing on the current step. Restyles between
      the cosmic and paper worlds. */
   .atmos-track {
-    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    position: absolute; bottom: 17px; left: 50%; transform: translateX(-50%);
     z-index: 4; pointer-events: none;
     display: flex; flex-direction: row; align-items: center; gap: 13px;
   }
@@ -1333,7 +1333,7 @@
      from "done" by its pulse and scale rather than a light-vs-dark flip
      that no longer makes sense once both states sit on the same board. */
   .tnode {
-    width: 24px; height: 24px; box-sizing: border-box;
+    width: 19px; height: 19px; box-sizing: border-box;
     background: rgba(22,32,92,.1); border: 1.5px solid rgba(22,32,92,.28);
     clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
     transition: background .35s ease, border-color .35s ease, transform .35s ease, filter .35s ease;
@@ -1601,6 +1601,13 @@
      job is to carry the hinge rotation for its whole subtree; the visible
      skin and any child nodes sit inside it at absolute net coordinates. */
   .fnode { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+  /* Mirrors .face's box (see layout()) but carries no clip-path, so the
+     ruler's hashmarks and its "4 cm" callout can overhang a triangle's
+     slanted edge instead of being sliced by it. Sits above the face and
+     never takes a tap. */
+  .face-art {
+    position: absolute; pointer-events: none; z-index: 5;
+  }
   .face {
     position: absolute;
     display: grid; place-items: center;
@@ -2461,7 +2468,7 @@ MIProgress.paintAll();
   var scene = document.querySelector(".scene");
   // Rebuilt per shape by buildNet(); every downstream system (focus, tapping,
   // measuring, area labels) talks to these two arrays and nothing else.
-  var faces = [], areaLabels = [], fnodes = [];
+  var faces = [], faceArts = [], areaLabels = [], fnodes = [];
 
   var ruler = $("ruler"), rulerFace = $("rulerFace"), dropHint = $("dropHint");
 
@@ -3095,7 +3102,7 @@ MIProgress.paintAll();
 
   function buildNet() {
     centerer.innerHTML = "";
-    faces = []; areaLabels = []; fnodes = [];
+    faces = []; faceArts = []; areaLabels = []; fnodes = [];
     var spec = shape.net;
     var nodes = [];
     var bbox = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
@@ -3192,6 +3199,16 @@ MIProgress.paintAll();
         '</svg>';
       node.appendChild(face);
 
+      // The ruler's own annotations (hashmarks + the "4 cm" span callout)
+      // live in a box that mirrors the face exactly but carries no
+      // clip-path. They sit *along* an edge and deliberately overhang it,
+      // so drawing them inside the face meant a triangle's diagonal sliced
+      // the callout and the last hash numbers clean off. The unit grid is
+      // NOT moved here — that one is meant to be cut to the polygon.
+      var art = document.createElement("span");
+      art.className = "face-art";
+      node.appendChild(art);
+
       // A vertex dot at each polygon corner, placed on the node (not the
       // face) so the face's clip-path can't cut it in half.
       fs.poly.forEach(function (pt) {
@@ -3213,6 +3230,7 @@ MIProgress.paintAll();
       });
 
       faces.push(face);
+      faceArts.push(art);
       areaLabels.push(face.querySelector(".area-label"));
       fnodes.push({ el: node, spec: fs, minX: minX, minY: minY, maxX: maxX, maxY: maxY });
     });
@@ -3253,12 +3271,20 @@ MIProgress.paintAll();
       var fs = fn.spec;
       var fw = (fn.maxX - fn.minX) * S, fh = (fn.maxY - fn.minY) * S;
       var faceEl = fn.el.querySelector(".face");
-      faceEl.style.cssText +=
-        ";left:" + (fn.minX * S) + "px;top:" + (fn.minY * S) + "px" +
-        ";width:" + fw + "px;height:" + fh + "px";
+      var box = ";left:" + (fn.minX * S) + "px;top:" + (fn.minY * S) + "px" +
+                ";width:" + fw + "px;height:" + fh + "px";
+      faceEl.style.cssText += box;
       // Type scales with the face it sits on, so a small triangle's number
       // and label stay inside it.
       faceEl.style.setProperty("--fs", Math.min(fw, fh) + "px");
+      // The unclipped annotation layer tracks the same box, so the ruler's
+      // hashmarks and callout keep addressing it in the same percentages
+      // they always did — they just aren't cut to the polygon any more.
+      var artEl = fn.el.querySelector(".face-art");
+      if (artEl) {
+        artEl.style.cssText += box;
+        artEl.style.setProperty("--fs", Math.min(fw, fh) + "px");
+      }
       Array.prototype.forEach.call(fn.el.children, function (c) {
         if (c.classList.contains("corner")) {
           c.style.left = (+c.getAttribute("data-vx") * S) + "px";
@@ -3690,7 +3716,10 @@ MIProgress.paintAll();
   // between two of them, exactly as a real ruler would read it.
   function revealHashes(axis, units) {
     var sp = measure.spec || measureSpec();
-    var face = faces[measure.idx];
+    // Drawn on the unclipped annotation layer, not the face itself — these
+    // hug (and overhang) the measured edge, so a triangle's clip-path would
+    // otherwise cut the callout and the outer hash numbers in half.
+    var face = faceArts[measure.idx];
     var box = document.createElement("span");
     box.className = "hashes " + axis
       + (axis === "h" && sp.tri && sp.baseAtTop ? " at-top" : "")
@@ -3749,13 +3778,16 @@ MIProgress.paintAll();
   }
   function clearMeasureArt() {
     faces.forEach(function (f) {
-      f.querySelectorAll(".hashes, .span-tag, .unit-grid").forEach(function (el) { el.remove(); });
+      f.querySelectorAll(".unit-grid").forEach(function (el) { el.remove(); });
+    });
+    faceArts.forEach(function (a) {
+      a.querySelectorAll(".hashes, .span-tag").forEach(function (el) { el.remove(); });
     });
   }
   // Retire the ruler's readings once the unit grid takes over, so the face
   // ends up clean: grid + area label, nothing competing.
   function fadeMeasureArt() {
-    faces[measure.idx].querySelectorAll(".hashes, .span-tag").forEach(function (el) {
+    faceArts[measure.idx].querySelectorAll(".hashes, .span-tag").forEach(function (el) {
       el.style.transition = "opacity .5s ease";
       el.style.opacity = "0";
       setTimeout(function () { el.remove(); }, 560);
