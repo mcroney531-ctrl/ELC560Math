@@ -796,6 +796,20 @@
   .tile.ready .tile-fig { color: var(--accent); }
   .tile.ready .tile-lock { content: none; }
 
+  /* Wide canvas (embeds up to 1920×1080): the hub stayed capped at the same
+     560px column no matter how wide the viewport got, leaving a dead strip
+     down the right side in a desktop/PC embed even though the activity
+     screen already widens (see #activity above). Give the hub the same
+     treatment and put the room to use: the journey map splits into two
+     columns — main path beside the Challenge Zone — instead of stacking,
+     and the shape/badge grids pick up a third column. */
+  @media (min-width: 1100px) {
+    #menu { max-width: 1040px; }
+    .journey { display: grid; grid-template-columns: 1.15fr .85fr; align-items: start; gap: 22px; }
+    .zone-panel { margin-top: 0; }
+    .shape-grid, .badge-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
   /* ============ ACTIVITY ============ */
   #activity { display: none; }
   .act-header { display: flex; align-items: center; gap: 10px; padding: 4px 0 10px; }
