@@ -1249,7 +1249,7 @@
        free. Just under the bubble is: clear of the hint/track below, and
        (being a fixed px offset rather than tracking the bubble's own
        height) still clear of it even on the rare two-line message. */
-    position: absolute; top: 68px; right: 20px; z-index: 2;
+    position: absolute; top: 68px; right: 32px; z-index: 2;
     text-align: right; pointer-events: none;
   }
   .sp-head {
@@ -1690,25 +1690,32 @@
     opacity: 1; pointer-events: auto; cursor: pointer;
     animation: huntPulse 1.7s ease-in-out infinite;
   }
-  /* The bar itself gets the same green glow the pulsing Next/advance buttons
-     use elsewhere, synced to the same 1.7s beat as the opacity pulse above
-     so the two read as one breathing highlight rather than two competing
-     animations. */
+  /* The bar itself gets the same purple glow the pulsing Next/advance
+     buttons use elsewhere, synced to the same 1.7s beat as the opacity
+     pulse above so the two read as one breathing highlight rather than two
+     competing animations. */
   .scene.hunt-edges .edge-hit:before {
     animation: edgeGlowPulse 1.7s ease-in-out infinite;
   }
   .scene.hunt-edges .edge-hit:hover:before {
     background: #fff; box-shadow: 0 0 9px rgba(255,255,255,.95);
   }
+  /* Corner dots get the same purple treatment: a tinted fill plus a
+     pulsing glow layered alongside the shared opacity pulse. */
   .scene.hunt-corners .corner {
     opacity: .5; pointer-events: auto; cursor: pointer;
-    animation: huntPulse 1.7s ease-in-out infinite;
+    background: #8b5cf6; border-color: #8b5cf6;
+    animation: huntPulse 1.7s ease-in-out infinite, cornerGlowPulse 1.7s ease-in-out infinite;
   }
   .scene.hunt-corners .corner:hover { opacity: 1; transform: scale(1.3); }
   @keyframes huntPulse { 0%, 100% { opacity: .38; } 50% { opacity: .95; } }
   @keyframes edgeGlowPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(6,214,160,.3); }
-    50% { box-shadow: 0 0 7px 2px rgba(6,214,160,.5); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,.3); }
+    50% { box-shadow: 0 0 7px 2px rgba(139,92,246,.5); }
+  }
+  @keyframes cornerGlowPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(139,92,246,.4), 0 0 3px rgba(0,0,0,.3); }
+    50% { box-shadow: 0 0 14px rgba(139,92,246,.8), 0 0 20px 2px rgba(139,92,246,.5); }
   }
   @media (prefers-reduced-motion: reduce) {
     .scene.hunt-edges .edge-hit, .scene.hunt-corners .corner { animation: none; opacity: .8; }
