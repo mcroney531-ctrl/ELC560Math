@@ -4216,7 +4216,9 @@ MIProgress.paintAll();
       key: "faces",
       name: "Look closely",
       textKey: "intro",
-      text: "This is a cube. Drag to spin it. A “face” is one flat side — <strong>how many can you count?</strong>",
+      // Fallback only — every shape supplies `intro`. Kept shape-neutral so
+      // a shape that ever missed one can't claim to be a cube.
+      text: "Drag to spin it. A “face” is one flat side. <strong>Count the faces.</strong>",
       learnMore: function (sh) { return {
         title: "What’s a face?",
         html: '<p>A <strong>face</strong> is one flat side of a solid shape. ' + sh.faceBlurb + '</p>' +
@@ -4267,7 +4269,10 @@ MIProgress.paintAll();
       text: "Half the faces always hide around the back. So let’s cheat — <strong>unfold it flat</strong> and see all of them at once.",
       enter: function () {
         setActions([
-          { id: "unfold", text: "▶ Unfold the cube", primary: true },
+          // Named for whichever solid is loaded — this read "the cube" on
+          // every shape, since it is the one action label that was written
+          // out rather than taken from the shape.
+          { id: "unfold", text: "▶ Unfold the " + shape.solidLabel.toLowerCase(), primary: true },
           { id: "next", text: "Next →", primary: true, disabled: true, hidden: true }
         ]);
       }
@@ -4276,7 +4281,9 @@ MIProgress.paintAll();
       key: "net",
       name: "Meet the net",
       textKey: "netDesc",
-      text: "This flat pattern is the cube’s net. All 6 faces are identical squares — <strong>tap each one</strong> to check it off.",
+      // Fallback only — every shape supplies `netDesc`. Shape-neutral for
+      // the same reason as the faces step above.
+      text: "This flat pattern is the solid’s net. <strong>Tap each face to check it off.</strong>",
       learnMore: function (sh) {
         var isBox = sh.net.length === 6 && sh.net.every(function (f) { return f.poly.length === 4; });
         return {
