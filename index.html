@@ -1629,6 +1629,10 @@
     background: rgba(255,255,255,.72);
     box-shadow: 0 1px 3px rgba(0,0,0,.14);
   }
+  /* By the surface-area step the badges' job — telling faces apart — is
+     done; every face reveals a unit-square grid when tapped instead (see
+     .unit-grid below), so the number has nothing left to compete with. */
+  .scene.sa-step .face .badge { display: none; }
   .face.f1 { background: var(--face1); color: var(--glow1); }
   .face.f2 { background: var(--face2); color: var(--glow2); }
   .face.f3 { background: var(--face3); color: var(--glow3); }
@@ -3411,17 +3415,21 @@ MIProgress.paintAll();
   function fmtArea(v) {
     return (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, "");
   }
+  // A face's own bounding box, in cm — shared by its dimension label and its
+  // unit-grid cell count, so the two can never disagree with each other.
+  function faceBBox(i) {
+    var xs = shape.net[i].poly.map(function (p) { return p[0]; });
+    var ys = shape.net[i].poly.map(function (p) { return p[1]; });
+    return { w: Math.max.apply(null, xs) - Math.min.apply(null, xs),
+             h: Math.max.apply(null, ys) - Math.min.apply(null, ys) };
+  }
   // The "w × h" / "½ × b × h" caption for a face.
   function faceDimLabel(i) {
-    var fs = shape.net[i];
-    var xs = fs.poly.map(function (p) { return p[0]; });
-    var ys = fs.poly.map(function (p) { return p[1]; });
-    var w = Math.max.apply(null, xs) - Math.min.apply(null, xs);
-    var h = Math.max.apply(null, ys) - Math.min.apply(null, ys);
-    if (fs.poly.length === 4) return fmtArea(w) + "×" + fmtArea(h);
+    var fs = shape.net[i], bb = faceBBox(i);
+    if (fs.poly.length === 4) return fmtArea(bb.w) + "×" + fmtArea(bb.h);
     // Triangle: label it with the base and height that produce its area.
     var area = polyArea(fs.poly);
-    var base = Math.max.apply(null, [w, h]);
+    var base = Math.max(bb.w, bb.h);
     return "½·" + fmtArea(base) + "·" + fmtArea(2 * area / base);
   }
   function updateAreaReadout() {
@@ -3616,8 +3624,10 @@ MIProgress.paintAll();
   }
 
   // The face carved into its unit squares — the bridge from "3 × 3" to "9 cm²".
-  function revealUnitGrid(cols, rows) {
-    var face = faces[measure.idx];
+  // Takes an explicit face index (not just the ruler-measured anchor) so the
+  // same grid can be drawn on every other face as it's tapped, not just #1.
+  function revealUnitGrid(idx, cols, rows) {
+    var face = faces[idx];
     var g = document.createElement("span");
     g.className = "unit-grid";
     for (var r = 0; r < rows; r++) {
@@ -3728,7 +3738,7 @@ MIProgress.paintAll();
     // "count the squares". On a triangle the clip-path cuts the row along the
     // slope in half, which is the point: the triangle is half its rectangle.
     var cols = Math.max(1, Math.round(b)), rows = Math.max(1, Math.ceil(hgt - 1e-6));
-    revealUnitGrid(cols, rows);
+    revealUnitGrid(measure.idx, cols, rows);
     var cells = cols * rows;
     setTimeout(function () {
       if (sp.tri) {
@@ -3768,6 +3778,16 @@ MIProgress.paintAll();
     areaLabels[idx].textContent = faceDimLabel(idx);
     saTotal += faceAreas()[idx]; saCount++;
     updateAreaReadout();
+    // The ruler-measured anchor face already carries a grid — drawn by
+    // completeMeasure() and timed to its own "count the squares" narration,
+    // so it's already there by the time this runs. Every other face gets
+    // the identical grid the instant it's tapped, rather than just a number:
+    // the whole point is that every face ends up reading the same way once
+    // its dimensions are known, not just the one that got the ruler.
+    if (!f.querySelector(".unit-grid")) {
+      var bb = faceBBox(idx);
+      revealUnitGrid(idx, Math.max(1, Math.round(bb.w)), Math.max(1, Math.ceil(bb.h - 1e-6)));
+    }
     return true;
   }
 
@@ -4258,6 +4278,10 @@ MIProgress.paintAll();
       stepLabel.textContent = "Step " + (mainIdx + 1) + " of " + mainCount + " · " + s.name;
     }
     areaReadout.classList.remove("show");   // only the surface-area step shows it
+    // The face-number badges are how you tell faces apart while counting
+    // and hunting edges/corners, but by step 6 that job is done — hide them
+    // so the grid each tap reveals is the only thing competing for the eye.
+    scene.classList.toggle("sa-step", s.key === "sa");
     // Guided-attention state is per-step; never let it leak forward.
     measure.active = false; measure.dragging = false;
     ruler.classList.remove("on", "parked", "locked", "vert", "snapping");
