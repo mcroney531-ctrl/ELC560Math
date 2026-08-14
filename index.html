@@ -2803,14 +2803,36 @@ MIProgress.paintAll();
 
     input.addEventListener("input", function () { if (!anim) paint(); });
     // `change` fires on pointer release and on each keyboard step, so the
-    // control clicks into a phase either way — in principle. Mobile touch
-    // drags on a native range input don't reliably fire `change` in every
-    // browser (a short, fast drag can end without one ever landing), so
-    // `pointerup` is wired to the same snap as a second, more dependable
-    // trigger. snap() is idempotent — finding the same nearest stop twice
-    // costs nothing — so there's no harm if both end up firing.
+    // control clicks into a phase either way — in principle. In practice, a
+    // touch drag that wanders even slightly off the input's own (thin) hit
+    // area before lifting can end the touch on the rail wrapper or a mark
+    // instead — neither `change` nor a `pointerup` listener on the input
+    // itself ever fires, and the thumb is left stranded off a stop. Tracked
+    // explicitly instead: `dragging` goes true on the input's own
+    // pointerdown (contact reliably starts there), and every plausible
+    // "the finger/mouse lifted somewhere" signal is caught at the document
+    // level and treated as a release, wherever it actually landed.
     input.addEventListener("change", snap);
-    input.addEventListener("pointerup", snap);
+    var dragging = false;
+    input.addEventListener("pointerdown", function () { dragging = true; });
+    // Each Learn-more open rebuilds this sheet's markup from scratch, which
+    // detaches this exact input — but these three listeners live on
+    // `document` and would otherwise never get torn down with it. The first
+    // stray release event after that happens (any tap, anywhere) notices
+    // the input's gone and unhooks itself, rather than accumulating a
+    // fresh set of dead listeners every time the sheet reopens.
+    function onRelease() {
+      if (!input.isConnected) {
+        document.removeEventListener("pointerup", onRelease);
+        document.removeEventListener("touchend", onRelease);
+        document.removeEventListener("mouseup", onRelease);
+        return;
+      }
+      if (dragging) { dragging = false; snap(); }
+    }
+    document.addEventListener("pointerup", onRelease);
+    document.addEventListener("touchend", onRelease);
+    document.addEventListener("mouseup", onRelease);
     paint();
     return { paint: paint };
   }
