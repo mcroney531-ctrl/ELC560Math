@@ -1521,63 +1521,10 @@
   /* ---- "Why measure?" — a Cal-hosted modal, not an in-stage overlay ---- */
   /* Same fixed/backdrop/card shell as .lm-sheet, so it reads as one modal
      language across the app; Cal's image + speech bubble sit up top. */
-  .why-modal { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; }
-  .why-modal[hidden] { display: none; }
-  .why-modal-backdrop {
-    position: absolute; inset: 0; background: rgba(18,20,34,.55);
-    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); animation: lmFade .2s ease;
-  }
-  .why-modal-card {
-    position: relative; z-index: 1;
-    width: min(480px, calc(100vw - 32px)); max-height: min(88vh, 720px);
-    display: flex; flex-direction: column;
-    background: var(--card); border-radius: var(--radius);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 30px 70px -20px rgba(10,12,30,.6);
-    animation: lmRise .25s cubic-bezier(.2,.9,.3,1.2);
-    overflow: hidden;
-  }
-  .why-modal-close {
-    position: absolute; top: 12px; right: 12px; z-index: 2;
-    width: 32px; height: 32px; border-radius: 10px;
-    border: 1px solid rgba(0,0,0,.08); background: #fff; color: var(--ink-soft);
-    font-size: 15px; cursor: pointer;
-    box-shadow: inset 0 2px 3px rgba(255,255,255,.9), inset 0 -3px 5px rgba(43,42,51,.06);
-    transition: transform .12s ease, box-shadow .12s ease;
-  }
-  .why-modal-close:active {
-    transform: scale(.92);
-    box-shadow: inset 0 3px 5px rgba(43,42,51,.15);
-  }
-  .why-modal-cal {
-    display: flex; align-items: center; gap: 12px;
-    padding: 20px 44px 14px 18px;
-    background: linear-gradient(180deg, #f1effc, var(--card) 92%);
-  }
-  .why-modal-cal .cal-img { width: 64px; height: auto; flex: 0 0 auto; }
-  .why-modal-bubble {
-    position: relative; background: #fff; border-radius: 14px; padding: 10px 13px;
-    font-size: 13px; line-height: 1.4; box-shadow: 0 8px 20px -12px rgba(43,42,51,.35);
-    border: 1px solid rgba(0,0,0,.05);
-  }
-  .why-modal-bubble::before {
-    content: ""; position: absolute; left: -7px; top: 18px;
-    width: 14px; height: 14px; background: #fff;
-    border-left: 1px solid rgba(0,0,0,.05); border-bottom: 1px solid rgba(0,0,0,.05);
-    transform: rotate(45deg);
-  }
-  .why-modal-lead b { color: var(--accent); }
-  .why-modal-body { padding: 4px 20px 0; overflow-y: auto; }
-  .why-modal-title { font-size: 17px; letter-spacing: -.01em; margin: 4px 0 10px; }
-  /* Reserved slot for a future illustration (e.g. a Cal pose demonstrating
-     one of the cases below) — same dashed-placeholder language as the
-     Learn-more sheets' .lm-placeholder, so it reads as "coming soon," not broken. */
-  .why-modal-art {
-    border: 1px dashed rgba(32,48,80,.35); border-radius: 14px;
-    height: 130px; margin-bottom: 14px;
-    display: grid; place-items: center; text-align: center;
-    color: var(--ink-soft); font-size: 12.5px; font-weight: 600;
-    background: linear-gradient(160deg, #faf9ff, #f3f1fb);
-  }
+  /* Real-world "why measure" examples — folded into the "why" step's own
+     Learn-more sheet (see steps["why"].learnMore) rather than a forced
+     full-screen modal that used to interrupt every playthrough with the
+     same static content regardless of shape. */
   .why-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .why-card {
     background: #faf9ff; border: 1px solid rgba(0,0,0,.06);
@@ -1591,11 +1538,7 @@
     margin: 12px 0 4px; text-align: center; color: var(--accent);
     font-size: 12.5px; font-weight: 700; line-height: 1.4;
   }
-  .why-modal-actions { padding: 14px 20px 20px; }
-  .why-modal-actions .btn { width: 100%; }
   @media (max-width: 380px) {
-    .why-modal-cal { padding: 18px 40px 12px 16px; }
-    .why-modal-cal .cal-img { width: 52px; }
     .why-card { flex-direction: column; gap: 3px; }
     .why-card span { display: none; }
   }
@@ -2336,36 +2279,6 @@
 
 
 
-  <!-- "Why measure?" — Cal hosts this one directly, framing counting vs.
-       measuring before the surface-area step needs a unit. -->
-  <div class="why-modal" id="whyModal" hidden>
-    <div class="why-modal-backdrop" id="whyModalBackdrop"></div>
-    <div class="why-modal-card" role="dialog" aria-modal="true" aria-labelledby="whyModalTitle">
-      <button class="why-modal-close" id="whyModalClose" type="button" aria-label="Close">✕</button>
-      <div class="why-modal-cal">
-        <img class="cal-img" src="assets/cal.png" alt="Cal">
-        <div class="why-modal-bubble">
-          <p class="why-modal-lead">Counting faces gave us <b>numbers</b>. To know how much <b>material</b> covers a shape, we have to measure — and measuring needs a <b>unit</b>, like centimetres.</p>
-        </div>
-      </div>
-      <div class="why-modal-body">
-        <h3 class="why-modal-title" id="whyModalTitle">Why measure at all?</h3>
-        <!-- Reserved for a future illustration (e.g. a Cal pose demonstrating
-             one of the cases below) — swap this div's contents for an <img>. -->
-        <div class="why-modal-art" id="whyModalArt" aria-hidden="true">🖼 Illustration coming soon</div>
-        <div class="why-cards">
-          <div class="why-card"><span class="wc-ico">🎁</span><div><b>Wrapping a gift</b><span>How much paper before it runs out?</span></div></div>
-          <div class="why-card"><span class="wc-ico">🎨</span><div><b>Painting a room</b><span>How many tins of paint to buy?</span></div></div>
-          <div class="why-card"><span class="wc-ico">📦</span><div><b>Making a box</b><span>How much cardboard per box?</span></div></div>
-          <div class="why-card"><span class="wc-ico">📱</span><div><b>Screen protector</b><span>Will the sheet cover the whole face?</span></div></div>
-        </div>
-        <p class="why-foot">Every one of these is surface area — the total of all the faces.</p>
-      </div>
-      <div class="why-modal-actions">
-        <button class="btn primary" id="whyModalGo" type="button">Got it — let's measure →</button>
-      </div>
-    </div>
-  </div>
 
 </div><!-- /#activity — closed explicitly. It used to run to end-of-markup on
      the parser's implicit close, which silently swallowed every overlay
@@ -2494,16 +2407,6 @@ MIProgress.paintAll();
   var faces = [], areaLabels = [], fnodes = [];
 
   var ruler = $("ruler"), rulerFace = $("rulerFace"), dropHint = $("dropHint");
-  var whyModal = $("whyModal"), whyModalBackdrop = $("whyModalBackdrop"),
-      whyModalClose = $("whyModalClose"), whyModalGo = $("whyModalGo");
-  function openWhyModal() { whyModal.hidden = false; }
-  function closeWhyModal() { whyModal.hidden = true; }
-  whyModalClose.addEventListener("click", closeWhyModal);
-  whyModalBackdrop.addEventListener("click", closeWhyModal);
-  whyModalGo.addEventListener("click", function () { closeWhyModal(); goStep(step + 1); });
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && !whyModal.hidden) closeWhyModal();
-  });
 
   // ---------- focus system ----------
   // keep: array of face indices to leave lit (others dim), or null to clear.
@@ -4206,7 +4109,14 @@ MIProgress.paintAll();
                 '</div>' +
                 '<div class="unit-demo" id="unitDemo"></div>' +
                 '<div class="lmi-out" id="unitOut"></div>' +
-              '</div>'
+              '</div>' +
+              '<div class="why-cards">' +
+                '<div class="why-card"><span class="wc-ico">🎁</span><div><b>Wrapping a gift</b><span>How much paper before it runs out?</span></div></div>' +
+                '<div class="why-card"><span class="wc-ico">🎨</span><div><b>Painting a room</b><span>How many tins of paint to buy?</span></div></div>' +
+                '<div class="why-card"><span class="wc-ico">📦</span><div><b>Making a box</b><span>How much cardboard per box?</span></div></div>' +
+                '<div class="why-card"><span class="wc-ico">📱</span><div><b>Screen protector</b><span>Will the sheet cover the whole face?</span></div></div>' +
+              '</div>' +
+              '<p class="why-foot">Every one of these is surface area — the total of all the faces.</p>'
       }; },
       onOpen: function (body) {
         var demo = body.querySelector("#unitDemo"),
@@ -4230,7 +4140,6 @@ MIProgress.paintAll();
       },
       enter: function () {
         if (p > 0.05) animateFold(0, 900);
-        openWhyModal();
         setFocus(null, true);
         setActions([{ id: "next", text: "Got it — let’s measure →", primary: true }]);
       }
@@ -4413,7 +4322,6 @@ MIProgress.paintAll();
     measure.active = false; measure.dragging = false;
     ruler.classList.remove("on", "parked", "locked", "vert", "snapping");
     dropHint.classList.remove("show");
-    closeWhyModal();
     clearFocus();
     setHunt(null);
     dotSay(s.textKey && shape[s.textKey] ? shape[s.textKey] : s.text, false);
