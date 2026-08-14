@@ -937,6 +937,16 @@
     background: var(--board-bg-a) url('assets/whiteboard.jpg') center / cover no-repeat;
   }
   .scene-region:active { cursor: grabbing; }
+  /* The bottom strip of the board is shared: the step diamonds sit lowest,
+     then the one-at-a-time toast row (drag hint / overlay tag / surface-area
+     total), then the gold "+N" that pops off that total. They used to carry
+     independent fixed offsets, so nudging the diamonds up ate the gap above
+     them and the readout ended up sitting on their heads. Everything up
+     there now derives from this one value, which keeps the gaps fixed by
+     construction — and it scales with the board, so a phone's short stage
+     keeps the tight floor while a desktop's taller one lifts the whole
+     stack clear of the whiteboard's tray. */
+  .scene-region { --track-b: clamp(28px, 6%, 44px); }
   @media (max-width: 480px) {
     .stage { height: auto; min-height: 0; max-height: none; aspect-ratio: 1287 / 1016; }
   }
@@ -1322,7 +1332,7 @@
      reached, brightest and pulsing on the current step. Restyles between
      the cosmic and paper worlds. */
   .atmos-track {
-    position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+    position: absolute; bottom: var(--track-b, 28px); left: 50%; transform: translateX(-50%);
     z-index: 4; pointer-events: none;
     display: flex; flex-direction: row; align-items: center; gap: 13px;
   }
@@ -1353,7 +1363,8 @@
     50% { filter: drop-shadow(0 0 13px rgba(64,104,192,.95)); }
   }
   .hint {
-    position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%);
+    /* +32 clears the diamonds' own 19px height with room to spare. */
+    position: absolute; bottom: calc(var(--track-b, 28px) + 32px); left: 50%; transform: translateX(-50%);
     background: rgba(10,12,22,.85); color: #fff; font-size: 12.5px; font-weight: 600;
     padding: 6px 13px; border-radius: 999px; pointer-events: none;
     border: 1px solid rgba(255,255,255,.14);
@@ -1374,7 +1385,7 @@
   }
   .big-count.show { opacity: 1; transform: translateY(-50%) scale(1); }
   .overlay-tag {
-    position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%);
+    position: absolute; bottom: calc(var(--track-b, 28px) + 32px); left: 50%; transform: translateX(-50%);
     background: rgba(10,12,22,.9); color: #fff; font-size: 13px; font-weight: 700;
     padding: 7px 14px; border-radius: 999px; opacity: 0; transition: opacity .3s;
     border: 1px solid rgba(255,255,255,.14);
@@ -1388,7 +1399,7 @@
      either mode) this one is styled as a single light annotation, since
      it's the only state that was ever reachable. */
   .area-readout {
-    position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%);
+    position: absolute; bottom: calc(var(--track-b, 28px) + 32px); left: 50%; transform: translateX(-50%);
     background: rgba(255,255,255,.95); color: var(--board-ink); font-size: 14px; font-weight: 700;
     padding: 8px 16px; border-radius: 999px; opacity: 0; transition: opacity .3s;
     border: 1px solid rgba(210,215,240,.6); pointer-events: none; z-index: 6; white-space: nowrap;
@@ -1404,7 +1415,7 @@
      and right so it reads as coming off the pill's corner rather than
      covering the total itself. */
   .area-plus {
-    position: absolute; bottom: 78px; left: 50%;
+    position: absolute; bottom: calc(var(--track-b, 28px) + 62px); left: 50%;
     background: linear-gradient(150deg, #ffd966, #f0a83c);
     color: #5c3a05; font-size: 13px; font-weight: 800;
     padding: 3px 10px; border-radius: 999px;
