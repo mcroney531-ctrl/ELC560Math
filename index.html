@@ -348,6 +348,11 @@
     text-transform: uppercase; color: var(--hub-ink-soft); }
   .sc-area { font-size: 11.5px; font-weight: 700; color: var(--hub-ink-soft); }
   .sc-area b { color: var(--hub-accent-ink); }
+  /* Unlocked isn't solved: the "?" placeholders read as a faint hint rather
+     than a rendering glitch, the same convention the board's own Solid
+     Parts legend uses for a count you haven't found yet (see .num.unknown). */
+  .shape-card.unsolved .sc-stat b { color: rgba(37,64,111,.4); }
+  .shape-card.unsolved .sc-area b { color: rgba(37,64,111,.45); }
 
   /* ---- Learn ---- */
   .learn-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
@@ -2794,8 +2799,14 @@ MIProgress.paintAll();
 
     input.addEventListener("input", function () { if (!anim) paint(); });
     // `change` fires on pointer release and on each keyboard step, so the
-    // control clicks into a phase either way.
+    // control clicks into a phase either way — in principle. Mobile touch
+    // drags on a native range input don't reliably fire `change` in every
+    // browser (a short, fast drag can end without one ever landing), so
+    // `pointerup` is wired to the same snap as a second, more dependable
+    // trigger. snap() is idempotent — finding the same nearest stop twice
+    // costs nothing — so there's no harm if both end up firing.
     input.addEventListener("change", snap);
+    input.addEventListener("pointerup", snap);
     paint();
     return { paint: paint };
   }
@@ -4547,8 +4558,15 @@ MIProgress.paintAll();
       var sh = SHAPES[key];
       if (!sh) return;
       var open = shapeUnlocked(key);
+      // Unlocked (you can start it) isn't the same as solved: showing the
+      // face/edge/corner counts and surface area for a shape you haven't
+      // actually worked through yet hands over the answers the activity
+      // itself is there to earn. Held back until this specific shape is
+      // complete, same "?" convention the board's own legend uses for a
+      // count you haven't found yet.
+      var solved = MIProgress.isComplete(key);
       var card = document.createElement(open ? "button" : "div");
-      card.className = "shape-card" + (open ? "" : " locked");
+      card.className = "shape-card" + (open ? "" : " locked") + (open && !solved ? " unsolved" : "");
       if (open) card.type = "button";
       card.innerHTML =
         '<div class="shape-card-top">' +
@@ -4557,11 +4575,11 @@ MIProgress.paintAll();
             '<span class="sc-tag">' + (open ? (sh.challenge ? "Challenge" : "Main path") : unlockNote(key)) + '</span></span>' +
         '</div>' +
         '<div class="sc-stats">' +
-          '<div class="sc-stat"><b>' + sh.F + '</b><span>Faces</span></div>' +
-          '<div class="sc-stat"><b>' + sh.E + '</b><span>Edges</span></div>' +
-          '<div class="sc-stat"><b>' + sh.V + '</b><span>Corners</span></div>' +
+          '<div class="sc-stat"><b>' + (solved ? sh.F : "?") + '</b><span>Faces</span></div>' +
+          '<div class="sc-stat"><b>' + (solved ? sh.E : "?") + '</b><span>Edges</span></div>' +
+          '<div class="sc-stat"><b>' + (solved ? sh.V : "?") + '</b><span>Corners</span></div>' +
         '</div>' +
-        '<div class="sc-area">Surface area <b>' + fmtArea(shapeArea(sh)) + ' ' + sh.unit + '²</b></div>';
+        '<div class="sc-area">Surface area <b>' + (solved ? (fmtArea(shapeArea(sh)) + ' ' + sh.unit + '²') : "?") + '</b></div>';
       if (open) card.addEventListener("click", function () { startActivity(key); });
       grid.appendChild(card);
     });
