@@ -1386,6 +1386,32 @@
   .area-readout.show { opacity: 1; }
   .area-readout strong { color: var(--accent); font-size: 16px; }
 
+  /* Gold "+N" that pops up off the readout pill the instant a face is
+     tapped, floats up and fades — so the running total's next jump reads as
+     the result of *this* tap, not just a number changing on its own.
+     Anchored to the same bottom-centre spot the readout sits at, nudged up
+     and right so it reads as coming off the pill's corner rather than
+     covering the total itself. */
+  .area-plus {
+    position: absolute; bottom: 78px; left: 50%;
+    background: linear-gradient(150deg, #ffd966, #f0a83c);
+    color: #5c3a05; font-size: 13px; font-weight: 800;
+    padding: 3px 10px; border-radius: 999px;
+    box-shadow: 0 4px 10px -4px rgba(180,120,10,.55);
+    opacity: 0; pointer-events: none; z-index: 7; white-space: nowrap;
+  }
+  .area-plus.pop { animation: areaPlusPop 900ms ease-out; }
+  @keyframes areaPlusPop {
+    0% { opacity: 0; transform: translate(-50%, 4px) scale(.7); }
+    15% { opacity: 1; transform: translate(-50%, -4px) scale(1.08); }
+    30% { transform: translate(-50%, -8px) scale(1); }
+    75% { opacity: 1; transform: translate(-50%, -26px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -36px) scale(.92); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .area-plus.pop { animation: none; }
+  }
+
   /* Per-face area label, shown during the surface-area step */
   .area-label {
     /* Hung off the centroid toward the face's wide end (see --ay), so it
@@ -2251,6 +2277,7 @@
     <div class="big-count" id="bigCount">1</div>
     <div class="overlay-tag" id="overlayTag"></div>
     <div class="area-readout" id="areaReadout"></div>
+    <span class="area-plus" id="areaPlus" aria-hidden="true"></span>
     <div class="drop-hint" id="dropHint" aria-hidden="true"></div>
     <div class="ruler" id="ruler" role="button" tabindex="0" aria-label="Measuring ruler — drag onto the highlighted edge">
       <div class="r-face" id="rulerFace"></div>
@@ -2400,7 +2427,7 @@ MIProgress.paintAll();
   var stepTrack = $("stepTrack");
   var trackNodes = [];   // built to match steps.length in buildTrack()
   var learnMoreBtn = $("learnMoreBtn"), lmSheet = $("lmSheet"), lmTitle = $("lmTitle"), lmBody = $("lmBody");
-  var areaReadout = $("areaReadout");
+  var areaReadout = $("areaReadout"), areaPlus = $("areaPlus");
   var scene = document.querySelector(".scene");
   // Rebuilt per shape by buildNet(); every downstream system (focus, tapping,
   // measuring, area labels) talks to these two arrays and nothing else.
@@ -3444,17 +3471,27 @@ MIProgress.paintAll();
     return { w: Math.max.apply(null, xs) - Math.min.apply(null, xs),
              h: Math.max.apply(null, ys) - Math.min.apply(null, ys) };
   }
-  // The "w × h" / "½ × b × h" caption for a face.
+  // The "w × h = area" / "½ · b · h = area" caption for a face — the "="
+  // always closes with polyArea's own number, the same value faceAreas()
+  // adds to the running total, so the label can never disagree with the
+  // readout it feeds.
   function faceDimLabel(i) {
     var fs = shape.net[i], bb = faceBBox(i);
-    if (fs.poly.length === 4) return fmtArea(bb.w) + "×" + fmtArea(bb.h);
-    // Triangle: label it with the base and height that produce its area.
     var area = polyArea(fs.poly);
+    if (fs.poly.length === 4) return fmtArea(bb.w) + "×" + fmtArea(bb.h) + "=" + fmtArea(area);
+    // Triangle: label it with the base and height that produce its area.
     var base = Math.max(bb.w, bb.h);
-    return "½·" + fmtArea(base) + "·" + fmtArea(2 * area / base);
+    return "½·" + fmtArea(base) + "·" + fmtArea(2 * area / base) + "=" + fmtArea(area);
   }
   function updateAreaReadout() {
     areaReadout.innerHTML = "Surface area: <strong>" + fmtArea(saTotal) + "</strong> " + shape.unit + "²";
+  }
+  function showAreaPlus(delta) {
+    if (!delta || dotReduceMotion) return;
+    areaPlus.textContent = "+" + fmtArea(delta);
+    areaPlus.classList.remove("pop");
+    void areaPlus.offsetWidth;
+    areaPlus.classList.add("pop");
   }
 
   /* ---------- guided measuring: drag the ruler onto a face --------------
@@ -3797,8 +3834,13 @@ MIProgress.paintAll();
     if (f.classList.contains("sa-shown")) return false;
     f.classList.add("sa-shown");
     areaLabels[idx].textContent = faceDimLabel(idx);
-    saTotal += faceAreas()[idx]; saCount++;
-    updateAreaReadout();
+    var added = faceAreas()[idx];
+    saTotal += added; saCount++;
+    showAreaPlus(added);
+    // The readout's own jump lags the gold "+N" slightly, so the total
+    // visibly catches up to what the badge just promised instead of both
+    // firing at once.
+    setTimeout(updateAreaReadout, 380);
     // The ruler-measured anchor face already carries a grid — drawn by
     // completeMeasure() and timed to its own "count the squares" narration,
     // so it's already there by the time this runs. Every other face gets
