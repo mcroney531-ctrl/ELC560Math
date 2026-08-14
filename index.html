@@ -2590,29 +2590,42 @@ MIProgress.paintAll();
       { poly: kids[2], parent: 0, hinge: [c[2], c[0]], dih: DIH_TETRA, name: "face" }
     ];
   }
-  // Octahedron: the classic two-row strip of eight triangles. Each row is a
-  // zigzag; the rows are chained through one shared horizontal edge.
+  // Octahedron: read it as a triangular antiprism — a band of six triangles
+  // wrapping the equator, capped top and bottom. The band unrolls to a single
+  // zigzag strip; the two caps hang off it, one up, one down.
+  //
+  // The earlier "two mirrored rows of four" layout looked like a plausible
+  // net but was not one: its two rows sat flush along a second horizontal
+  // edge that no hinge used, so folding it left two corners with only two
+  // faces meeting (a visible gap) while two others piled six faces on top of
+  // each other. Verified by folding it and clustering the resulting 3D
+  // corners: this layout gives the six corners a real octahedron has, each
+  // shared by exactly four faces.
   function octaNet(a) {
     var h = a * T_H, F = [];
-    // row A occupies y ∈ [0, h] with apexes alternating up/down
-    var A1 = [[0, h], [a, h], [a / 2, 0]];
-    var A2 = [[a / 2, 0], [a * 1.5, 0], [a, h]];
-    var A3 = [[a, h], [a * 2, h], [a * 1.5, 0]];
-    var A4 = [[a * 1.5, 0], [a * 2.5, 0], [a * 2, h]];
-    // row B mirrors it below
-    var B1 = [[0, h], [a, h], [a / 2, 2 * h]];
-    var B2 = [[a / 2, 2 * h], [a * 1.5, 2 * h], [a, h]];
-    var B3 = [[a, h], [a * 2, h], [a * 1.5, 2 * h]];
-    var B4 = [[a * 1.5, 2 * h], [a * 2.5, 2 * h], [a * 2, h]];
     var D = DIH_OCTA;
-    F.push({ poly: A1, parent: -1, name: "face" });
-    F.push({ poly: A2, parent: 0, hinge: [A1[1], A1[2]], dih: D, name: "face" });
-    F.push({ poly: A3, parent: 1, hinge: [A2[1], A2[2]], dih: D, name: "face" });
-    F.push({ poly: A4, parent: 2, hinge: [A3[1], A3[2]], dih: D, name: "face" });
-    F.push({ poly: B1, parent: 0, hinge: [A1[0], A1[1]], dih: D, name: "face" });
-    F.push({ poly: B2, parent: 4, hinge: [B1[1], B1[2]], dih: D, name: "face" });
-    F.push({ poly: B3, parent: 5, hinge: [B2[1], B2[2]], dih: D, name: "face" });
-    F.push({ poly: B4, parent: 6, hinge: [B3[1], B3[2]], dih: D, name: "face" });
+    // The equatorial band: six triangles alternating apex-up / apex-down
+    // between y = 0 and y = h. Rolled up, the left edge of T0 meets the
+    // right edge of T5.
+    var T0 = [[0, h], [a, h], [a / 2, 0]];
+    var T1 = [[a / 2, 0], [a * 1.5, 0], [a, h]];
+    var T2 = [[a, h], [a * 2, h], [a * 1.5, 0]];
+    var T3 = [[a * 1.5, 0], [a * 2.5, 0], [a * 2, h]];
+    var T4 = [[a * 2, h], [a * 3, h], [a * 2.5, 0]];
+    var T5 = [[a * 2.5, 0], [a * 3.5, 0], [a * 3, h]];
+    // The caps. The band's top boundary is three bases along y = 0 and its
+    // bottom boundary three along y = h; each closes into one triangle, so a
+    // cap can hang off any one of them.
+    var CAP_UP = [[a / 2, 0], [a * 1.5, 0], [a, -h]];
+    var CAP_DN = [[0, h], [a, h], [a / 2, 2 * h]];
+    F.push({ poly: T0, parent: -1, name: "face" });
+    F.push({ poly: T1, parent: 0, hinge: [T0[1], T0[2]], dih: D, name: "face" });
+    F.push({ poly: T2, parent: 1, hinge: [T1[1], T1[2]], dih: D, name: "face" });
+    F.push({ poly: T3, parent: 2, hinge: [T2[1], T2[2]], dih: D, name: "face" });
+    F.push({ poly: T4, parent: 3, hinge: [T3[1], T3[2]], dih: D, name: "face" });
+    F.push({ poly: T5, parent: 4, hinge: [T4[1], T4[2]], dih: D, name: "face" });
+    F.push({ poly: CAP_UP, parent: 1, hinge: [T1[0], T1[1]], dih: D, name: "face" });
+    F.push({ poly: CAP_DN, parent: 0, hinge: [T0[0], T0[1]], dih: D, name: "face" });
     return F;
   }
 
@@ -3024,7 +3037,7 @@ MIProgress.paintAll();
       ladderFinal: "Lift a point above the square and another below it — two pyramids, back to back.",
       flat2D: "diamond",
       faceBlurb: "All eight faces of an octahedron are identical triangles.",
-      netBlurb: "Eight triangles in two zigzag rows of four. Each row rolls into a cone-like cap, and the two caps meet at the middle — like two square pyramids glued base to base.", challenge: true,
+      netBlurb: "A zigzag band of six triangles with one more hanging off each side. The band wraps into a ring around the middle, and the two loose triangles fold in to cap the top and the bottom.", challenge: true,
       net: octaNet(4), F: 8, E: 12, V: 6, faceWord: "triangles",
       saRuler: true, measureFace: 0,
       unit: "cm",
@@ -3033,10 +3046,10 @@ MIProgress.paintAll();
       buildup: "Edge-on it looks like a flat diamond. <strong>Drag it.</strong> It opens into eight faces.",
       buildupDone: "<strong>3D!</strong> Eight triangles — like two square pyramids glued base to base.",
       intro: "An octahedron: eight triangular faces. Spinning and counting is genuinely hard here. <strong>Count the faces.</strong>",
-      netDesc: "Eight triangles in two zigzag rows. <strong>Tap each face to check it off.</strong>",
+      netDesc: "A band of six triangles, plus a cap for the top and the bottom. <strong>Tap each face to check it off.</strong>",
       whyIntro: "Eight faces to wrap. Same rule though — every one is ½ × base × height.",
       saIntro: "Eight identical triangles, each ½ × 4 × 3.46. <strong>Tap each face to add up its area.</strong>",
-      counted: "<strong>All 8 counted!</strong> Those two rows roll up into a diamond with a point at the top and bottom.",
+      counted: "<strong>All 8 counted!</strong> The band rolls into a ring and the two caps close it off — a point at the top and one at the bottom.",
       done: "🎉 <strong>8 faces, 12 edges, 6 corners.</strong> Same 12 edges as a cube — but eight faces instead of six.",
       next: null
     }
